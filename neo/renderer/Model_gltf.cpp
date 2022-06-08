@@ -6,7 +6,7 @@
 #include "Model_gltf.h"
 #include "Model_local.h"
 
-
+idCVar gltf_yup( "gltf_yup", "0", CVAR_SYSTEM | CVAR_BOOL, "automatically converts from a orientation with y-up to doomcoords " );
 
 bool idRenderModelStatic::ConvertGltfMeshToModelsurfaces( const gltfMesh* mesh )
 {
@@ -77,7 +77,7 @@ void MapPolygonMesh::ConvertFromMeshGltf( const gltfMesh* _mesh, gltfData* data 
 				{
 					case gltfMesh_Primitive_Attribute::Type::Position:
 					{
-						for( int i = 0; i < attrAcc->count; i++ )
+						for( int i = attrAcc->count - 1; i >= 0; i-- )
 						{
 							idVec3 pos;
 
@@ -85,16 +85,19 @@ void MapPolygonMesh::ConvertFromMeshGltf( const gltfMesh* _mesh, gltfData* data 
 							bin.Read( ( void* )( &pos.y ), attrAcc->typeSize );
 							bin.Read( ( void* )( &pos.z ), attrAcc->typeSize );
 
-#if 1
 							// RB: proper glTF2 convention, requires Y-up export option ticked on in Blender
-							verts[i].xyz.x = pos.z;
-							verts[i].xyz.y = pos.x;
-							verts[i].xyz.z = pos.y;
-#else
-							verts[i].xyz.x = pos.x;
-							verts[i].xyz.y = pos.y;
-							verts[i].xyz.z = pos.z;
-#endif
+							if ( gltf_yup.GetBool() )
+							{
+								verts[i].xyz.x = pos.z;
+								verts[i].xyz.y = pos.x;
+								verts[i].xyz.z = pos.y;
+							}else
+							{
+								verts[i].xyz.x = pos.x;
+								verts[i].xyz.y = pos.y;
+								verts[i].xyz.z = pos.z;
+							}
+
 
 							if( attrBv->byteStride )
 							{
@@ -244,19 +247,21 @@ int idMapEntity::GetEntities( gltfData* data, EntityListRef entities, int sceneI
 				}
 #endif
 
-				data->ResolveNodeMatrix( node );
-
 				idVec3 origin;
-#if 1
+				if ( gltf_yup.GetBool() )
 				// RB: proper glTF2 convention, requires Y-up export option ticked on in Blender
-				origin.x = node->translation.z;
-				origin.y = node->translation.x;
-				origin.z = node->translation.y;
-#else
-				origin.x = node->translation.x;
-				origin.y = node->translation.y;
-				origin.z = node->translation.z;
-#endif
+				{
+					origin.x = node->translation.z;
+					origin.y = node->translation.x;
+					origin.z = node->translation.y;
+				}else
+				{
+
+					origin.x = node->translation.x;
+					origin.y = node->translation.y;
+					origin.z = node->translation.z;
+				}
+
 
 				newEntity->epairs.Set( "origin", origin.ToString() );
 

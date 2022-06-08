@@ -497,9 +497,9 @@ static int ParsePolygonMesh( const MapPolygonMesh* mesh, int primitiveNum, int n
 			// RB: glTF2 workflow insists to use triangles instead of n-gons or quads
 			mapTri_t* tri = AllocTri();
 
-			tri->v[0] = verts[ indexes[ 0 ] ];
+			tri->v[0] = verts[ indexes[ 2 ] ];
 			tri->v[1] = verts[ indexes[ 1 ] ];
-			tri->v[2] = verts[ indexes[ 2 ] ];
+			tri->v[2] = verts[ indexes[ 0 ] ];
 
 			idPlane plane;
 			plane.FromPoints( tri->v[0].xyz, tri->v[1].xyz, tri->v[2].xyz );
