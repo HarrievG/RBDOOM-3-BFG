@@ -28,6 +28,32 @@ If you have questions concerning this license or the applicable additional terms
 */
 #include "precompiled.h"
 #pragma hdrstop
+idSWFScriptObject* GetMouseEventDispatcher( idSWFScriptObject *object ) {
+	idSWFScriptObject *dispatcher = nullptr;
+	if ( object->HasValidProperty( "__eventDispatcher__" ) ) {
+		dispatcher = object->Get( "__eventDispatcher__" ).GetObject( );
+		if ( dispatcher->HasValidProperty( "click" )
+			|| dispatcher->HasValidProperty( "contextMenu" )
+			|| dispatcher->HasValidProperty( "doubleClick" )
+			|| dispatcher->HasValidProperty( "middleClick" )
+			|| dispatcher->HasValidProperty( "middleMouseDown" )
+			|| dispatcher->HasValidProperty( "middleMouseUp" )
+			|| dispatcher->HasValidProperty( "mouseDown" )
+			|| dispatcher->HasValidProperty( "mouseMove" )
+			|| dispatcher->HasValidProperty( "mouseOut" )
+			|| dispatcher->HasValidProperty( "mouseOver" )
+			|| dispatcher->HasValidProperty( "mouseUp" )
+			|| dispatcher->HasValidProperty( "mouseWheel" )
+			|| dispatcher->HasValidProperty( "releaseOutside" )
+			|| dispatcher->HasValidProperty( "rightClick" )
+			|| dispatcher->HasValidProperty( "rightMouseDown" )
+			|| dispatcher->HasValidProperty( "rightMouseUp" )
+			|| dispatcher->HasValidProperty( "rollOut" )
+			|| dispatcher->HasValidProperty( "rollOver" ) )
+			return dispatcher;
+	}
+	return nullptr;
+}
 
 /*
 ===================
@@ -50,15 +76,23 @@ idSWFScriptObject* idSWF::HitTest( idSWFSpriteInstance* spriteInstance, const sw
 	{
 		return NULL;
 	}
+	
+	idSWFScriptObject * dispatcher = GetMouseEventDispatcher( spriteInstance->scriptObject );
 
-	if( spriteInstance->scriptObject->HasValidProperty( "onRelease" )
+	if (dispatcher!=nullptr) {
+			parentObject = spriteInstance->scriptObject;
+	}else
+	{
+		if ( spriteInstance->scriptObject->HasValidProperty( "onRelease" )
 			|| spriteInstance->scriptObject->HasValidProperty( "onPress" )
 			|| spriteInstance->scriptObject->HasValidProperty( "onRollOver" )
 			|| spriteInstance->scriptObject->HasValidProperty( "onRollOut" )
 			|| spriteInstance->scriptObject->HasValidProperty( "onDrag" )
-	  )
-	{
-		parentObject = spriteInstance->scriptObject;
+			|| spriteInstance->scriptObject->HasValidProperty( "onDrag" )
+			)
+		{
+			parentObject = spriteInstance->scriptObject;
+		}
 	}
 
 	// rather than returning the first object we find, we actually want to return the last object we find
@@ -122,21 +156,29 @@ idSWFScriptObject* idSWF::HitTest( idSWFSpriteInstance* spriteInstance, const sw
 		else if( entry->type == SWF_DICT_MORPH )
 		{
 			// FIXME: this should be roughly the same as SWF_DICT_SHAPE
-		}
-		else if( entry->type == SWF_DICT_TEXT )
-		{
+		
+		//} else if( entry->type == SWF_DICT_TEXT )
+		//{
 			// FIXME: this should be roughly the same as SWF_DICT_SHAPE
 		}
-		else if( entry->type == SWF_DICT_EDITTEXT )
+		else if( entry->type == SWF_DICT_EDITTEXT ||  entry->type == SWF_DICT_TEXT)
 		{
 			idSWFScriptObject* editObject = NULL;
 
-			if( display.textInstance->scriptObject.HasProperty( "onRelease" ) || display.textInstance->scriptObject.HasProperty( "onPress" ) )
+			idSWFScriptObject * textdispatcher = nullptr;
+			if ( display.textInstance )
+			{
+				dispatcher = GetMouseEventDispatcher( &display.textInstance->scriptObject );
+			}
+			if ( dispatcher!=nullptr )
+			{
+				editObject = &display.textInstance->scriptObject;
+			}else if ( display.textInstance && ( display.textInstance->scriptObject.HasProperty( "onRelease" ) || display.textInstance->scriptObject.HasProperty( "onPress" ) ) ) 
 			{
 				// if the edit box itself can be clicked, then we want to return it when it's clicked on
 				editObject = &display.textInstance->scriptObject;
 			}
-			else if( parentObject != NULL )
+			else if ( !dispatcher && parentObject != NULL ) 
 			{
 				// otherwise, we want to return the parent object
 				editObject = parentObject;
@@ -147,7 +189,7 @@ idSWFScriptObject* idSWF::HitTest( idSWFSpriteInstance* spriteInstance, const sw
 				continue;
 			}
 
-			if( display.textInstance->text.IsEmpty() )
+			if(!display.textInstance || display.textInstance->text.IsEmpty() )
 			{
 				continue;
 			}
@@ -254,7 +296,8 @@ bool idSWF::HandleEvent( const sysEvent_t* event )
 		{
 			mouseEnabled = true;
 			idSWFScriptVar var;
-			if( event->evValue2 )
+			idSWFScriptVar eventDispatcher =  mainspriteInstance->GetScriptObject()->Get( "__eventDispatcher__" );
+			if ( event->evValue2 ) 
 			{
 
 				idSWFScriptVar waitInput = globals->Get( "waitInput" );
@@ -277,8 +320,35 @@ bool idSWF::HandleEvent( const sysEvent_t* event )
 					mouseObject = hitObject;
 					mouseObject->AddRef();
 
+					eventDispatcher = hitObject->Get( "__eventDispatcher__" );
+
+					if (!eventDispatcher.IsUndefined() && !var.IsFunction())
+					{
+						var = eventDispatcher.GetObject( )->Get( "click" );
+						if ( !var.IsFunction( ) )
+							var = eventDispatcher.GetObject( )->Get( "mouseDown" );
+					}
+					if ( var.IsFunction( ) ) 
+					{
+						idSWFScriptVar eventArg;
+						auto *eventObj = globals->Get( "EventDispatcher" ).GetObject( )
+							->Get( "MouseEvent" ).GetObject( )
+							->Get( "[MouseEvent]" ).GetObject( );
+						eventArg.SetObject( idSWFScriptObject::Alloc( ) );
+						eventArg.GetObject( )->DeepCopy( eventObj );
+						idSWFParmList parms;
+						parms.Append( eventArg );
+						if ( !( ( idSWFScriptFunction_Script * ) var.GetFunction( ) )->GetScope( )->Num( ) )
+						{
+							( ( idSWFScriptFunction_Script * ) var.GetFunction( ) )->GetScope( )->Append( globals );
+						}
+						var.GetFunction( )->Call( hitObject, parms );
+						parms.Clear( );
+						return false;
+					}
+
 					var = hitObject->Get( "onPress" );
-					if( var.IsFunction() )
+					if ( var.IsFunction( ) ) 
 					{
 						idSWFParmList parms;
 						parms.Append( event->inputDevice );
@@ -304,11 +374,37 @@ bool idSWF::HandleEvent( const sysEvent_t* event )
 				parms.Append( hitObject );
 				Invoke( "setHitObject", parms );
 
-			}
-			else
+			} else 
 			{
-				if( mouseObject )
+				if ( mouseObject ) 
 				{
+					eventDispatcher = mouseObject->Get( "__eventDispatcher__" );
+
+					if ( !eventDispatcher.IsUndefined( ) && !var.IsFunction( ) )
+					{
+						var = eventDispatcher.GetObject( )->Get( "mouseUp" );
+					}
+					if ( var.IsFunction( ) ) 
+					{
+						idSWFScriptVar eventArg;
+						auto *eventObj = globals->Get( "EventDispatcher" ).GetObject( )
+							->Get( "MouseEvent" ).GetObject( )
+							->Get( "[MouseEvent]" ).GetObject( );
+						eventArg.SetObject( idSWFScriptObject::Alloc( ) );
+						eventArg.GetObject( )->DeepCopy( eventObj );
+						idSWFParmList parms;
+						parms.Append( eventArg );
+						if ( !( ( idSWFScriptFunction_Script * ) var.GetFunction( ) )->GetScope( )->Num( ) )
+						{
+							( ( idSWFScriptFunction_Script * ) var.GetFunction( ) )->GetScope( )->Append( globals );
+						}
+						var.GetFunction( )->Call( mouseObject, parms );
+						parms.Clear( );
+						mouseObject->Release( );
+						mouseObject = NULL;
+						return true;
+					}
+
 					var = mouseObject->Get( "onRelease" );
 					if( var.IsFunction() )
 					{
@@ -494,15 +590,35 @@ bool idSWF::HandleEvent( const sysEvent_t* event )
 			hasHitObject = false;
 		}
 
-		if( hitObject != hoverObject )
-		{
+		idSWFScriptVar eventDispatcher;
+		if ( hitObject != hoverObject ) {
+			
 			// First check to see if we should call onRollOut on our previous hoverObject
 			if( hoverObject != NULL )
 			{
 				idSWFScriptVar var = hoverObject->Get( "onRollOut" );
-				if( var.IsFunction() )
+
+				eventDispatcher = hoverObject->Get( "__eventDispatcher__" );
+				if ( !eventDispatcher.IsUndefined( ) && !var.IsFunction( ) )
 				{
-					var.GetFunction()->Call( hoverObject, idSWFParmList() );
+					var = eventDispatcher.GetObject( )->Get( "mouseOut" );
+					if ( var.IsFunction( ) ) 					{
+						idSWFScriptVar eventArg;
+						auto *eventObj = globals->Get( "EventDispatcher" ).GetObject( )
+							->Get( "MouseEvent" ).GetObject( )
+							->Get( "[MouseEvent]" ).GetObject( );
+						eventArg.SetObject( idSWFScriptObject::Alloc( ) );
+						eventArg.GetObject( )->DeepCopy( eventObj );
+						idSWFParmList parms;
+						parms.Append( eventArg );
+						if ( !( ( idSWFScriptFunction_Script * ) var.GetFunction( ) )->GetScope( )->Num( ) )
+							( ( idSWFScriptFunction_Script * ) var.GetFunction( ) )->GetScope( )->Append( globals );
+						var.GetFunction( )->Call( hoverObject, parms );
+						parms.Clear( );
+						retVal = true;
+					}
+				}else if ( var.IsFunction( ) ) {
+					var.GetFunction( )->Call( hoverObject, idSWFParmList( ) );
 					retVal = true;
 				}
 				hoverObject->Release();
@@ -514,9 +630,29 @@ bool idSWF::HandleEvent( const sysEvent_t* event )
 				hoverObject = hitObject;
 				hoverObject->AddRef();
 				idSWFScriptVar var = hitObject->Get( "onRollOver" );
-				if( var.IsFunction() )
+
+				eventDispatcher = hoverObject->Get( "__eventDispatcher__" );
+				if ( !eventDispatcher.IsUndefined( ) && !var.IsFunction( ) )
 				{
-					var.GetFunction()->Call( hitObject, idSWFParmList() );
+					var = eventDispatcher.GetObject( )->Get( "mouseOver" );
+					if (var.IsFunction() )
+					{
+						idSWFScriptVar eventArg;
+						auto *eventObj = globals->Get( "EventDispatcher" ).GetObject( )
+							->Get( "MouseEvent" ).GetObject( )
+							->Get( "[MouseEvent]" ).GetObject( );
+						eventArg.SetObject( idSWFScriptObject::Alloc( ) );
+						eventArg.GetObject( )->DeepCopy( eventObj );
+						idSWFParmList parms;
+						parms.Append( eventArg );
+						if ( !( ( idSWFScriptFunction_Script * ) var.GetFunction( ) )->GetScope( )->Num( ) )
+							( ( idSWFScriptFunction_Script * ) var.GetFunction( ) )->GetScope( )->Append( globals );
+						var.GetFunction( )->Call( hoverObject, parms );
+						parms.Clear( );
+						retVal = true;
+					}
+				} else if ( var.IsFunction( ) ) {
+					var.GetFunction( )->Call( hitObject, idSWFParmList( ) );
 					retVal = true;
 				}
 			}

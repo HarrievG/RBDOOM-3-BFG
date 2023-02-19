@@ -45,6 +45,13 @@ void idSWFSpriteInstance::PlaceObject2( idSWFBitStream& bitstream )
 	uint64 flags = bitstream.ReadU8();
 	int depth = bitstream.ReadU16();
 
+	if ( ( flags & PlaceFlagHasClassName ) != 0 )
+	//	idLib::Warning( "PlaceObject3: hasClassName %s", bitstream.ReadString( ) );
+
+	if ( ( ( ( flags & PlaceFlagHasImage ) != 0 ) && ( ( flags & PlaceFlagHasCharacter ) != 0 ) ) ) {
+	//		idLib::Warning( "PlaceObject3: %s ignored", bitstream.ReadString( ) );
+	}
+
 	int characterID = -1;
 	if( ( flags & PlaceFlagHasCharacter ) != 0 )
 	{
@@ -146,9 +153,11 @@ void idSWFSpriteInstance::PlaceObject3( idSWFBitStream& bitstream )
 	uint64 flags2 = bitstream.ReadU8();
 	uint16 depth = bitstream.ReadU16();
 
-	if( ( flags2 & PlaceFlagHasClassName ) != 0 || ( ( ( flags2 & PlaceFlagHasImage ) != 0 ) && ( ( flags1 & PlaceFlagHasCharacter ) != 0 ) ) )
-	{
-		bitstream.ReadString(); // ignored
+	if ( ( flags2 & PlaceFlagHasClassName ) != 0  || ( flags1 & PlaceFlagHasClassName ) )
+		//idLib::Warning( "PlaceObject3: hasClassName %s", bitstream.ReadString( ) );
+
+	if ( ( ( ( flags2 & PlaceFlagHasImage ) != 0 ) && ( ( flags1 & PlaceFlagHasCharacter ) != 0 ) ) ) {
+			//idLib::Warning( "PlaceObject3: %s ignored", bitstream.ReadString() );
 	}
 
 	int characterID = -1;

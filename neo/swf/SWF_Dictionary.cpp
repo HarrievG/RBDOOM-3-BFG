@@ -43,7 +43,10 @@ idSWFDictionaryEntry::idSWFDictionaryEntry() :
 	edittext( NULL ),
 	imageSize( 0, 0 ),
 	imageAtlasOffset( 0, 0 ),
-	channelScale( 1.0f, 1.0f, 1.0f, 1.0f )
+	channelScale( 1.0f, 1.0f, 1.0f, 1.0f ),
+	scriptClass( ),
+	resolved ( false ),
+	name( NULL )
 {
 }
 
@@ -78,6 +81,9 @@ idSWFDictionaryEntry& idSWFDictionaryEntry::operator=( idSWFDictionaryEntry& oth
 	edittext = other.edittext;
 	imageSize = other.imageSize;
 	imageAtlasOffset = other.imageAtlasOffset;
+	scriptClass = other.scriptClass;
+	resolved = other.resolved;
+	name = other.name;
 	other.type = SWF_DICT_NULL;
 	other.material = NULL;
 	other.shape = NULL;
@@ -85,6 +91,9 @@ idSWFDictionaryEntry& idSWFDictionaryEntry::operator=( idSWFDictionaryEntry& oth
 	other.font = NULL;
 	other.text = NULL;
 	other.edittext = NULL;
+	other.resolved = false;
+	other.name = NULL;
+	other.scriptClass = idSWFScriptVar();
 	return *this;
 }
 

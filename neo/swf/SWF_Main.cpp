@@ -40,13 +40,83 @@ idCVar postLoadExportFlashToSWF( "postLoadExportFlashToSWF", "0", CVAR_INTEGER, 
 idCVar postLoadExportFlashToJSON( "postLoadExportFlashToJSON", "0", CVAR_INTEGER, "" );
 // RB end
 
+idCVar swf_printAbcObjects("swf_printAbcObjects", "1", CVAR_INTEGER, "used to set whether to print all classes constructed from the DoAbc tag");
+
 int idSWF::mouseX = -1;
 int idSWF::mouseY = -1;
 bool idSWF::isMouseInClientArea = false;
 
 extern idCVar in_useJoystick;
 
+idSWFScriptObject_EventDispatcherPrototype eventDispatcherScriptObjectPrototype;
 
+void idSWF::CreateAbcObjects( idSWFScriptObject *globals ) 
+{
+	//2 passes.
+	//1. Create all classes
+	int idx = 0;
+	for (auto & classInfo : abcFile.classes )
+	{
+		swfInstance_info & instanceInfo = abcFile.instances[idx];
+
+		idSWFScriptObject * tmp = idSWFScriptObject::Alloc();
+		idStr& className = abcFile.constant_pool.utf8Strings[instanceInfo.name->nameIndex];
+		//if these are namespace sets, concat all?
+		idStr fullClassName = *abcFile.constant_pool.namespaceNames[instanceInfo.name->index] + "." + abcFile.constant_pool.utf8Strings[instanceInfo.name->nameIndex];
+		idStr& superName = abcFile.constant_pool.utf8Strings[instanceInfo.super_name->nameIndex];
+
+		//lookup prototype
+		if (globals->HasValidProperty(superName))
+			tmp->SetPrototype(globals->GetObject(superName)->GetPrototype());
+		else
+			common->Warning(" prototype %s not found for %s",className.c_str(),superName.c_str());
+		
+		idSWFScriptFunction_Script *  init = idSWFScriptFunction_Script::Alloc();
+		init->SetData( classInfo.cinit );
+		tmp->Set( "__initializer__", idSWFScriptVar( init ) );
+		init->SetAbcFile(&abcFile);
+		idSWFScriptFunction_Script *constr = idSWFScriptFunction_Script::Alloc( );
+		constr->SetData( instanceInfo.iinit );
+		tmp->Set( "__constructor__", idSWFScriptVar( constr ) );
+		constr->SetAbcFile(&abcFile);
+		globals->Set(className,tmp);
+		globals->Set(fullClassName,tmp);
+		idx++;
+		//check release
+		init->Release();
+		constr->Release();
+	}
+	idx = 0;
+
+	//2, create all traits
+	for ( auto &classInfo : abcFile.classes ) 	{
+		swfInstance_info &instanceInfo = abcFile.instances[idx];
+
+		idStr &className = abcFile.constant_pool.utf8Strings[instanceInfo.name->nameIndex];
+		idSWFScriptObject *tmp = globals->GetObject( className );
+		auto * target = idSWFScriptObject::Alloc( );
+		auto *var = tmp->GetVariable( "[" + className + "]", true );
+		
+		for ( swfTraits_info &trait : instanceInfo.traits ) {
+			target->Set( abcFile.constant_pool.utf8Strings[trait.name->nameIndex], 
+				abcFile.GetTrait<idSWFScriptObject::swfNamedVar_t>( trait, globals )->value);		
+		}
+		var->value.SetObject(target);
+		target->Release();
+
+		for ( swfTraits_info &trait : classInfo.traits ) {
+			tmp->Set( abcFile.constant_pool.utf8Strings[trait.name->nameIndex],
+				abcFile.GetTrait<idSWFScriptObject::swfNamedVar_t>( trait, globals )->value
+			);
+		}
+		if (swf_printAbcObjects.GetBool())
+		{
+			tmp->PrintToConsole(className.c_str());
+			target->PrintToConsole("[" + className + "]");
+		}
+		idx++;
+	}
+}
 
 /*
 ===================
@@ -163,7 +233,8 @@ idSWF::idSWF( const char* filename_, idSoundWorld* soundWorld_ )
 			}
 			else if( LoadSWF( filename ) )
 			{
-				WriteBinary( binaryFileName );
+				if (!abcFile.class_count)
+					WriteBinary( binaryFileName );
 			}
 		}
 	}
@@ -336,9 +407,53 @@ idSWF::idSWF( const char* filename_, idSoundWorld* soundWorld_ )
 	globals = idSWFScriptObject::Alloc();
 	globals->Set( "_global", globals );
 
+	auto *accessibilityPropertiesObj = idSWFScriptObject::Alloc( );
+	//accessibilityPropertiesObj->Set( "", idSWFScriptObject::Alloc( ) );
+	
+	auto *dispatcherObj = idSWFScriptObject::Alloc( );
+	dispatcherObj->SetPrototype( &eventDispatcherScriptObjectPrototype );
+
+	extern idSWFScriptObject_SpriteInstancePrototype spriteInstanceScriptObjectPrototype;
+	auto *movieclipObj = idSWFScriptObject::Alloc( );
+	movieclipObj->SetPrototype( &spriteInstanceScriptObjectPrototype );
+
+	if (spriteInstanceScriptObjectPrototype.GetPrototype() == NULL)
+		spriteInstanceScriptObjectPrototype.SetPrototype( &eventDispatcherScriptObjectPrototype );
+
 	globals->Set( "Object", &scriptFunction_Object );
+	globals->Set( "EventDispatcher", dispatcherObj );	
+	globals->Set( "DisplayObject", idSWFScriptObject::Alloc( ) );
+	globals->Set( "InteractiveObject", idSWFScriptObject::Alloc( ) );
+	globals->Set( "AccessibilityProperties", accessibilityPropertiesObj );
+	globals->Set( "Dictionary", idSWFScriptObject::Alloc());
+	globals->Set( "DisplayObjectContainer", idSWFScriptObject::Alloc( ) );
+	globals->Set( "Sprite", idSWFScriptObject::Alloc( ) );
+	globals->Set( "DisplayObjectContainer", idSWFScriptObject::Alloc( ) );
+	globals->Set( "MovieClip", movieclipObj );
+
+	CreateAbcObjects( globals );
+	bool skipInitOnContruct = symbolClasses.symbols.Num() > 0;
 
 	mainspriteInstance = spriteInstanceAllocator.Alloc();
+	mainspriteInstance->abcFile = &abcFile;
+	mainspriteInstance->scriptObject = idSWFScriptObject::Alloc( );
+	//stage class.
+	
+	for ( auto &symbol : symbolClasses.symbols ) {
+		if ( !symbol.tag ) {
+			mainspriteInstance->name = symbol.name;
+			idStr objName;
+			mainspriteInstance->name.ExtractFileExtension(objName);
+
+			auto *super = globals->Get( symbol.name ).GetObject( );
+			auto dcopy = super->Get("[" + objName + "]");
+			if (dcopy.IsObject())
+				mainspriteInstance->scriptObject->DeepCopy( dcopy.GetObject( ) );
+
+			mainspriteInstance->scriptObject->SetPrototype( super );
+			mainspriteInstance->scriptObject->Set( "root", mainspriteInstance->scriptObject );
+		}
+	}
 	mainspriteInstance->Init( mainsprite, NULL, 0 );
 
 	shortcutKeys = idSWFScriptObject::Alloc();
@@ -357,6 +472,7 @@ idSWF::idSWF( const char* filename_, idSoundWorld* soundWorld_ )
 	globals->Set( "getLocalString", scriptFunction_getLocalString.Bind( this ) );
 	globals->Set( "swapPS3Buttons", scriptFunction_swapPS3Buttons.Bind( this ) );
 	globals->Set( "_root", mainspriteInstance->scriptObject );
+	globals->Set( "root", mainspriteInstance->scriptObject );
 	globals->Set( "strReplace", scriptFunction_strReplace.Bind( this ) );
 	globals->Set( "getCVarInteger", scriptFunction_getCVarInteger.Bind( this ) );
 	globals->Set( "setCVarInteger", scriptFunction_setCVarInteger.Bind( this ) );
@@ -372,22 +488,29 @@ idSWF::idSWF( const char* filename_, idSoundWorld* soundWorld_ )
 	globals->Set( "floor", scriptFunction_floor.Bind( this ) );
 	globals->Set( "ceil", scriptFunction_ceil.Bind( this ) );
 	globals->Set( "toUpper", scriptFunction_toUpper.Bind( this ) );
+	globals->Set( "trace", scriptFunction_trace.Bind(this));
 
 	globals->SetNative( "platform", swfScriptVar_platform.Bind( &scriptFunction_getPlatform ) );
 	globals->SetNative( "blackbars", swfScriptVar_blackbars.Bind( this ) );
 	globals->SetNative( "cropToHeight", swfScriptVar_crop.Bind( this ) );
 	globals->SetNative( "cropToFit", swfScriptVar_crop.Bind( this ) );
 	globals->SetNative( "crop", swfScriptVar_crop.Bind( this ) );
-
+	
 	// Do this to touch any external references (like sounds)
 	// But disable script warnings because many globals won't have been created yet
 	extern idCVar swf_debug;
 	int debug = swf_debug.GetInteger();
 	swf_debug.SetInteger( 0 );
 
-	mainspriteInstance->Run();
-	mainspriteInstance->RunActions();
-	mainspriteInstance->RunTo( 0 );
+
+	//The original impl does an initial run when contructing the stage.
+	//This is not possible with swf's that have the tag DoABC / run abc-bytecode
+	if (!skipInitOnContruct)
+	{
+		mainspriteInstance->Run();
+		mainspriteInstance->RunActions();
+		mainspriteInstance->RunTo( 0 );
+	}
 
 	swf_debug.SetInteger( debug );
 
@@ -973,4 +1096,10 @@ idSWFScriptVar idSWF::idSWFScriptNativeVar_crop::Get( idSWFScriptObject* object 
 void idSWF::idSWFScriptNativeVar_crop::Set( idSWFScriptObject* object, const idSWFScriptVar& value )
 {
 	pThis->crop = value.ToBool();
+}
+
+idSWFScriptVar idSWF::idSWFScriptFunction_trace::Call(idSWFScriptObject* thisObject, const idSWFParmList& parms) {
+	common->Printf("[%s] %s\n", thisObject->GetSprite() ? thisObject->GetSprite()->name.c_str() : "NONAME",
+		parms[0].ToString().c_str());
+	return idSWFScriptVar();
 }

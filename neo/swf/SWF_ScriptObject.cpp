@@ -59,6 +59,13 @@ idSWFScriptObject::swfNamedVar_t& idSWFScriptObject::swfNamedVar_t::operator=( c
 	return *this;
 }
 
+void idSWFScriptObject::DeepCopy( idSWFScriptObject *_object ) {
+	if ( _object != NULL ) {
+		for ( int i = 0; i < _object->NumVariables( ); i++ )
+			Set( _object->EnumVariable( i ), _object->Get( _object->EnumVariable( i ) ) );
+	}
+}
+
 /*
 ========================
 idSWFScriptObject::idSWFScriptObject
@@ -661,11 +668,15 @@ idSWFTextInstance* idSWFScriptObject::GetNestedText( const char* arg1, const cha
 idSWFScriptObject::PrintToConsole
 ========================
 */
-void idSWFScriptObject::PrintToConsole() const
-{
-	if( variables.Num() > 0 )
-	{
-		idLib::Printf( "%d subelements:\n", variables.Num() );
+void idSWFScriptObject::PrintToConsole(const char * name) const {
+	static int recursionCount = 0;
+	common->Printf( "------------------------------------------------------------\n" );
+
+	if ( variables.Num() > 0 ) {
+		if ( name )
+			idLib::Printf( "[%s] %d subelements:\n",name, variables.Num() );
+		else
+			idLib::Printf( "%d subelements:\n", variables.Num() );
 		int maxVarLength = 0;
 
 		for( int i = 0; i < variables.Num(); ++i )
@@ -689,9 +700,13 @@ void idSWFScriptObject::PrintToConsole() const
 			idLib::Printf( fmt, nv.name.c_str(), nv.value.TypeOf(),
 						   nv.value.ToString().c_str() );
 		}
-	}
-	else
+	} 
+	else 
 	{
-		idLib::Printf( "No subelements\n" );
+		if ( name )
+			idLib::Printf( "[%s] No subelements:\n", name );
+		else
+			idLib::Printf( "No subelements\n" );
+		
 	}
 }

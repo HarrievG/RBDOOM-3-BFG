@@ -28,6 +28,7 @@ If you have questions concerning this license or the applicable additional terms
 */
 #ifndef __SWF_SCRIPTFUNCTION_H__
 #define __SWF_SCRIPTFUNCTION_H__
+#include "SWF_Abc.h"
 
 /*
 ========================
@@ -185,7 +186,7 @@ idSWFScriptFunction_Script is a script function that's implemented in action scr
 class idSWFScriptFunction_Script : public idSWFScriptFunction
 {
 public:
-	idSWFScriptFunction_Script() : refCount( 1 ), flags( 0 ), data( NULL ), length( 0 ), prototype( NULL ), defaultSprite( NULL )
+	idSWFScriptFunction_Script() : refCount( 1 ), flags( 0 ), data( NULL ), length( 0 ), prototype( NULL ), defaultSprite( NULL ), methodInfo(NULL), abcFile(NULL)
 	{
 		registers.SetNum( 4 );
 	}
@@ -217,7 +218,11 @@ public:
 		data = _data;
 		length = _length;
 	}
+	void	SetData( swfMethod_info * _method)						{ methodInfo = _method; }
+	void	SetAbcFile ( SWF_AbcFile * _file )						{ abcFile = _file; }
+	swfMethod_info * GetMethodInfo( )							{ return methodInfo;}
 	void	SetScope( idList<idSWFScriptObject*>& scope );
+	idList<idSWFScriptObject *,TAG_SWF> *	GetScope()						{ return &scope; }
 	void	SetConstants( const idSWFConstantPool& _constants )
 	{
 		constants.Copy( _constants );
@@ -257,9 +262,20 @@ public:
 	idStr CallToScript( idSWFScriptObject* thisObject, const idSWFParmList& parms, const char* filename, int characterID, int actionID );
 
 private:
+	//////////////////////////////////////////////////////////////////////////
+	//////////////////////ABC Wordcode Interpretation/////////////////////////
+	//////////////////////////////////////////////////////////////////////////
+	void findpropstrict( SWF_AbcFile *file, idSWFStack &stack, idSWFBitStream &bitstream );
+	void getlex( SWF_AbcFile *file, idSWFStack &stack, idSWFBitStream &bitstream );
+	void getscopeobject( SWF_AbcFile *file, idSWFStack &stack, idSWFBitStream &bitstream );
+	void pushscope( SWF_AbcFile *file, idSWFStack &stack, idSWFBitStream &bitstream );
+	void popscope( SWF_AbcFile *file, idSWFStack &stack, idSWFBitStream &bitstream );
+	void getlocal0( SWF_AbcFile *file, idSWFStack &stack, idSWFBitStream &bitstream );
+	void newclass( SWF_AbcFile *file, idSWFStack &stack, idSWFBitStream &bitstream );
+	void callpropvoid( SWF_AbcFile *file, idSWFStack &stack, idSWFBitStream &bitstream );
+	//////////////////////////////////////////////////////////////////////////
+	
 	idSWFScriptVar Run( idSWFScriptObject* thisObject, idSWFStack& stack, idSWFBitStream& bitstream );
-
-
 
 	struct ActionBlock
 	{
@@ -280,6 +296,9 @@ private:
 	idStr		ExportToScript( idSWFScriptObject* thisObject, idSWFStack& stack, idSWFBitStream& bitstream, const char* filename, int characterID, int actionID );
 	// RB end
 
+
+	idSWFScriptVar RunAbc( idSWFScriptObject * thisObject, idSWFStack & stack, idSWFBitStream & bitstream );
+	SWF_AbcFile *abcFile;
 private:
 	int					refCount;
 
@@ -300,7 +319,9 @@ private:
 		const char* name;
 		uint8 reg;
 	};
-	idList< parmInfo_t, TAG_SWF > parameters;
+	idList< parmInfo_t > parameters;
+
+	swfMethod_info *methodInfo;
 };
 
 #endif // !__SWF_SCRIPTFUNCTION_H__

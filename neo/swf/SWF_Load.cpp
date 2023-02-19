@@ -32,9 +32,12 @@ If you have questions concerning this license or the applicable additional terms
 #include "../renderer/Image.h"
 //#include "../../libs/rapidjson/include/rapidjson/document.h"
 
-using namespace rapidjson;
+using namespace rapidjson;//bleh
 
 #pragma warning(disable: 4355) // 'this' : used in base member initializer list
+
+
+idCVar swf_fatalVersionMismatch("swf_fatalVersionMismatch", "0", CVAR_BOOL, "Version number mismatch results in fatal error");
 
 #define BSWF_VERSION 16		// bumped to 16 for storing atlas image dimensions for unbuffered loads
 #define BSWF_MAGIC ( ( 'B' << 24 ) | ( 'S' << 16 ) | ( 'W' << 8 ) | BSWF_VERSION )
@@ -68,11 +71,13 @@ bool idSWF::LoadSWF( const char* fullpath )
 		return false;
 	}
 
-	if( header.version > 9 )
-	{
+	if ( header.version >= 9 ) {
 		idLib::Warning( "Unsupported version %d", header.version );
-		delete rawfile;
-		return false;
+		if  (swf_fatalVersionMismatch.GetBool() )
+		{
+			delete rawfile;
+			return false;
+		}
 	}
 
 	bool compressed;

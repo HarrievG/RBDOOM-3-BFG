@@ -51,6 +51,7 @@ idSWFScriptVar::idSWFScriptVar( const idSWFScriptVar& other )
 	{
 		other.value.function->AddRef();
 	}
+	traitsInfo = other.traitsInfo;
 }
 
 /*

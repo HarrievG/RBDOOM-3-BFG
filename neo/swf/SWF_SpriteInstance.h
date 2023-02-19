@@ -147,9 +147,11 @@ public:
 	bool childrenRunning;
 	bool firstRun;
 
+	bool constructed;
 	// currentFrame is the frame number currently in the displayList
 	// we use 1 based frame numbers because currentFrame = 0 means nothing is in the display list
 	// it's also convenient because Flash also uses 1 based frame numbers
+	uint16  lastFrame;
 	uint16	currentFrame;
 	uint16	frameCount;
 
@@ -184,6 +186,7 @@ public:
 	idList< swfDisplayEntry_t, TAG_SWF > displayList;
 	swfDisplayEntry_t* FindDisplayEntry( int depth );
 
+	SWF_AbcFile * abcFile;
 	// name of this sprite instance
 	idStr name;
 
@@ -258,6 +261,7 @@ public:
 		idSWFScriptVar Call( idSWFScriptObject * thisObject, const idSWFParmList & parms ); \
 	} scriptFunction_##x
 
+	SWF_SPRITE_FUNCTION_DECLARE( addFrameScript );
 	SWF_SPRITE_FUNCTION_DECLARE( duplicateMovieClip );
 	SWF_SPRITE_FUNCTION_DECLARE( gotoAndPlay );
 	SWF_SPRITE_FUNCTION_DECLARE( gotoAndStop );
@@ -279,6 +283,7 @@ public:
 	SWF_NATIVE_VAR_DECLARE( _rotation );
 
 	SWF_NATIVE_VAR_DECLARE_READONLY( _name );
+	SWF_NATIVE_VAR_DECLARE_READONLY( name );
 	SWF_NATIVE_VAR_DECLARE_READONLY( _currentframe );
 	SWF_NATIVE_VAR_DECLARE_READONLY( _totalframes );
 	SWF_NATIVE_VAR_DECLARE_READONLY( _target );

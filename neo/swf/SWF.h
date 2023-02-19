@@ -41,8 +41,10 @@ If you have questions concerning this license or the applicable additional terms
 #include "SWF_ParmList.h"
 #include "SWF_ScriptFunction.h"
 #include "SWF_SpriteInstance.h"
+#include "SWF_EventDispatcher.h"
 #include "SWF_ShapeParser.h"
 #include "SWF_TextInstance.h"
+#include "SWF_Abc.h"
 
 class idSWFDictionaryEntry
 {
@@ -65,6 +67,9 @@ public:
 	// the compressed images are normalize to reduce compression artifacts,
 	// color must be scaled down by this
 	idVec4				channelScale;
+	idSWFScriptVar		scriptClass;
+	bool				resolved;
+	idStrPtr			name;
 };
 
 struct purgableSwfImage_t
@@ -215,6 +220,7 @@ public:
 
 	idSWFScriptObject* HitTest( idSWFSpriteInstance* spriteInstance, const swfRenderState_t& renderState, int x, int y, idSWFScriptObject* parentObject );
 
+	SWF_AbcFile				abcFile;
 private:
 	idStr			filename;
 	ID_TIME_T		timestamp;
@@ -289,6 +295,7 @@ private:
 	SWF_NATIVE_FUNCTION_SWF_DECLARE( getCVarInteger );
 	SWF_NATIVE_FUNCTION_SWF_DECLARE( setCVarInteger );
 	SWF_NATIVE_FUNCTION_SWF_DECLARE( strReplace );
+	SWF_NATIVE_FUNCTION_SWF_DECLARE( trace );
 
 	SWF_NATIVE_FUNCTION_SWF_DECLARE( acos );
 	SWF_NATIVE_FUNCTION_SWF_DECLARE( cos );
@@ -307,7 +314,8 @@ private:
 	SWF_NATIVE_VAR_DECLARE_NESTED( blackbars, idSWF );
 	SWF_NATIVE_VAR_DECLARE_NESTED( crop, idSWF );
 
-	class idSWFScriptFunction_Object : public idSWFScriptFunction
+	class idSWFScriptFunction_Object;
+	SWF_NATIVE_VAR_DECLARE_NESTED_READONLY( Object, idSWFScriptFunction_Object, Call( object, idSWFParmList() ) );	class idSWFScriptFunction_Object : public idSWFScriptFunction
 	{
 	public:
 		idSWFScriptVar	Call( idSWFScriptObject* thisObject, const idSWFParmList& parms )
@@ -516,6 +524,12 @@ private:
 	// SWF_Zlib.cpp
 	//----------------------------------
 	bool			Inflate( const byte* input, int inputSize, byte* output, int outputSize );
+	//----------------------------------
+	// SWF_Abc.cpp
+	//----------------------------------
+	void			DoABC( idSWFBitStream & bitstream ) ;
+	void			SymbolClass( idSWFBitStream & bitstream ) ;
+
 	// RB begin
 	bool			Deflate( const byte* input, int inputSize, byte* output, int& outputSize );
 	// RB end
@@ -531,6 +545,8 @@ public:
 	static const char* GetTagName( swfTag_t tag );
 	static const char* GetActionName( swfAction_t action );
 
+	void CreateAbcObjects( idSWFScriptObject *globals );
+	SWF_SymbolClass symbolClasses;
 };
 
 #endif // !__SWF_H__
