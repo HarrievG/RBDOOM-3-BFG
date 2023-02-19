@@ -35,7 +35,8 @@ If you have questions concerning this license or the applicable additional terms
 #include "swf.h"
 #include "SWF_Abc.h"
 
-class idSWFScriptObject_EventDispatcherPrototype : public idSWFScriptObject {
+class idSWFScriptObject_EventDispatcherPrototype : public idSWFScriptObject
+{
 public:
 	idSWFScriptObject_EventDispatcherPrototype( );
 #define SWF_EVENTDISPATCHER_FUNCTION_DECLARE( x ) \

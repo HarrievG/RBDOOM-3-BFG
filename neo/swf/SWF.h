@@ -315,7 +315,8 @@ private:
 	SWF_NATIVE_VAR_DECLARE_NESTED( crop, idSWF );
 
 	class idSWFScriptFunction_Object;
-	SWF_NATIVE_VAR_DECLARE_NESTED_READONLY( Object, idSWFScriptFunction_Object, Call( object, idSWFParmList() ) );	class idSWFScriptFunction_Object : public idSWFScriptFunction
+	SWF_NATIVE_VAR_DECLARE_NESTED_READONLY( Object, idSWFScriptFunction_Object, Call( object, idSWFParmList() ) );
+	class idSWFScriptFunction_Object : public idSWFScriptFunction
 	{
 	public:
 		idSWFScriptVar	Call( idSWFScriptObject* thisObject, const idSWFParmList& parms )
@@ -527,8 +528,8 @@ private:
 	//----------------------------------
 	// SWF_Abc.cpp
 	//----------------------------------
-	void			DoABC( idSWFBitStream & bitstream ) ;
-	void			SymbolClass( idSWFBitStream & bitstream ) ;
+	void			DoABC( idSWFBitStream& bitstream ) ;
+	void			SymbolClass( idSWFBitStream& bitstream ) ;
 
 	// RB begin
 	bool			Deflate( const byte* input, int inputSize, byte* output, int& outputSize );
@@ -545,7 +546,7 @@ public:
 	static const char* GetTagName( swfTag_t tag );
 	static const char* GetActionName( swfAction_t action );
 
-	void CreateAbcObjects( idSWFScriptObject *globals );
+	void CreateAbcObjects( idSWFScriptObject* globals );
 	SWF_SymbolClass symbolClasses;
 };
 

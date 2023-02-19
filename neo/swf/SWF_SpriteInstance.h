@@ -186,7 +186,7 @@ public:
 	idList< swfDisplayEntry_t, TAG_SWF > displayList;
 	swfDisplayEntry_t* FindDisplayEntry( int depth );
 
-	SWF_AbcFile * abcFile;
+	SWF_AbcFile* abcFile;
 	// name of this sprite instance
 	idStr name;
 

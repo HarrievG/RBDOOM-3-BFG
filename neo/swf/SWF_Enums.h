@@ -74,7 +74,7 @@ enum swfConstantKind_t
 #endif
 };
 
-enum swfDictType_t 
+enum swfDictType_t
 {
 	SWF_DICT_NULL,
 	SWF_DICT_IMAGE,

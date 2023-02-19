@@ -69,18 +69,43 @@ they can contain raw data (int, float), strings, functions, or objects
 ========================
 */
 struct swfTraits_info;
-class idSWFScriptVar {
+class idSWFScriptVar
+{
 public:
-	idSWFScriptVar() : traitsInfo( NULL ),type( SWF_VAR_UNDEF ) { }
-	idSWFScriptVar( const idSWFScriptVar & other );
-	idSWFScriptVar( idSWFScriptObject * o ) :  traitsInfo( NULL ),type( SWF_VAR_UNDEF ) { SetObject( o ); }
-	idSWFScriptVar( idStrId s ) :  traitsInfo( NULL ),type( SWF_VAR_UNDEF ) { SetString( s ); }
-	idSWFScriptVar( const idStr & s ) :  traitsInfo( NULL ),type( SWF_VAR_UNDEF ) { SetString( s ); }
-	idSWFScriptVar( const char * s ) :  traitsInfo( NULL ),type( SWF_VAR_UNDEF ) { SetString( idStr( s ) ); }
-	idSWFScriptVar( float f ) :  traitsInfo( NULL ),type( SWF_VAR_UNDEF ) { SetFloat( f ); }
-	idSWFScriptVar( bool b ) :  traitsInfo( NULL ),type( SWF_VAR_UNDEF ) { SetBool( b ); }
-	idSWFScriptVar( int32 i ) :  traitsInfo( NULL ),type( SWF_VAR_UNDEF ) { SetInteger( i ); }
-	idSWFScriptVar( idSWFScriptFunction * nf ) :  traitsInfo( NULL ),type( SWF_VAR_UNDEF ) { SetFunction( nf ); }
+	idSWFScriptVar() : traitsInfo( NULL ), type( SWF_VAR_UNDEF ) { }
+	idSWFScriptVar( const idSWFScriptVar& other );
+	idSWFScriptVar( idSWFScriptObject* o ) :  traitsInfo( NULL ), type( SWF_VAR_UNDEF )
+	{
+		SetObject( o );
+	}
+	idSWFScriptVar( idStrId s ) :  traitsInfo( NULL ), type( SWF_VAR_UNDEF )
+	{
+		SetString( s );
+	}
+	idSWFScriptVar( const idStr& s ) :  traitsInfo( NULL ), type( SWF_VAR_UNDEF )
+	{
+		SetString( s );
+	}
+	idSWFScriptVar( const char* s ) :  traitsInfo( NULL ), type( SWF_VAR_UNDEF )
+	{
+		SetString( idStr( s ) );
+	}
+	idSWFScriptVar( float f ) :  traitsInfo( NULL ), type( SWF_VAR_UNDEF )
+	{
+		SetFloat( f );
+	}
+	idSWFScriptVar( bool b ) :  traitsInfo( NULL ), type( SWF_VAR_UNDEF )
+	{
+		SetBool( b );
+	}
+	idSWFScriptVar( int32 i ) :  traitsInfo( NULL ), type( SWF_VAR_UNDEF )
+	{
+		SetInteger( i );
+	}
+	idSWFScriptVar( idSWFScriptFunction* nf ) :  traitsInfo( NULL ), type( SWF_VAR_UNDEF )
+	{
+		SetFunction( nf );
+	}
 	~idSWFScriptVar();
 
 	idSWFScriptVar& operator=( const idSWFScriptVar& other );
@@ -248,7 +273,7 @@ public:
 		return type;
 	}
 
-	const swfTraits_info * traitsInfo;
+	const swfTraits_info* traitsInfo;
 private:
 	void Free();
 	swfScriptVarType type;

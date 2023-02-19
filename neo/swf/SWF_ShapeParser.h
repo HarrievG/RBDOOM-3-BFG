@@ -86,11 +86,11 @@ private:
 	void ReadFillStyle( idSWFBitStream& bitstream );
 	void ParseEdge( idSWFBitStream& bitstream, int32& penX, int32& penY, swfSPEdge_t& edge );
 	void MakeLoops();
-	void TriangulateSoup( idSWFShape & shape );
-	void TriangulateSoup( idSWFFontGlyph & shape );
-	int FindEarVert( const swfSPLineLoop_t & loop );
-	void AddUniqueVert( idSWFShapeDrawFill & drawFill, const idVec2 & start, const idVec2 & end );
-	void MakeCap( swfSPDrawLine_t & spld, idSWFShapeDrawLine &ld , swfSPMorphEdge_t & edge,bool end);
+	void TriangulateSoup( idSWFShape& shape );
+	void TriangulateSoup( idSWFFontGlyph& shape );
+	int FindEarVert( const swfSPLineLoop_t& loop );
+	void AddUniqueVert( idSWFShapeDrawFill& drawFill, const idVec2& start, const idVec2& end );
+	void MakeCap( swfSPDrawLine_t& spld, idSWFShapeDrawLine& ld , swfSPMorphEdge_t& edge, bool end );
 };
 
 #endif // !__SWF_SHAPEPARSER_H__

@@ -164,7 +164,7 @@ struct swfLineStyle_t
 	swfColorRGBA_t endColor;
 	uint8 startCapStyle;
 	uint8 endCapStyle;
-	enum capStyle { round = 0,none,square };
+	enum capStyle { round = 0, none, square };
 };
 struct swfGradientRecord_t
 {

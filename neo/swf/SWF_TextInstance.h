@@ -47,8 +47,8 @@ public:
 	idSWFTextInstance();
 	~idSWFTextInstance();
 
-	void Init( idSWFEditText * _editText, idSWF * _swf );
-	void Init( idSWFText * _text, idSWF *_swf );
+	void Init( idSWFEditText* _editText, idSWF* _swf );
+	void Init( idSWFText* _text, idSWF* _swf );
 
 	idSWFScriptObject* GetScriptObject()
 	{
@@ -176,16 +176,19 @@ public:
 		lengthCalculated = false;
 	}
 
-	const idSWFText * GetText() const { return staticText; }
+	const idSWFText* GetText() const
+	{
+		return staticText;
+	}
 
 	// Removing the private access control statement due to cl 214702
 	// Apparently MS's C++ compiler supports the newer C++ standard, and GCC supports C++03
 	// In the new C++ standard, nested members of a friend class have access to private/protected members of the class granting friendship
 	// In C++03, nested members defined in a friend class do NOT have access to private/protected members of the class granting friendship
 
-	idSWFEditText * editText;
-	idSWFText * staticText;
-	idSWF *	swf;
+	idSWFEditText* editText;
+	idSWFText* staticText;
+	idSWF* 	swf;
 
 	// this text instance's script object
 	idSWFScriptObject  scriptObject;

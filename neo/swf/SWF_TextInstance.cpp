@@ -68,7 +68,7 @@ idSWFTextInstance::~idSWFTextInstance()
 	subtitleTimingInfo.Clear();
 }
 
-void idSWFTextInstance::Init( idSWFText * _text, idSWF * _swf ) 
+void idSWFTextInstance::Init( idSWFText* _text, idSWF* _swf )
 {
 	editText = nullptr;
 	staticText = _text;

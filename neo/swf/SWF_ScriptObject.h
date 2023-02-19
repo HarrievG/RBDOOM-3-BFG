@@ -140,7 +140,7 @@ public:
 		return ( objectType == SWF_OBJECT_TEXT ) ? data.text : NULL;
 	}
 
-	void					DeepCopy( idSWFScriptObject *_object );
+	void					DeepCopy( idSWFScriptObject* _object );
 	// Also accessible via __proto__ property
 	idSWFScriptObject* 		GetPrototype()
 	{
@@ -182,7 +182,7 @@ public:
 	idSWFSpriteInstance* 	GetNestedSprite( const char* arg1, const char* arg2 = NULL, const char* arg3 = NULL, const char* arg4 = NULL, const char* arg5 = NULL, const char* arg6 = NULL );
 	idSWFTextInstance* 		GetNestedText( const char* arg1, const char* arg2 = NULL, const char* arg3 = NULL, const char* arg4 = NULL, const char* arg5 = NULL, const char* arg6 = NULL );
 
-	void					PrintToConsole(const char * name = nullptr) const;
+	void					PrintToConsole( const char* name = nullptr ) const;
 
 	struct swfNamedVar_t
 	{
@@ -198,16 +198,17 @@ public:
 		int							flags;
 	};
 
-	swfNamedVar_t *	GetVariable( int index, bool create );
-	swfNamedVar_t *	GetVariable( const char * name, bool create );
+	swfNamedVar_t* 	GetVariable( int index, bool create );
+	swfNamedVar_t* 	GetVariable( const char* name, bool create );
 private:
 	int refCount;
 	bool noAutoDelete;
 
-	enum swfNamedVarFlags_t {
+	enum swfNamedVarFlags_t
+	{
 		SWF_VAR_FLAG_NONE = 0,
-		SWF_VAR_FLAG_READONLY = BIT(1),
-		SWF_VAR_FLAG_DONTENUM = BIT(2)
+		SWF_VAR_FLAG_READONLY = BIT( 1 ),
+		SWF_VAR_FLAG_DONTENUM = BIT( 2 )
 	};
 
 	idList< swfNamedVar_t, TAG_SWF >	variables;

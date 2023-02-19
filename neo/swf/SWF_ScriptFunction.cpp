@@ -138,24 +138,24 @@ idSWFScriptVar idSWFScriptFunction_Script::Call( idSWFScriptObject* thisObject, 
 	{
 		stack[ parms.Num() - i - 1 ] = parms[i];
 		// Unfortunately at this point we don't have the function name anymore, so our warning messages aren't very detailed
-		if (i < parameters.Num())
+		if( i < parameters.Num() )
 		{
-			if (parameters[i].reg > 0 && parameters[i].reg < registers.Num())
+			if( parameters[i].reg > 0 && parameters[i].reg < registers.Num() )
 			{
 				registers[parameters[i].reg] = parms[i];
 			}
-			locals->Set(parameters[i].name, parms[i]);
+			locals->Set( parameters[i].name, parms[i] );
 		}
 	}
 
 	// Set any additional parameters to undefined
-	for (int i = parms.Num(); i < parameters.Num(); i++)
+	for( int i = parms.Num(); i < parameters.Num(); i++ )
 	{
-		if (parameters[i].reg > 0 && parameters[i].reg < registers.Num())
+		if( parameters[i].reg > 0 && parameters[i].reg < registers.Num() )
 		{
 			registers[parameters[i].reg].SetUndefined();
 		}
-		locals->Set(parameters[i].name, idSWFScriptVar());
+		locals->Set( parameters[i].name, idSWFScriptVar() );
 	}
 
 	stack.A().SetInteger( parms.Num() );
@@ -249,17 +249,21 @@ idSWFScriptVar idSWFScriptFunction_Script::Call( idSWFScriptObject* thisObject, 
 	scope.Append( locals );
 	locals->AddRef();
 	idSWFScriptVar retVal;
-	if ( methodInfo != nullptr ) 	{
+	if( methodInfo != nullptr )
+	{
 		assert( methodInfo->body );
-		auto *body = methodInfo->body;
+		auto* body = methodInfo->body;
 		registers[0].SetObject( thisObject );
 		idSWFBitStream abcStream( methodInfo->body->code.Ptr( ), methodInfo->body->codeLength, false );
 		retVal = RunAbc( thisObject, stack, abcStream );
 		locals->Release( );
 		locals = NULL;
 		return retVal;
-	}else
+	}
+	else
+	{
 		retVal = Run( thisObject, stack, bitstream );
+	}
 
 	assert( scope.Num() == scopeSize + 1 );
 	for( int i = scopeSize; i < scope.Num(); i++ )

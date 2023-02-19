@@ -25,7 +25,8 @@ struct swfConstant_pool_info
 
 struct swfMetadata_info
 {
-	struct item { //item_info 
+	struct item   //item_info
+	{
 		idStrPtr	key;	//u30 key
 		idStrPtr	value;	//u30 value
 	};
@@ -35,7 +36,8 @@ struct swfMetadata_info
 
 struct swfOption_info
 {
-	struct item { //option_detail 
+	struct item   //option_detail
+	{
 		uint32				val;	//u30 val
 		swfConstantKind_t	kind;	//u8 kind
 	};
@@ -47,7 +49,8 @@ struct swfMethod_body_info;
 struct swfMethod_info
 {
 	//zero before use.
-	enum Flags 	{
+	enum Flags
+	{
 		NEED_ARGUMENTS	= 0x01, // Suggests to the run - time that an “arguments” object( as specified by the ActionScript 3.0 Language Reference ) be created.Must not be used together with NEED_REST.See Chapter 3.
 		NEED_ACTIVATION = 0x02, // Must be set if this method uses the newactivation opcode.
 		NEED_REST		= 0x04, // This flag creates an ActionScript 3.0 rest arguments array.Must not be used with NEED_ARGUMENTS.See Chapter 3.
@@ -66,17 +69,19 @@ struct swfMethod_info
 	swfOption_info			options;		//option_info options
 	idStrPtrList			paramNames;		// ( param_info )  param_names	u30 param_name[param_count]
 
-	swfMethod_body_info *	body = nullptr;	
+	swfMethod_body_info* 	body = nullptr;
 };
 
 struct swfTraits_info
 {
-	enum Attrib { // upper 4 bits of kind
+	enum Attrib   // upper 4 bits of kind
+	{
 		Final		= 0x1,	// Is used with Trait_Method, Trait_Getter andTrait_Setter.It marks a method that cannot be overridden by a sub - class
 		Override	= 0x2, // Is used with Trait_Method, Trait_Getter andTrait_Setter.It marks a method that has been overridden in this class
 		Metadata	= 0x4, // Is used to signal that the fields metadata_count and metadata follow the data field in the traits_info entry
 	};
-	enum Type {
+	enum Type
+	{
 		Trait_Slot		= 0,
 		Trait_Method	= 1,
 		Trait_Getter	= 2,
@@ -124,14 +129,16 @@ struct swfTrait_class
 	swfClass_info*	classi;		//u30 classi
 };
 
-struct swfTrait_function {
+struct swfTrait_function
+{
 	uint32				slot_id;	//u30 slot_id
-	swfMethod_info *	func;		//u30 function
+	swfMethod_info* 	func;		//u30 function
 };
 
-struct swfTrait_method {
+struct swfTrait_method
+{
 	uint32				disp_id;	//u30 disp_id
-	swfMethod_info *	method;		//u30 method
+	swfMethod_info* 	method;		//u30 method
 };
 
 struct swfScript_info
@@ -151,7 +158,7 @@ struct swfException_info
 
 struct swfMethod_body_info
 {
-	swfMethod_info *			method;			//u30 method
+	swfMethod_info* 			method;			//u30 method
 	uint32						max_stack;		//u30 max_stack
 	uint32						localCount;		//u30 local_count
 	uint32						initScopeDepth;	//u30 init_scope_depth
@@ -166,30 +173,30 @@ class idSWFScriptObject;
 struct SWF_AbcFile
 {
 	template<class T>
-	T *GetTrait( const swfTraits_info &trait, idSWFScriptObject * globals = nullptr );
+	T* GetTrait( const swfTraits_info& trait, idSWFScriptObject* globals = nullptr );
 
-	void ReadMethodInfo		( idSWFBitStream &bitstream, swfMethod_info &newMethod );
-	void ReadOptionInfo		( idSWFBitStream &bitstream, swfOption_info &newOption );
-	void ReadMetaDataInfo	( idSWFBitStream &bitstream, swfMetadata_info &newMetadata );
-	void ReadInstanceInfo	( idSWFBitStream &bitstream, swfInstance_info &newInstancedata );
-	void ReadTraitData		( idSWFBitStream &bitstream, swfTraits_info &newTraitsData );
-	void ReadTraitsInfo		( idSWFBitStream &bitstream, swfTraits_info &newTraitsData );
-	void ReadClassInfo		( idSWFBitStream &bitstream, swfClass_info &newClassData );
-	void ReadScriptInfo		( idSWFBitStream &bitstream, swfScript_info &newScriptData );
-	void ReadMethodBodyInfo	( idSWFBitStream &bitstream, swfMethod_body_info &newMethodBody );
-	void ReadExceptionInfo	( idSWFBitStream &bitstream, swfException_info &newException );
+	void ReadMethodInfo( idSWFBitStream& bitstream, swfMethod_info& newMethod );
+	void ReadOptionInfo( idSWFBitStream& bitstream, swfOption_info& newOption );
+	void ReadMetaDataInfo( idSWFBitStream& bitstream, swfMetadata_info& newMetadata );
+	void ReadInstanceInfo( idSWFBitStream& bitstream, swfInstance_info& newInstancedata );
+	void ReadTraitData( idSWFBitStream& bitstream, swfTraits_info& newTraitsData );
+	void ReadTraitsInfo( idSWFBitStream& bitstream, swfTraits_info& newTraitsData );
+	void ReadClassInfo( idSWFBitStream& bitstream, swfClass_info& newClassData );
+	void ReadScriptInfo( idSWFBitStream& bitstream, swfScript_info& newScriptData );
+	void ReadMethodBodyInfo( idSWFBitStream& bitstream, swfMethod_body_info& newMethodBody );
+	void ReadExceptionInfo( idSWFBitStream& bitstream, swfException_info& newException );
 
-	static idStr asString( swfConstantKind_t kind, swfConstant_pool_info &constant_pool );
-	static idStr asString( swfMultiname *mn, swfConstant_pool_info &constant_pool, bool prefix = true );
-	static void traceMN( const char *name, swfMultiname *mn, swfConstant_pool_info &constant_pool );
-	static void traceConstantPool( swfConstant_pool_info &constant_pool );
+	static idStr asString( swfConstantKind_t kind, swfConstant_pool_info& constant_pool );
+	static idStr asString( swfMultiname* mn, swfConstant_pool_info& constant_pool, bool prefix = true );
+	static void traceMN( const char* name, swfMultiname* mn, swfConstant_pool_info& constant_pool );
+	static void traceConstantPool( swfConstant_pool_info& constant_pool );
 
 	uint16						minor_version;
 	uint16						major_version;
 	swfConstant_pool_info		constant_pool;
 	idList<swfMethod_info>		methods;		//u30 method_count		method_info method[method_count]
 	idList<swfMetadata_info>	metadatas;		//u30 metadata_count	metadata_info metadata[metadata_count]
-	uint32						class_count;	//u30 class_count	
+	uint32						class_count;	//u30 class_count
 	idList<swfInstance_info>	instances;		//instance_info instance[class_count]
 	idList<swfClass_info>		classes;		//class_info class[class_count]
 	idList<swfScript_info>		scripts;		//u30 script_count script_info script[script_count]
@@ -206,7 +213,8 @@ struct SWF_SymbolClass
 	idList<Item> symbols;
 };
 
-enum SWFAbcOpcode {
+enum SWFAbcOpcode
+{
 #define ABC_OP(operandCount, canThrow, stack, internalOnly, nameToken)        OP_##nameToken,
 #define ABC_UNUSED_OP(operandCount, canThrow, stack, internalOnly, nameToken) ABC_OP(operandCount, canThrow, stack, internalOnly, nameToken)
 #include "opcodes.tbl"
@@ -217,12 +225,13 @@ enum SWFAbcOpcode {
 	OP_end_of_op_codes
 };
 
-struct AbcOpcodeInfo {
+struct AbcOpcodeInfo
+{
 	int8_t operandCount;    // uses -1 for "invalid", we can avoid that if necessary
 	int8_t canThrow;        // always 0 or 1
 	int8_t stack;           // stack movement not taking into account run-time names or function arguments
 	uint16_t wordCode;      // a map used during translation
-	const char *name;       // instruction name or OP_0xNN for undefined instructions #IFDEF DEBUGGER
+	const char* name;       // instruction name or OP_0xNN for undefined instructions #IFDEF DEBUGGER
 };
 
 extern const AbcOpcodeInfo opcodeInfo[];

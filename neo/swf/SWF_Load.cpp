@@ -37,7 +37,7 @@ using namespace rapidjson;//bleh
 #pragma warning(disable: 4355) // 'this' : used in base member initializer list
 
 
-idCVar swf_fatalVersionMismatch("swf_fatalVersionMismatch", "0", CVAR_BOOL, "Version number mismatch results in fatal error");
+idCVar swf_fatalVersionMismatch( "swf_fatalVersionMismatch", "0", CVAR_BOOL, "Version number mismatch results in fatal error" );
 
 #define BSWF_VERSION 16		// bumped to 16 for storing atlas image dimensions for unbuffered loads
 #define BSWF_MAGIC ( ( 'B' << 24 ) | ( 'S' << 16 ) | ( 'W' << 8 ) | BSWF_VERSION )
@@ -71,9 +71,10 @@ bool idSWF::LoadSWF( const char* fullpath )
 		return false;
 	}
 
-	if ( header.version >= 9 ) {
+	if( header.version >= 9 )
+	{
 		idLib::Warning( "Unsupported version %d", header.version );
-		if  (swf_fatalVersionMismatch.GetBool() )
+		if( swf_fatalVersionMismatch.GetBool() )
 		{
 			delete rawfile;
 			return false;
