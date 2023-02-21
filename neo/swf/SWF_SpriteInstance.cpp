@@ -1271,7 +1271,7 @@ SWF_SPRITE_NATIVE_VAR_DEFINE_SET( _height ) { }
 SWF_SPRITE_FUNCTION_DEFINE( addFrameScript )
 {
 	SWF_SPRITE_PTHIS_FUNC( "addFrameScript" );
-	// Frame/timeline actionScript code is added implicitly 
+	// Frame/timeline actionScript code is added implicitly
 	return idSWFScriptVar();
 }
 
@@ -1663,7 +1663,7 @@ SWF_SPRITE_NATIVE_VAR_DEFINE_GET( _name )
 	SWF_SPRITE_PTHIS_GET( "_name" );
 	return pThis->name.c_str();
 }
-//Im not sure how much of the 'legacy' underscore prefixed functions need to be changed for as3.0. 
+//Im not sure how much of the 'legacy' underscore prefixed functions need to be changed for as3.0.
 //if more is needed, we should change the macro to work for both legacy AS and 3.0
 SWF_SPRITE_NATIVE_VAR_DEFINE_GET( name )
 {

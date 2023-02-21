@@ -154,8 +154,8 @@ SWF_EVENTDISPATCHER_FUNCTION_DEFINE( addEventListener )
 		dispatcher->value.SetObject( idSWFScriptObject::Alloc() );
 	}
 
-	dispatcher->value.GetObject()->Set( parms[1].ToString(), parms[0] );
-	common->DPrintf( "{%s} AddEventListener(%s,%s)\n", thisObject->GetSprite()->name.c_str(), parms[1].ToString().c_str(), parms[0].ToString().c_str() );
+	dispatcher->value.GetObject()->Set( parms[0].ToString(), parms[1] );
+	common->DPrintf( "{%s} AddEventListener(%s,%s)\n", thisObject->GetSprite()->name.c_str(), parms[0].ToString().c_str(), parms[1].ToString().c_str() );
 	//add listener
 	return idSWFScriptVar( );
 }

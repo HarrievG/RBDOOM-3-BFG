@@ -4,6 +4,7 @@
 Doom 3 BFG Edition GPL Source Code
 Copyright (C) 1993-2012 id Software LLC, a ZeniMax Media company.
 Copyright (C) 2015 Robert Beckebans
+Copyright (C) 2022-2023 Harrie van Ginneken
 
 This file is part of the Doom 3 BFG Edition GPL Source Code ("Doom 3 BFG Edition Source Code").
 
@@ -31,6 +32,26 @@ If you have questions concerning this license or the applicable additional terms
 
 idCVar swf_debug( "swf_debug", "0", CVAR_INTEGER | CVAR_ARCHIVE, "debug swf scripts.  1 shows traces/errors.  2 also shows warnings.  3 also shows disassembly.  4 shows parameters in the disassembly." );
 idCVar swf_debugInvoke( "swf_debugInvoke", "0", CVAR_INTEGER, "debug swf functions being called from game." );
+
+idList<idSWFScriptFunction*, TAG_SWF> idSWFScriptFunction::actionScriptAPIs;
+CONSOLE_COMMAND_SHIP( swf_ExportActionScriptAPI, "writes all .as files", NULL )
+{
+	for( auto func : idSWFScriptFunction::actionScriptAPIs )
+	{
+		idStr result;
+		idStr name = func->GetActionScriptAPI( result );
+		if( !name.IsEmpty() )
+		{
+			idStrStatic< MAX_OSPATH > generatedFileName = name;
+			generatedFileName.Insert( "generated/AS_Defs/", 0 );
+			generatedFileName.SetFileExtension( "as" );
+			idFileLocal file( fileSystem->OpenFileWrite( generatedFileName, "fs_basepath" ) );
+			file->Printf( result );
+
+			common->Printf( "Written %s:\n ^4%s^7\n", generatedFileName.c_str(), result.c_str() );
+		}
+	}
+}
 
 idSWFConstantPool::idSWFConstantPool()
 {

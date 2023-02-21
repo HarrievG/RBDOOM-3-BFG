@@ -379,7 +379,7 @@ void idSWFScriptFunction_Script::callpropvoid( SWF_AbcFile* file, idSWFStack& st
 
 	for( int i = 0; i < parms.Num( ); i++ )
 	{
-		parms[i] = stack.A( );
+		parms[parms.Num() - 1 - i] = stack.A();
 		stack.Pop( 1 );
 	}
 	idSWFScriptVar& item = stack.A();
@@ -553,20 +553,50 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 
 					for( int i = 0; i < parms.Num( ); i++ )
 					{
-						parms[i] = stack.A( );
+						parms[parms.Num() - 1 - i] = stack.A( );
 						stack.Pop( 1 );
 					}
 					idSWFScriptVar& item = stack.A( );
+
 					if( item.IsFunction( ) )
 					{
+						stack.Pop( 1 );
 						stack.Alloc() = item.GetFunction( )->Call( registers[0].GetObject( ), parms );
 					}
 					else if( item.IsObject( ) )
 					{
-						auto func = item.GetObject( )->Get( funcName->c_str( ) );
+						auto func = item.GetObject()->Get( funcName->c_str() );
+						if( !func.IsFunction() ) // search up scope
+						{
+							for( int i = scope.Num() - 1; i >= 0; i-- )
+							{
+								auto* s = scope[i];
+								while( s )
+								{
+									if( s->HasProperty( funcName->c_str() ) )
+									{
+										func = s->Get( funcName->c_str() );
+										s = NULL;
+										i = -1;
+										break;
+									}
+									else if( s->GetPrototype() && s->GetPrototype()->GetPrototype() )
+									{
+										s = s->GetPrototype()->GetPrototype();
+									}
+									else
+									{
+										s = NULL;
+									}
+								}
+							}
+						}
 						if( func.IsFunction( ) )
 						{
-							( ( idSWFScriptFunction_Script* ) func.GetFunction( ) )->SetScope( *GetScope( ) );
+							if( !( ( idSWFScriptFunction_Script* )func.GetFunction() )->GetScope()->Num() )
+							{
+								( ( idSWFScriptFunction_Script* ) func.GetFunction( ) )->SetScope( *GetScope( ) );
+							}
 							stack.Alloc() = func.GetFunction( )->Call( item.GetObject( ), parms );
 						}
 					}
@@ -605,7 +635,7 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 
 					for( int i = 0; i < parms.Num( ); i++ )
 					{
-						parms[i] = stack.A( );
+						parms[parms.Num() - 1 - i] = stack.A();
 						stack.Pop( 1 );
 					}
 
@@ -791,9 +821,69 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 					stack.Alloc() = result;
 					continue;
 				}
-				//ExecWordCode ( subtract );
-				//ExecWordCode ( multiply );
-				//ExecWordCode ( divide );
+				InlineWordCode( subtract )
+				{
+					auto& lH = stack.A();
+					auto& rH = stack.B();
+					idSWFScriptVar result;
+					switch( lH.GetType( ) )
+					{
+						case idSWFScriptVar::SWF_VAR_FLOAT:
+							result.SetFloat( lH.ToFloat( ) - rH.ToFloat( ) );
+							break;
+						case idSWFScriptVar::SWF_VAR_INTEGER:
+							result.SetInteger( lH.ToInteger( ) - rH.ToInteger( ) );
+							break;
+						default:
+							common->Warning( " Tried to subtract incompatible types %s + %s", lH.TypeOf( ), rH.TypeOf( ) );
+					}
+
+					stack.Pop( 2 );
+					stack.Alloc() = result;
+					continue;
+				}
+				InlineWordCode( multiply )
+				{
+					auto& lH = stack.A();
+					auto& rH = stack.B();
+					idSWFScriptVar result;
+					switch( lH.GetType() )
+					{
+						case idSWFScriptVar::SWF_VAR_FLOAT:
+							result.SetFloat( lH.ToFloat() * rH.ToFloat() );
+							break;
+						case idSWFScriptVar::SWF_VAR_INTEGER:
+							result.SetInteger( lH.ToInteger() * rH.ToInteger() );
+							break;
+						default:
+							common->Warning( " Tried to multiply incompatible types %s + %s", lH.TypeOf(), rH.TypeOf() );
+					}
+
+					stack.Pop( 2 );
+					stack.Alloc() = result;
+					continue;
+				}
+				InlineWordCode( divide )
+				{
+					auto& lH = stack.A();
+					auto& rH = stack.B();
+					idSWFScriptVar result;
+					switch( lH.GetType() )
+					{
+						case idSWFScriptVar::SWF_VAR_FLOAT:
+							result.SetFloat( lH.ToFloat() / rH.ToFloat() );
+							break;
+						case idSWFScriptVar::SWF_VAR_INTEGER:
+							result.SetInteger( lH.ToInteger() / rH.ToInteger() );
+							break;
+						default:
+							common->Warning( " Tried to divide incompatible types %s + %s", lH.TypeOf(), rH.TypeOf() );
+					}
+
+					stack.Pop( 2 );
+					stack.Alloc() = result;
+					continue;
+				}
 				//ExecWordCode ( modulo );
 				//ExecWordCode ( lshift );
 				//ExecWordCode ( rshift );

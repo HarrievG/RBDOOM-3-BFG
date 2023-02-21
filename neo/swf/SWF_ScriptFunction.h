@@ -44,6 +44,12 @@ public:
 	{
 		return idSWFScriptVar();
 	}; // this should never be hit
+
+	//Used to generate [returnVal].as file with public stub function to be used while compiling actionscript 3.0
+	virtual const char* GetActionScriptAPI( idStr& out )
+	{
+		return "";
+	};
 	virtual void			AddRef() {};
 	virtual void			Release() {};
 	virtual idSWFScriptObject* GetPrototype()
@@ -51,6 +57,7 @@ public:
 		return NULL;
 	}
 	virtual void			SetPrototype( idSWFScriptObject* _object ) { }
+	static idList<idSWFScriptFunction*, TAG_SWF> actionScriptAPIs;
 };
 
 /*

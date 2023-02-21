@@ -269,7 +269,8 @@ void ReadConstantPoolInfo( idSWFBitStream& bitstream ,  swfConstant_pool_info& t
 	target.doubles.Alloc( ) = 0.0;
 	for( uint i = 1; i < double_count; i++ )
 	{
-		target.doubles.Alloc( ) = bitstream.ReadDouble( );
+		//WARNING IEEE-754
+		target.doubles.Alloc() = *( double* )bitstream.ReadData( 8 );
 	}
 
 	uint32 string_count = bitstream.ReadEncodedU32( );
