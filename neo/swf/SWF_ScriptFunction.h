@@ -30,6 +30,17 @@ If you have questions concerning this license or the applicable additional terms
 #define __SWF_SCRIPTFUNCTION_H__
 #include "SWF_Abc.h"
 
+#define SWF_NATIVE_API_OBJECT_DECLARE( x ) idSwfActionScriptAPI::AddObjectAPI(#x);
+
+class idSwfActionScriptAPI
+{
+public:
+	static idList<idSWFScriptFunction*, TAG_SWF> actionScriptAPIs;
+	static idList<idStr, TAG_SWF>  actionScriptVariableAPIs;
+	static idList<idStr, TAG_SWF>  actionScriptVariableNames;
+	static void AddObjectAPI( idStr var );
+};
+
 /*
 ========================
 Interface for calling functions from script
@@ -50,6 +61,7 @@ public:
 	{
 		return "";
 	};
+
 	virtual void			AddRef() {};
 	virtual void			Release() {};
 	virtual idSWFScriptObject* GetPrototype()
@@ -57,7 +69,8 @@ public:
 		return NULL;
 	}
 	virtual void			SetPrototype( idSWFScriptObject* _object ) { }
-	static idList<idSWFScriptFunction*, TAG_SWF> actionScriptAPIs;
+
+
 };
 
 /*
@@ -288,7 +301,6 @@ private:
 	void getlex( SWF_AbcFile* file, idSWFStack& stack, idSWFBitStream& bitstream );
 	void getscopeobject( SWF_AbcFile* file, idSWFStack& stack, idSWFBitStream& bitstream );
 	void pushscope( SWF_AbcFile* file, idSWFStack& stack, idSWFBitStream& bitstream );
-	void popscope( SWF_AbcFile* file, idSWFStack& stack, idSWFBitStream& bitstream );
 	void getlocal0( SWF_AbcFile* file, idSWFStack& stack, idSWFBitStream& bitstream );
 	void newclass( SWF_AbcFile* file, idSWFStack& stack, idSWFBitStream& bitstream );
 	void callpropvoid( SWF_AbcFile* file, idSWFStack& stack, idSWFBitStream& bitstream );

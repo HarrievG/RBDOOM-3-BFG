@@ -85,7 +85,7 @@ public:
 	uint32			ReadU32();
 	int16			ReadS16();
 	int32			ReadS32();
-
+	int32			ReadS24();
 	template< typename T >
 	T ReadEncoded()
 	{
@@ -186,6 +186,15 @@ ID_INLINE int16  idSWFBitStream::ReadS16()
 	readp += 2;
 	return ( readp[-2] | ( readp[-1] << 8 ) );
 }
+
+ID_INLINE int idSWFBitStream::ReadS24()
+{
+	ResetBits();
+	readp += 3;
+	uint32 i = ( readp[-3] | ( readp[-2] << 8 ) | ( readp[-1] << 16 ) );
+	return ( int& )i;
+}
+
 ID_INLINE int32  idSWFBitStream::ReadS32()
 {
 	ResetBits();
@@ -228,5 +237,8 @@ ID_INLINE double idSWFBitStream::ReadDouble()
 	idSwap::Little( d );
 	return d;
 }
+
+
+
 
 #endif // !__SWF_BITSTREAM_H__

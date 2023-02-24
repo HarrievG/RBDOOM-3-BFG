@@ -66,7 +66,7 @@ void idSWF::CreateAbcObjects( idSWFScriptObject* globals )
 		idStr& superName = abcFile.constant_pool.utf8Strings[instanceInfo.super_name->nameIndex];
 
 		//lookup prototype
-		if( globals->HasValidProperty( superName ) )
+		if( globals->HasValidProperty( superName ) && superName != "Object" )
 		{
 			tmp->SetPrototype( globals->GetObject( superName )->GetPrototype() );
 		}
@@ -416,6 +416,7 @@ idSWF::idSWF( const char* filename_, idSoundWorld* soundWorld_ )
 
 	globals = idSWFScriptObject::Alloc();
 	globals->Set( "_global", globals );
+	SWF_NATIVE_API_OBJECT_DECLARE( _global );
 
 	auto* accessibilityPropertiesObj = idSWFScriptObject::Alloc( );
 	//accessibilityPropertiesObj->Set( "", idSWFScriptObject::Alloc( ) );
@@ -442,6 +443,9 @@ idSWF::idSWF( const char* filename_, idSoundWorld* soundWorld_ )
 	globals->Set( "Sprite", idSWFScriptObject::Alloc( ) );
 	globals->Set( "DisplayObjectContainer", idSWFScriptObject::Alloc( ) );
 	globals->Set( "MovieClip", movieclipObj );
+
+
+	
 
 	CreateAbcObjects( globals );
 	bool skipInitOnContruct = symbolClasses.symbols.Num() > 0;
@@ -476,7 +480,8 @@ idSWF::idSWF( const char* filename_, idSoundWorld* soundWorld_ )
 	scriptFunction_shortcutKeys_clear.Bind( this );
 	scriptFunction_shortcutKeys_clear.Call( shortcutKeys, idSWFParmList() );
 	globals->Set( "shortcutKeys", shortcutKeys );
-
+	SWF_NATIVE_API_OBJECT_DECLARE( shortcutKeys );
+	
 	globals->Set( "deactivate", scriptFunction_deactivate.Bind( this ) );
 	globals->Set( "inhibitControl", scriptFunction_inhibitControl.Bind( this ) );
 	globals->Set( "useInhibit", scriptFunction_useInhibit.Bind( this ) );
@@ -493,6 +498,8 @@ idSWF::idSWF( const char* filename_, idSoundWorld* soundWorld_ )
 	globals->Set( "getCVarInteger", scriptFunction_getCVarInteger.Bind( this ) );
 	globals->Set( "setCVarInteger", scriptFunction_setCVarInteger.Bind( this ) );
 
+	globals->Set( "Random", scriptFunction_random.Bind(this));
+	globals->Set( "random", scriptFunction_random.Bind(this));
 	globals->Set( "acos", scriptFunction_acos.Bind( this ) );
 	globals->Set( "cos", scriptFunction_cos.Bind( this ) );
 	globals->Set( "sin", scriptFunction_sin.Bind( this ) );
@@ -600,6 +607,7 @@ void idSWF::Activate( bool b )
 {
 	if( !isActive && b )
 	{
+		isActive = b;
 		inhibitControl = false;
 		lastRenderTime = Sys_Milliseconds();
 
@@ -704,6 +712,11 @@ idSWF::idSWFScriptFunction_precacheSound::Call
 */
 idSWFScriptVar idSWF::idSWFScriptFunction_precacheSound::Call( idSWFScriptObject* thisObject, const idSWFParmList& parms )
 {
+	if( !parms.Num() )
+	{
+		return "[Undefined]";
+	}
+
 	const idSoundShader* soundShader = declManager->FindSound( parms[0].ToString(), true );
 	return soundShader->GetName();
 }
@@ -864,6 +877,7 @@ idSWFScriptVar idSWF::idSWFScriptFunction_setCVarInteger::Call( idSWFScriptObjec
 	cvarSystem->SetCVarInteger( parms[0].ToString(), parms[1].ToInteger() );
 	return idSWFScriptVar();
 }
+
 
 /*
 ===================
@@ -1032,6 +1046,48 @@ idSWFScriptVar idSWF::idSWFScriptFunction_ceil::Call( idSWFScriptObject* thisObj
 }
 
 /*
+===================
+idSWF::idSWFScriptFunction_random::Call
+===================
+*/
+idSWFScriptVar idSWF::idSWFScriptFunction_random::Call(idSWFScriptObject* thisObject, const idSWFParmList& parms)
+{
+	float min = 0.0f;
+	float max = 1.0f;
+	switch (parms.Num())
+	{
+	case 0:
+		return 0;
+		break;
+	case 1:
+		switch (parms[0].GetType())
+		{
+		case idSWFScriptVar::SWF_VAR_FLOAT:
+			return  pThis->GetRandom().RandomFloat() * max;
+		case idSWFScriptVar::SWF_VAR_INTEGER:
+			return pThis->GetRandom().RandomInt((int)max);
+		default:
+			return 0;
+		}
+		break;
+	default:
+		min = parms[0].ToFloat();
+		max = parms[1].ToFloat();
+		break;
+	}
+
+	switch (parms[0].GetType())
+	{
+	case idSWFScriptVar::SWF_VAR_FLOAT:
+		return min + pThis->GetRandom().RandomFloat() * (max - min);
+	case idSWFScriptVar::SWF_VAR_INTEGER:
+		return (int)min + pThis->GetRandom().RandomInt() * (int)(max - min);
+	default:
+		return 0;
+	}
+}
+
+/*
 ========================
 idSWFScriptFunction_toUpper::Call
 ========================
@@ -1082,7 +1138,7 @@ idSWFScriptVar idSWF::idSWFScriptFunction_shortcutKeys_clear::Call( idSWFScriptO
 	object->Set( "MWHEELDOWN", "MWHEEL_DOWN" );
 	object->Set( "MWHEELUP", "MWHEEL_UP" );
 	object->Set( "K_TAB", "TAB" );
-
+	object->Set( "BACKSPACE", "BACKSPACE" );
 
 	// FIXME: I'm an RTARD and didn't realize the keys all have "ARROW" after them
 	object->Set( "LEFTARROW", "LEFT" );

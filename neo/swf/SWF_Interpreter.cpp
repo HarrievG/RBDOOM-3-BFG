@@ -336,7 +336,10 @@ void idSWFScriptFunction_Script::pushscope( SWF_AbcFile* file, idSWFStack& stack
 	{
 		if( stack.A().IsObject() )
 		{
-			scope.Alloc() = stack.A().GetObject();
+			auto stackOBj = stack.A().GetObject();
+			stackOBj->AddRef();
+			scope.Alloc() = stackOBj;
+
 		}
 		else
 		{
@@ -344,11 +347,6 @@ void idSWFScriptFunction_Script::pushscope( SWF_AbcFile* file, idSWFStack& stack
 		}
 		stack.Pop( 1 );
 	}
-}
-
-void idSWFScriptFunction_Script::popscope( SWF_AbcFile* file, idSWFStack& stack, idSWFBitStream& bitstream )
-{
-	scope.SetNum( scope.Num() - 1 );
 }
 
 void idSWFScriptFunction_Script::getlocal0( SWF_AbcFile* file, idSWFStack& stack, idSWFBitStream& bitstream )
@@ -373,6 +371,12 @@ void idSWFScriptFunction_Script::callpropvoid( SWF_AbcFile* file, idSWFStack& st
 	const auto& cp = file->constant_pool;
 	const auto& mn = file->constant_pool.multinameInfos[bitstream.ReadEncodedU32( )];
 	const idStrPtr funcName = ( idStrPtr ) &cp.utf8Strings[mn.nameIndex];
+	
+	if (*funcName == "addFrameScript")
+	{
+		stack.Pop(3);
+		return;
+	}
 	uint32 arg_count = bitstream.ReadEncodedU32();
 
 	idSWFParmList parms( arg_count );
@@ -382,6 +386,9 @@ void idSWFScriptFunction_Script::callpropvoid( SWF_AbcFile* file, idSWFStack& st
 		parms[parms.Num() - 1 - i] = stack.A();
 		stack.Pop( 1 );
 	}
+
+
+
 	idSWFScriptVar& item = stack.A();
 	if( item.IsFunction() )
 	{
@@ -425,68 +432,438 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 #define ExecWordCode( n ) case OP_##n: n(abcFile,stack,bitstream); continue;
 #define InlineWordCode( n ) case OP_##n:
 		SWFAbcOpcode opCode = ( SWFAbcOpcode ) bitstream.ReadU8();
-
 		switch( opCode )
 		{
-				//ExecWordCode ( bkpt );
-				//ExecWordCode ( nop );
-				//ExecWordCode ( throw );
-				//ExecWordCode ( getsuper );
-				//ExecWordCode ( setsuper );
-				//ExecWordCode ( dxns );
-				//ExecWordCode ( dxnslate );
-				//ExecWordCode ( kill );
-				//ExecWordCode ( label );
-				//ExecWordCode ( ifnlt );
-				//ExecWordCode ( ifnle );
-				//ExecWordCode ( ifngt );
-				//ExecWordCode ( ifnge );
-				//ExecWordCode ( jump );
-				//ExecWordCode ( iftrue );
-				//ExecWordCode ( iffalse );
-				//ExecWordCode ( ifeq );
-				//ExecWordCode ( ifne );
-				//ExecWordCode ( iflt );
-				//ExecWordCode ( ifle );
-				//ExecWordCode ( ifgt );
-				//ExecWordCode ( ifge );
-				//ExecWordCode ( ifstricteq );
-				//ExecWordCode ( ifstrictne );
-				//ExecWordCode ( lookupswitch );
-				//ExecWordCode ( pushwith );
-				ExecWordCode( popscope );
-				//ExecWordCode ( nextname );
-				//ExecWordCode ( hasnext );
+				//ExecWordCode( bkpt );
+				//ExecWordCode( nop );
+				//ExecWordCode( throw );
+				//ExecWordCode( getsuper );
+				//ExecWordCode( setsuper );
+				//ExecWordCode( dxns );
+				//ExecWordCode( dxnslate );
+				//ExecWordCode( kill );
+				//ExecWordCode( label );
+				InlineWordCode( ifnlt )
+				{
+					int offset = bitstream.ReadS24();
+					auto& lH = stack.B();
+					auto& rH = stack.A();
+					stack.Pop( 2 );
+					bool condition = false;
+					switch( lH.GetType() )
+					{
+						case idSWFScriptVar::SWF_VAR_STRING:
+							condition = !( lH.ToString() < rH.ToString() );
+							break;
+						case idSWFScriptVar::SWF_VAR_FLOAT:
+							condition = !( lH.ToFloat() < rH.ToFloat() );
+							break;
+						case idSWFScriptVar::SWF_VAR_INTEGER:
+							condition = !( lH.ToInteger() < rH.ToInteger() );
+							break;
+						default:
+							common->Warning( " Tried to compare incompatible types %s + %s", lH.TypeOf(), rH.TypeOf() );
+					}
+					if( condition )
+					{
+						bitstream.Seek( offset );
+					}
+					continue;
+				}
+				InlineWordCode( ifnle )
+				{
+					int offset = bitstream.ReadS24();
+					const auto& lH = stack.B();
+					const auto& rH = stack.A();
+					stack.Pop( 2 );
+					bool condition = false;
+					switch( lH.GetType() )
+					{
+						case idSWFScriptVar::SWF_VAR_STRING:
+							condition = !( lH.ToString() <= rH.ToString() );
+							break;
+						case idSWFScriptVar::SWF_VAR_FLOAT:
+							condition = !( lH.ToFloat() <= rH.ToFloat() );
+							break;
+						case idSWFScriptVar::SWF_VAR_INTEGER:
+							condition = !( lH.ToInteger() <= rH.ToInteger() );
+							break;
+						default:
+							common->Warning( " Tried to compare incompatible types %s + %s", lH.TypeOf(), rH.TypeOf() );
+					}
+					if( condition )
+					{
+						bitstream.Seek( offset );
+					}
+					continue;
+				}
+				InlineWordCode( ifngt )
+				{
+					int offset = bitstream.ReadS24();
+					auto& lH = stack.B();
+					auto& rH = stack.A();
+					stack.Pop( 2 );
+					bool condition = false;
+					switch( lH.GetType() )
+					{
+						case idSWFScriptVar::SWF_VAR_STRING:
+							condition = !( lH.ToString() > rH.ToString() );
+							break;
+						case idSWFScriptVar::SWF_VAR_FLOAT:
+							condition = !( lH.ToFloat() > rH.ToFloat() );
+							break;
+						case idSWFScriptVar::SWF_VAR_INTEGER:
+							condition = !( lH.ToInteger() > rH.ToInteger() );
+							break;
+						default:
+							common->Warning( " Tried to compare incompatible types %s + %s", lH.TypeOf(), rH.TypeOf() );
+					}
+					if( condition )
+					{
+						bitstream.Seek( offset );
+					}
+					continue;
+				}
+				InlineWordCode( ifnge )
+				{
+					int offset = bitstream.ReadS24();
+					auto& lH = stack.B();
+					auto& rH = stack.A();
+					stack.Pop( 2 );
+					bool condition = false;
+					switch( lH.GetType() )
+					{
+						case idSWFScriptVar::SWF_VAR_STRING:
+							condition = !( lH.ToString() >= rH.ToString() );
+							break;
+						case idSWFScriptVar::SWF_VAR_FLOAT:
+							condition = !( lH.ToFloat() >= rH.ToFloat() );
+							break;
+						case idSWFScriptVar::SWF_VAR_INTEGER:
+							condition = !( lH.ToInteger() >= rH.ToInteger() );
+							break;
+						default:
+							common->Warning( " Tried to compare incompatible types %s + %s", lH.TypeOf(), rH.TypeOf() );
+					}
+					if( condition )
+					{
+						bitstream.Seek( offset );
+					}
+					continue;
+				}
+				InlineWordCode( jump )
+				{
+					int offset = bitstream.ReadS24();
+					bitstream.Seek( offset );
+					continue;
+				}
+				InlineWordCode( iftrue )
+				{
+					int offset = bitstream.ReadS24();
+					idSWFScriptVar value = stack.A();
+					stack.Pop( 1 );
+					bool condition = value.ToBool();
+					if( condition )
+					{
+						bitstream.Seek( offset );
+					}
+					continue;
+				}
+				InlineWordCode( iffalse )
+				{
+					int offset = bitstream.ReadS24();
+					if( !stack.A().ToBool() )
+					{
+						bitstream.Seek( offset );
+					}
+					stack.Pop( 1 );
+					continue;
+				}
+				InlineWordCode( ifeq )
+				{
+					int offset = bitstream.ReadS24();
+					auto& lH = stack.B();
+					auto& rH = stack.A();
+					stack.Pop( 2 );
+					bool condition = false;
+					switch( lH.GetType() )
+					{
+						case idSWFScriptVar::SWF_VAR_STRING:
+							condition = lH.ToString() == rH.ToString();
+							break;
+						case idSWFScriptVar::SWF_VAR_FLOAT:
+							condition = lH.ToFloat() == rH.ToFloat();
+							break;
+						case idSWFScriptVar::SWF_VAR_INTEGER:
+							condition = lH.ToInteger() == rH.ToInteger();
+							break;
+						default:
+							common->Warning( " Tried to compare incompatible types %s + %s", lH.TypeOf(), rH.TypeOf() );
+					}
+					if( condition )
+					{
+						bitstream.Seek( offset );
+					}
+					continue;
+				}
+				InlineWordCode( ifne )
+				{
+					int offset = bitstream.ReadS24();
+					auto& lH = stack.B();
+					auto& rH = stack.A();
+					stack.Pop( 2 );
+					bool condition = false;
+					switch( lH.GetType() )
+					{
+						case idSWFScriptVar::SWF_VAR_STRING:
+							condition = lH.ToString() != rH.ToString();
+							break;
+						case idSWFScriptVar::SWF_VAR_FLOAT:
+							condition = lH.ToFloat() != rH.ToFloat();
+							break;
+						case idSWFScriptVar::SWF_VAR_INTEGER:
+							condition = lH.ToInteger() != rH.ToInteger();
+							break;
+						default:
+							common->Warning( " Tried to compare incompatible types %s + %s", lH.TypeOf(), rH.TypeOf() );
+					}
+					if( condition )
+					{
+						bitstream.Seek( offset );
+					}
+					continue;
+				}
+				InlineWordCode( iflt )
+				{
+					int offset = bitstream.ReadS24();
+					auto& lH = stack.B();
+					auto& rH = stack.A();
+					stack.Pop( 2 );
+					bool condition = false;
+					switch( lH.GetType() )
+					{
+						case idSWFScriptVar::SWF_VAR_STRING:
+							condition = lH.ToString() < rH.ToString();
+							break;
+						case idSWFScriptVar::SWF_VAR_FLOAT:
+							condition = lH.ToFloat() < rH.ToFloat();
+							break;
+						case idSWFScriptVar::SWF_VAR_INTEGER:
+							condition = lH.ToInteger() < rH.ToInteger();
+							break;
+						default:
+							common->Warning( " Tried to compare incompatible types %s + %s", lH.TypeOf(), rH.TypeOf() );
+					}
+					if( condition )
+					{
+						bitstream.Seek( offset );
+					}
+					continue;
+				}
+				InlineWordCode( ifle )
+				{
+					int offset = bitstream.ReadS24();
+					auto& lH = stack.B();
+					auto& rH = stack.A();
+					stack.Pop( 2 );
+					bool condition = false;
+					switch( lH.GetType() )
+					{
+						case idSWFScriptVar::SWF_VAR_STRING:
+							condition = lH.ToString() <= rH.ToString();
+							break;
+						case idSWFScriptVar::SWF_VAR_FLOAT:
+							condition = lH.ToFloat() <= rH.ToFloat();
+							break;
+						case idSWFScriptVar::SWF_VAR_INTEGER:
+							condition = lH.ToInteger() <= rH.ToInteger();
+							break;
+						default:
+							common->Warning( " Tried to compare incompatible types %s + %s", lH.TypeOf(), rH.TypeOf() );
+					}
+					if( condition )
+					{
+						bitstream.Seek( offset );
+					}
+					continue;
+				}
+				InlineWordCode( ifgt )
+				{
+					int offset = bitstream.ReadS24();
+					auto& lH = stack.B();
+					auto& rH = stack.A();
+					stack.Pop( 2 );
+					bool condition = false;
+					switch( lH.GetType() )
+					{
+						case idSWFScriptVar::SWF_VAR_STRING:
+							condition = lH.ToString() > rH.ToString();
+							break;
+						case idSWFScriptVar::SWF_VAR_FLOAT:
+							condition = lH.ToFloat() > rH.ToFloat();
+							break;
+						case idSWFScriptVar::SWF_VAR_INTEGER:
+							condition = lH.ToInteger() > rH.ToInteger();
+							break;
+						default:
+							common->Warning( " Tried to compare incompatible types %s + %s", lH.TypeOf(), rH.TypeOf() );
+					}
+					if( condition )
+					{
+						bitstream.Seek( offset );
+					}
+					continue;
+				}
+				InlineWordCode( ifge )
+				{
+					int offset = bitstream.ReadS24();
+					auto& lH = stack.B();
+					auto& rH = stack.A();
+					stack.Pop( 2 );
+					bool condition = false;
+					switch( lH.GetType() )
+					{
+						case idSWFScriptVar::SWF_VAR_STRING:
+							condition = lH.ToString() >= rH.ToString();
+							break;
+						case idSWFScriptVar::SWF_VAR_FLOAT:
+							condition = lH.ToFloat() >= rH.ToFloat();
+							break;
+						case idSWFScriptVar::SWF_VAR_INTEGER:
+							condition = lH.ToInteger() >= rH.ToInteger();
+							break;
+						default:
+							common->Warning( " Tried to compare incompatible types %s + %s", lH.TypeOf(), rH.TypeOf() );
+					}
+					if( condition )
+					{
+						bitstream.Seek( offset );
+					}
+					continue;
+				}
+				InlineWordCode( ifstricteq )
+				{
+					int offset = bitstream.ReadS24();
+					auto& lH = stack.B();
+					auto& rH = stack.A();
+					stack.Pop( 2 );
+					bool condition = false;
+					if (lH.GetType() != rH.GetType())
+					{
+						condition = false;
+					}
+					else
+					{
+						switch (lH.GetType())
+						{
+						case idSWFScriptVar::SWF_VAR_STRING:
+							condition = lH.ToString() == rH.ToString();
+							break;
+						case idSWFScriptVar::SWF_VAR_FLOAT:
+							condition = lH.ToFloat() == rH.ToFloat();
+							break;
+						case idSWFScriptVar::SWF_VAR_INTEGER:
+							condition = lH.ToInteger() == rH.ToInteger();
+							break;
+						default:
+							common->Warning(" Tried to compare incompatible types %s + %s", lH.TypeOf(), rH.TypeOf());
+						}
+					}
+					if( condition )
+					{
+						bitstream.Seek( offset );
+					}
+					continue;
+				}
+				InlineWordCode( ifstrictne )
+				{
+					int offset = bitstream.ReadS24();
+					auto& lH = stack.B();
+					auto& rH = stack.A();
+					stack.Pop( 2 );
+					bool condition = false;
+					if (lH.GetType() != rH.GetType())
+					{
+						condition = true;
+					}
+					else
+					{
+						switch (lH.GetType())
+						{
+						case idSWFScriptVar::SWF_VAR_STRING:
+							condition = (lH.ToString() != rH.ToString());
+							break;
+						case idSWFScriptVar::SWF_VAR_FLOAT:
+							condition = lH.ToFloat() != rH.ToFloat();
+							break;
+						case idSWFScriptVar::SWF_VAR_INTEGER:
+							condition = lH.ToInteger() != rH.ToInteger();
+							break;
+						default:
+							common->Warning(" Tried to compare incompatible types %s + %s", lH.TypeOf(), rH.TypeOf());
+						}
+					}
+					if( condition )
+					{
+						bitstream.Seek( offset );
+					}
+					continue;
+				}
+				//ExecWordCode( lookupswitch );
+				//ExecWordCode( pushwith );
+				InlineWordCode( popscope )
+				{
+					scope.SetNum( scope.Num() - 1 );
+				}
+				//ExecWordCode( nextname );
+				//ExecWordCode( hasnext );
 				InlineWordCode( pushnull )
-				stack.Append( idSWFScriptVar( NULL ) );
-				continue;
-				//ExecWordCode ( pushundefined );
+				{
+					stack.Append( idSWFScriptVar( NULL ) );
+					continue;
+				}
 				InlineWordCode( pushundefined )
-				stack.Append( idSWFScriptVar( ) );
-				continue;
-				//ExecWordCode ( nextvalue );
+				{
+					stack.Append( idSWFScriptVar() );
+					continue;
+				}
+				//ExecWordCode( nextvalue );
 				InlineWordCode( pushbyte )
-				stack.Append( idSWFScriptVar( ( int )bitstream.ReadU8() ) );
-				continue;
+				{
+					stack.Append( idSWFScriptVar( ( int )bitstream.ReadU8() ) );
+					continue;
+				}
 				InlineWordCode( pushshort )
-				stack.Append( idSWFScriptVar( ( int )bitstream.ReadEncodedU32( ) ) );
-				continue;
+				{
+					stack.Append( idSWFScriptVar( ( int )bitstream.ReadEncodedU32() ) );
+					continue;
+				}
 				InlineWordCode( pushtrue )
-				stack.Append( idSWFScriptVar( true ) );
-				continue;
+				{
+					stack.Append( idSWFScriptVar( true ) );
+					continue;
+				}
 				InlineWordCode( pushfalse )
-				stack.Append( idSWFScriptVar( false ) );
-				continue;
+				{
+					stack.Append( idSWFScriptVar( false ) );
+					continue;
+				}
 				//ExecWordCode ( pushnan );
 				InlineWordCode( pop )
-				stack.Pop( 1 );
-				continue;
+				{
+					stack.Pop( 1 );
+					continue;
+				}
 				InlineWordCode( dup )
-				stack.Alloc() = idSWFScriptVar( stack.A() );
-				continue;
+				{
+					stack.Alloc() = idSWFScriptVar( stack.A() );
+					continue;
+				}
 				InlineWordCode( swap )
-				common->FatalError( "swap not implemented" );
-				continue;
+				{
+					common->FatalError( "swap not implemented" );
+					continue;
+				}
 				InlineWordCode( pushstring )
 				{
 					const auto& cp = abcFile->constant_pool.utf8Strings;
@@ -515,30 +892,42 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 					stack.Append( idSWFScriptVar( ( float )val ) );
 					continue;
 				}
-				ExecWordCode( pushscope );
-				//ExecWordCode ( pushnamespace );
-				//ExecWordCode ( hasnext2 );
-				//ExecWordCode ( lix8 );
-				//ExecWordCode ( lix16 );
-				//ExecWordCode ( li8 );
-				//ExecWordCode ( li16 );
-				//ExecWordCode ( li32 );
-				//ExecWordCode ( lf32 );
-				//ExecWordCode ( lf64 );
-				//ExecWordCode ( si8 );
-				//ExecWordCode ( si8 );
-				//ExecWordCode ( si16 );
-				//ExecWordCode ( si32 );
-				//ExecWordCode ( sf32 );
-				//ExecWordCode ( sf64 );
-				//ExecWordCode ( newfunction );
-				//ExecWordCode ( call );
-				//ExecWordCode ( construct );
-				//ExecWordCode ( callmethod );
-				//ExecWordCode ( callstatic );
+				ExecWordCode( pushscope )
+				//ExecWordCode( pushnamespace );
+				//ExecWordCode( hasnext2 );
+				//ExecWordCode( lix8 );
+				//ExecWordCode( lix16 );
+				//ExecWordCode( li8 );
+				//ExecWordCode( li16 );
+				//ExecWordCode( li32 );
+				//ExecWordCode( lf32 );
+				//ExecWordCode( lf64 );
+				//ExecWordCode( si8 );
+				//ExecWordCode( si8 );
+				//ExecWordCode( si16 );
+				//ExecWordCode( si32 );
+				//ExecWordCode( sf32 );
+				//ExecWordCode( sf64 );
+				InlineWordCode( newfunction )
+				{
+					const auto& cp = abcFile->constant_pool;
+					auto& method = abcFile->methods[bitstream.ReadEncodedU32()];
+
+					idSWFScriptFunction_Script* func = idSWFScriptFunction_Script::Alloc();
+					func->SetAbcFile( abcFile );
+					func->methodInfo = &method;
+					func->GetScope()->Append( scope[0] );
+					func->GetScope()->Append( stack.B().GetObject() );
+					stack.Alloc() = idSWFScriptVar( func );
+					continue;
+				}
+				InlineWordCode( call )
+				InlineWordCode( construct )
+				InlineWordCode( callmethod )
+				InlineWordCode( callstatic )
 				InlineWordCode( callsuper )
 				{
-					common->FatalError( "callsuper not implemented" );
+					common->FatalError( "Not implemented" );
 					continue;
 				}
 				InlineWordCode( callproperty )
@@ -612,7 +1001,7 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 					scope.SetNum( scope.Num() - 1 );
 					continue;
 				}
-				//ExecWordCode ( returnvalue );
+				//ExecWordCode( returnvalue );
 				InlineWordCode( constructsuper )
 				{
 					uint32 args = bitstream.ReadEncodedU32( );
@@ -647,7 +1036,7 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 						newProp->DeepCopy( prop.GetObject() );
 						if( newProp->HasProperty( "__constructor__" ) )
 						{
-							common->DPrintf( "Calling constructor for %s%\n", propName->c_str( ) );
+							//common->DPrintf( "Calling constructor for %s%\n", propName->c_str( ) );
 							idSWFScriptVar instanceInit = newProp->Get( "__constructor__" );
 							( ( idSWFScriptFunction_Script* ) instanceInit.GetFunction( ) )->SetScope( *GetScope( ) );
 							instanceInit.GetFunction( )->Call( newProp, parms );
@@ -660,19 +1049,23 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 
 					continue;
 				}
-				//ExecWordCode ( callsuperid );
-				//ExecWordCode ( callproplex );
-				//ExecWordCode ( callinterface );
-				//ExecWordCode ( callsupervoid );
+				//ExecWordCode( callsuperid );
+				//ExecWordCode( callproplex );
+				//ExecWordCode( callinterface );
+				//ExecWordCode( callsupervoid );
 				ExecWordCode( callpropvoid );
-				//ExecWordCode ( sxi1 );
-				//ExecWordCode ( sxi8 );
-				//ExecWordCode ( sxi16 );
-				//ExecWordCode ( applytype );
-				//ExecWordCode ( DISABLED_pushfloat4 );
-				//ExecWordCode ( newobject );
-				//ExecWordCode ( newarray );
-				//ExecWordCode ( newactivation );
+				//ExecWordCode( sxi1 );
+				//ExecWordCode( sxi8 );
+				//ExecWordCode( sxi16 );
+				//ExecWordCode( applytype );
+				//ExecWordCode( DISABLED_pushfloat4 );
+				//ExecWordCode( newarray );
+				InlineWordCode( newobject );
+				InlineWordCode( newactivation )
+				{
+					stack.Alloc() = idSWFScriptObject::Alloc();
+					continue;
+				}
 				ExecWordCode( newclass );
 				//ExecWordCode ( getdescendants );
 				//ExecWordCode ( newcatch );
@@ -682,15 +1075,15 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 				//ExecWordCode ( findproperty );
 				//ExecWordCode ( finddef );
 				ExecWordCode( getlex );
-				InlineWordCode( setproperty );
+				InlineWordCode( setproperty )
 				{
 					const auto& cp = abcFile->constant_pool;
 					const auto& mn = cp.multinameInfos[bitstream.ReadEncodedU32( )];
 					const auto& n = cp.utf8Strings[mn.nameIndex];
-
-					idSWFScriptVar value = stack.A( );
+					if (stack.B().IsUndefined())
+						stack.B() = idSWFScriptObject::Alloc();
+					stack.B( ).GetObject( )->Set( n, stack.A() );
 					stack.Pop( 1 );
-					stack.A( ).GetObject( )->Set( n, value );
 					continue;
 				}
 				InlineWordCode( getlocal )

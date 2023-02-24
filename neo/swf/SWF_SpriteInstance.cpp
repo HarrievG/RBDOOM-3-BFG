@@ -399,7 +399,7 @@ bool idSWFSpriteInstance::RunActions()
 	{
 		if( scriptObject->HasProperty( "__constructor__" ) )
 		{
-			common->DPrintf( "Calling constructor for %s%\n", name.c_str() );
+			//common->DPrintf( "Calling constructor for %s%\n", name.c_str() );
 			idSWFScriptVar instanceInit = scriptObject->Get( "__constructor__" );
 			if( !( ( idSWFScriptFunction_Script* )instanceInit.GetFunction() )->GetScope()->Num() )
 			{
