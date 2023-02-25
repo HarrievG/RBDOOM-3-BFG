@@ -373,6 +373,7 @@ bool idSWFSpriteInstance::Run()
 				FreeDisplayList();
 				RunTo( 1 );
 			}
+			lastFrame = currentFrame;
 		}
 		else
 		{

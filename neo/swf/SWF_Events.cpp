@@ -352,7 +352,7 @@ bool idSWF::HandleEvent( const sysEvent_t* event )
 						}
 						var.GetFunction( )->Call( hitObject, parms );
 						parms.Clear( );
-						return false;
+						return true;
 					}
 
 					var = hitObject->Get( "onPress" );

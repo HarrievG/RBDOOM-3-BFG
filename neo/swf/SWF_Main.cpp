@@ -533,6 +533,7 @@ idSWF::idSWF( const char* filename_, idSoundWorld* soundWorld_ )
 		mainspriteInstance->Run();
 		mainspriteInstance->RunActions();
 		mainspriteInstance->RunTo( 0 );
+		mainspriteInstance->constructed = true;
 	}
 
 	swf_debug.SetInteger( debug );
@@ -1138,7 +1139,7 @@ idSWFScriptVar idSWF::idSWFScriptFunction_shortcutKeys_clear::Call( idSWFScriptO
 	object->Set( "MWHEELDOWN", "MWHEEL_DOWN" );
 	object->Set( "MWHEELUP", "MWHEEL_UP" );
 	object->Set( "K_TAB", "TAB" );
-	object->Set( "BACKSPACE", "BACKSPACE" );
+	object->Set( "K_BACKSPACE", "BACKSPACE" );
 
 	// FIXME: I'm an RTARD and didn't realize the keys all have "ARROW" after them
 	object->Set( "LEFTARROW", "LEFT" );

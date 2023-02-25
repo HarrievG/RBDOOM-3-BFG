@@ -158,6 +158,11 @@ public:
 		return *( mainspriteInstance->GetScriptObject() );
 	}
 
+	bool IsContructed()
+	{
+		return mainspriteInstance->constructed;
+	}
+
 	void Invoke( const char*   functionName, const idSWFParmList& parms );
 	void Invoke( const char*   functionName, const idSWFParmList& parms, idSWFScriptVar& scriptVar );
 	void Invoke( const char*   functionName, const idSWFParmList& parms, bool& functionExists );
