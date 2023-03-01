@@ -346,6 +346,7 @@ bool idSWF::HandleEvent( const sysEvent_t* event )
 						eventArg.GetObject( )->DeepCopy( eventObj );
 						idSWFParmList parms;
 						parms.Append( eventArg );
+						parms.Append( event->inputDevice );
 						if( !( ( idSWFScriptFunction_Script* ) var.GetFunction( ) )->GetScope( )->Num( ) )
 						{
 							( ( idSWFScriptFunction_Script* ) var.GetFunction( ) )->GetScope( )->Append( globals );

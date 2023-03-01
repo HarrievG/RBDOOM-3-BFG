@@ -297,6 +297,7 @@ private:
 	//////////////////////////////////////////////////////////////////////////
 	//////////////////////ABC Wordcode Interpretation/////////////////////////
 	//////////////////////////////////////////////////////////////////////////
+	void findproperty( SWF_AbcFile* file, idSWFStack& stack, idSWFBitStream& bitstream );
 	void findpropstrict( SWF_AbcFile* file, idSWFStack& stack, idSWFBitStream& bitstream );
 	void getlex( SWF_AbcFile* file, idSWFStack& stack, idSWFBitStream& bitstream );
 	void getscopeobject( SWF_AbcFile* file, idSWFStack& stack, idSWFBitStream& bitstream );

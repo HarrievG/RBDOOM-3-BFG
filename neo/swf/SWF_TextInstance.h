@@ -323,6 +323,7 @@ public:
 	SWF_NATIVE_VAR_DECLARE( subtitleSpeaker );
 
 	SWF_NATIVE_VAR_DECLARE_READONLY( _textLength );
+	SWF_NATIVE_VAR_DECLARE_READONLY( length );
 
 	SWF_TEXT_FUNCTION_DECLARE( subtitleSourceCheck );
 	SWF_TEXT_FUNCTION_DECLARE( subtitleStart );

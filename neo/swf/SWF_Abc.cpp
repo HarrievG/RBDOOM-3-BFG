@@ -24,7 +24,7 @@ Copyright (C) 2022 HvanGinneken
 
 #include "SWF_Abc.h"
 
-idCVar swf_abc_verbose( "swf_abc_verbose", "1", CVAR_INTEGER, "1 : writes out all abc data read \n 2 : print bytecode " );
+idCVar swf_abc_verbose( "swf_abc_verbose", "0", CVAR_INTEGER, "1 : writes out all abc data read \n 2 : print bytecode " );
 
 #pragma warning( disable: 4189 ) // local variable is initialized but not referenced
 
@@ -838,7 +838,7 @@ void idSWF::SymbolClass( idSWFBitStream& bitstream )
 		auto& newSymbol = symbolClasses.symbols.Alloc();
 		newSymbol.tag  = bitstream.ReadU16( );
 		newSymbol.name = bitstream.ReadString( );
-		common->Printf( "SymbolClass ^5%i ^7tag ^5%i  ^2%s \n", i, newSymbol.tag, newSymbol.name.c_str() );
+		trace( "SymbolClass ^5%i ^7tag ^5%i  ^2%s \n", i, newSymbol.tag, newSymbol.name.c_str() );
 	}
 
 	//load bytecode

@@ -191,7 +191,11 @@ ID_INLINE int idSWFBitStream::ReadS24()
 {
 	ResetBits();
 	readp += 3;
-	uint32 i = ( readp[-3] | ( readp[-2] << 8 ) | ( readp[-1] << 16 ) );
+	int32 i = ( readp[-3] | ( readp[-2] << 8 ) | ( readp[-1] << 16 ) );
+	if( i & ( 0x80 << 16 ) )
+	{
+		i |= 0xff << ( 24 );
+	}
 	return ( int& )i;
 }
 

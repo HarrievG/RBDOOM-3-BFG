@@ -230,7 +230,7 @@ swfDisplayEntry_t* idSWFSpriteInstance::AddDisplayEntry( int depth, int characte
 				display.spriteInstance->scriptObject = idSWFScriptObject::Alloc( );
 				auto* super = dictEntry->scriptClass.GetObject( );
 
-				auto dcopy = super->Get( "[" + *dictEntry->name + "]" );
+				auto dcopy = super->Get( *dictEntry->name );
 				if( dcopy.IsObject() )
 				{
 					display.spriteInstance->scriptObject->DeepCopy( dcopy.GetObject() );
@@ -250,7 +250,7 @@ swfDisplayEntry_t* idSWFSpriteInstance::AddDisplayEntry( int depth, int characte
 			if( dictEntry->scriptClass.IsValid( ) )
 			{
 				auto* super = dictEntry->scriptClass.GetObject( );
-				auto dcopy = super->Get( "[" + *dictEntry->name + "]" );
+				auto dcopy = super->Get( *dictEntry->name );
 				if( dcopy.IsObject() )
 				{
 					display.textInstance->scriptObject.DeepCopy( dcopy.GetObject() );
@@ -373,7 +373,10 @@ bool idSWFSpriteInstance::Run()
 				FreeDisplayList();
 				RunTo( 1 );
 			}
-			lastFrame = currentFrame;
+			else
+			{
+				lastFrame = currentFrame;
+			}
 		}
 		else
 		{
@@ -411,7 +414,6 @@ bool idSWFSpriteInstance::RunActions()
 		}
 	}
 
-
 	if( firstRun && !scriptObject->HasProperty( "__eventDispatcher__" ) && scriptObject->HasProperty( "onLoad" ) )
 	{
 		firstRun = false;
@@ -441,13 +443,6 @@ bool idSWFSpriteInstance::RunActions()
 		if( displayList[i].spriteInstance != NULL )
 		{
 			Prefetch( displayList[i].spriteInstance, 0 );
-		}
-	}
-	for( int i = 0; i < displayList.Num(); i++ )
-	{
-		if( displayList[i].spriteInstance != NULL )
-		{
-			displayList[i].spriteInstance->RunActions();
 		}
 	}
 
@@ -500,6 +495,14 @@ bool idSWFSpriteInstance::RunActions()
 				}
 				funcPtr->Call( obj, idSWFParmList() );
 			}
+		}
+	}
+
+	for( int i = 0; i < displayList.Num(); i++ )
+	{
+		if( displayList[i].spriteInstance != NULL )
+		{
+			displayList[i].spriteInstance->RunActions();
 		}
 	}
 
@@ -589,7 +592,11 @@ void idSWFSpriteInstance::RunTo( int targetFrame )
 	for( uint32 c = sprite->frameOffsets[ currentFrame ]; c < sprite->frameOffsets[ targetFrame ]; c++ )
 	{
 		idSWFSprite::swfSpriteCommand_t& command = sprite->commands[ c ];
-		if( command.tag == Tag_DoAction && c < firstActionCommand )
+
+		idStr frameId = idStr( "frame" ) + c;
+		idSWFScriptObject* obj = scriptObject;
+		bool hasAction = ( obj && obj->HasValidProperty( frameId.c_str() ) );
+		if( ( hasAction || command.tag == Tag_DoAction ) && c < firstActionCommand )
 		{
 			// Skip DoAction up to the firstActionCommand
 			// This is to properly support skipping to a specific frame
@@ -612,6 +619,13 @@ void idSWFSpriteInstance::RunTo( int targetFrame )
 				idLib::Printf( "Run Sprite: Unhandled tag %s\n", idSWF::GetTagName( command.tag ) );
 		}
 	}
+	idStr frameId = idStr( "frame" ) + targetFrame;
+	idSWFScriptObject* obj = scriptObject;
+	if( obj && obj->HasValidProperty( frameId.c_str() ) )
+	{
+		RunActions();
+	}
+
 	lastFrame = currentFrame;
 	currentFrame = targetFrame;
 }
@@ -1323,8 +1337,9 @@ SWF_SPRITE_FUNCTION_DEFINE( gotoAndPlay )
 
 	if( parms.Num() > 0 )
 	{
+		uint32 targetFrame = pThis->FindFrame( parms[0].ToString() );
 		pThis->actions.Clear();
-		pThis->RunTo( pThis->FindFrame( parms[0].ToString() ) );
+		pThis->RunTo( targetFrame );
 		pThis->Play();
 	}
 	else

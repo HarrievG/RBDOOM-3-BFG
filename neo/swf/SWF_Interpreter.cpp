@@ -270,6 +270,34 @@ void swf_PrintStream( SWF_AbcFile* file, idSWFBitStream& bitstream )
 #undef ExecWordCode
 }
 
+void idSWFScriptFunction_Script::findproperty( SWF_AbcFile* file, idSWFStack& stack, idSWFBitStream& bitstream )
+{
+	const auto& cp = file->constant_pool;
+	const auto& mn = file->constant_pool.multinameInfos[bitstream.ReadEncodedU32()];
+	const idStrPtr propName = ( idStrPtr )&cp.utf8Strings[mn.nameIndex];
+	//search up scope stack.
+	for( int i = scope.Num() - 1; i >= 0; i-- )
+	{
+		auto* s = scope[i];
+		while( s )
+			if( s->HasProperty( propName->c_str() ) )
+			{
+				stack.Alloc() = s->Get( propName->c_str() );
+				return;
+			}
+			else if( s->GetPrototype() && s->GetPrototype()->GetPrototype() )
+			{
+				s = s->GetPrototype()->GetPrototype();
+			}
+			else
+			{
+				s = NULL;
+			}
+	}
+	auto prop = scope[0]->GetVariable( *propName, true );
+	stack.Alloc() = prop->value;
+}
+
 void idSWFScriptFunction_Script::findpropstrict( SWF_AbcFile* file, idSWFStack& stack, idSWFBitStream& bitstream )
 {
 	const auto& cp = file->constant_pool;
@@ -295,7 +323,7 @@ void idSWFScriptFunction_Script::findpropstrict( SWF_AbcFile* file, idSWFStack& 
 			}
 	}
 	common->Warning( "idSWFScriptFunction_Script::findpropstrict cant find %s", propName->c_str() );
-	//search method closure, which is the stack up until a method call?
+	stack.Alloc().SetObject( idSWFScriptObject::Alloc() );
 }
 
 void idSWFScriptFunction_Script::getlex( SWF_AbcFile* file, idSWFStack& stack, idSWFBitStream& bitstream )
@@ -327,7 +355,7 @@ void idSWFScriptFunction_Script::getlex( SWF_AbcFile* file, idSWFStack& stack, i
 void idSWFScriptFunction_Script::getscopeobject( SWF_AbcFile* file, idSWFStack& stack, idSWFBitStream& bitstream )
 {
 	uint8 index = bitstream.ReadEncodedU32();
-	stack.Alloc() = scope[scope.Num() - index];
+	stack.Alloc() = scope[( scope.Num() - 1 ) - index];
 }
 
 void idSWFScriptFunction_Script::pushscope( SWF_AbcFile* file, idSWFStack& stack, idSWFBitStream& bitstream )
@@ -354,16 +382,14 @@ void idSWFScriptFunction_Script::getlocal0( SWF_AbcFile* file, idSWFStack& stack
 	stack.Alloc() = registers[0];
 }
 
-//The class's static initializer will be run when the newclass instruction
-// is executed on the class_info entry for the class.
+//Classes are constructed implicitly
 void idSWFScriptFunction_Script::newclass( SWF_AbcFile* file, idSWFStack& stack, idSWFBitStream& bitstream )
 {
 	const auto& ci = file->classes[bitstream.ReadEncodedU32( )];
 	idSWFScriptVar  base = stack.A();
 	stack.Pop( 1 );
 	idSWFScriptVar* thisObj = &registers[0];
-	//find static intializer.
-	int  a = 1;
+	common->FatalError( "Bytestream corrupted? Classes should already be created in CreateAbcObjects()!" );
 }
 
 void idSWFScriptFunction_Script::callpropvoid( SWF_AbcFile* file, idSWFStack& stack, idSWFBitStream& bitstream )
@@ -371,14 +397,15 @@ void idSWFScriptFunction_Script::callpropvoid( SWF_AbcFile* file, idSWFStack& st
 	const auto& cp = file->constant_pool;
 	const auto& mn = file->constant_pool.multinameInfos[bitstream.ReadEncodedU32( )];
 	const idStrPtr funcName = ( idStrPtr ) &cp.utf8Strings[mn.nameIndex];
-	
-	if (*funcName == "addFrameScript")
-	{
-		stack.Pop(3);
-		return;
-	}
+
 	uint32 arg_count = bitstream.ReadEncodedU32();
 
+	//Todo Optimize: search for addFrameScript string index in constantpool!
+	if( *funcName == "addFrameScript" )
+	{
+		stack.Pop( arg_count );
+		arg_count = 0;
+	}
 	idSWFParmList parms( arg_count );
 
 	for( int i = 0; i < parms.Num( ); i++ )
@@ -386,27 +413,32 @@ void idSWFScriptFunction_Script::callpropvoid( SWF_AbcFile* file, idSWFStack& st
 		parms[parms.Num() - 1 - i] = stack.A();
 		stack.Pop( 1 );
 	}
-
-
-
-	idSWFScriptVar& item = stack.A();
-	if( item.IsFunction() )
+	if( stack.Num() )
 	{
-		item.GetFunction()->Call( registers[0].GetObject(), parms );
-	}
-	else if( item.IsObject() )
-	{
-		auto func = item.GetObject()->Get( funcName->c_str() );
-		if( func.IsFunction( ) )
+		idSWFScriptVar& item = stack.A();
+		if( item.IsFunction() )
 		{
-			if( !( ( idSWFScriptFunction_Script* )func.GetFunction() )->GetScope()->Num() )
+			auto func = ( ( idSWFScriptFunction_Script* )item.GetFunction() );
+			if( !func->GetScope()->Num() )
 			{
-				( ( idSWFScriptFunction_Script* )func.GetFunction() )->SetScope( *GetScope() );
+				func->SetScope( *GetScope() );
 			}
-			func.GetFunction( )->Call( item.GetObject(), parms );
+			item.GetFunction()->Call( registers[0].GetObject(), parms );
 		}
+		else if( item.IsObject() )
+		{
+			auto func = item.GetObject()->Get( funcName->c_str() );
+			if( func.IsFunction() )
+			{
+				if( !( ( idSWFScriptFunction_Script* )func.GetFunction() )->GetScope()->Num() )
+				{
+					( ( idSWFScriptFunction_Script* )func.GetFunction() )->SetScope( *GetScope() );
+				}
+				func.GetFunction()->Call( item.GetObject(), parms );
+			}
+		}
+		stack.Pop( 1 );
 	}
-	stack.Pop( 1 );
 }
 
 /*
@@ -417,16 +449,10 @@ idSWFScriptFunction_Script::RunAbc bytecode
 idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject, idSWFStack& stack, idSWFBitStream& bitstream )
 {
 	static int abcCallstackLevel = -1;
-	idSWFSpriteInstance* thisSprite = thisObject->GetSprite( );
-	idSWFSpriteInstance* currentTarget = thisSprite;
 	assert( abcFile );
+	idSWFScriptVar returnValue;
 
 	abcCallstackLevel++;
-	if( currentTarget == NULL )
-	{
-		thisSprite = currentTarget = defaultSprite;
-	}
-
 	while( bitstream.Tell( ) < bitstream.Length( ) )
 	{
 #define ExecWordCode( n ) case OP_##n: n(abcFile,stack,bitstream); continue;
@@ -435,14 +461,21 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 		switch( opCode )
 		{
 				//ExecWordCode( bkpt );
-				//ExecWordCode( nop );
 				//ExecWordCode( throw );
 				//ExecWordCode( getsuper );
 				//ExecWordCode( setsuper );
 				//ExecWordCode( dxns );
 				//ExecWordCode( dxnslate );
-				//ExecWordCode( kill );
-				//ExecWordCode( label );
+				InlineWordCode( kill )
+				{
+					registers[bitstream.ReadEncodedU32()].SetUndefined();
+					continue;
+				}
+				InlineWordCode( nop );
+				InlineWordCode( label )
+				{
+					continue;
+				}
 				InlineWordCode( ifnlt )
 				{
 					int offset = bitstream.ReadS24();
@@ -748,25 +781,25 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 					auto& rH = stack.A();
 					stack.Pop( 2 );
 					bool condition = false;
-					if (lH.GetType() != rH.GetType())
+					if( lH.GetType() != rH.GetType() )
 					{
 						condition = false;
 					}
 					else
 					{
-						switch (lH.GetType())
+						switch( lH.GetType() )
 						{
-						case idSWFScriptVar::SWF_VAR_STRING:
-							condition = lH.ToString() == rH.ToString();
-							break;
-						case idSWFScriptVar::SWF_VAR_FLOAT:
-							condition = lH.ToFloat() == rH.ToFloat();
-							break;
-						case idSWFScriptVar::SWF_VAR_INTEGER:
-							condition = lH.ToInteger() == rH.ToInteger();
-							break;
-						default:
-							common->Warning(" Tried to compare incompatible types %s + %s", lH.TypeOf(), rH.TypeOf());
+							case idSWFScriptVar::SWF_VAR_STRING:
+								condition = lH.ToString() == rH.ToString();
+								break;
+							case idSWFScriptVar::SWF_VAR_FLOAT:
+								condition = lH.ToFloat() == rH.ToFloat();
+								break;
+							case idSWFScriptVar::SWF_VAR_INTEGER:
+								condition = lH.ToInteger() == rH.ToInteger();
+								break;
+							default:
+								common->Warning( " Tried to compare incompatible types %s + %s", lH.TypeOf(), rH.TypeOf() );
 						}
 					}
 					if( condition )
@@ -782,25 +815,25 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 					auto& rH = stack.A();
 					stack.Pop( 2 );
 					bool condition = false;
-					if (lH.GetType() != rH.GetType())
+					if( lH.GetType() != rH.GetType() )
 					{
 						condition = true;
 					}
 					else
 					{
-						switch (lH.GetType())
+						switch( lH.GetType() )
 						{
-						case idSWFScriptVar::SWF_VAR_STRING:
-							condition = (lH.ToString() != rH.ToString());
-							break;
-						case idSWFScriptVar::SWF_VAR_FLOAT:
-							condition = lH.ToFloat() != rH.ToFloat();
-							break;
-						case idSWFScriptVar::SWF_VAR_INTEGER:
-							condition = lH.ToInteger() != rH.ToInteger();
-							break;
-						default:
-							common->Warning(" Tried to compare incompatible types %s + %s", lH.TypeOf(), rH.TypeOf());
+							case idSWFScriptVar::SWF_VAR_STRING:
+								condition = ( lH.ToString() != rH.ToString() );
+								break;
+							case idSWFScriptVar::SWF_VAR_FLOAT:
+								condition = lH.ToFloat() != rH.ToFloat();
+								break;
+							case idSWFScriptVar::SWF_VAR_INTEGER:
+								condition = lH.ToInteger() != rH.ToInteger();
+								break;
+							default:
+								common->Warning( " Tried to compare incompatible types %s + %s", lH.TypeOf(), rH.TypeOf() );
 						}
 					}
 					if( condition )
@@ -814,6 +847,7 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 				InlineWordCode( popscope )
 				{
 					scope.SetNum( scope.Num() - 1 );
+					continue;
 				}
 				//ExecWordCode( nextname );
 				//ExecWordCode( hasnext );
@@ -912,12 +946,12 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 				{
 					const auto& cp = abcFile->constant_pool;
 					auto& method = abcFile->methods[bitstream.ReadEncodedU32()];
-
 					idSWFScriptFunction_Script* func = idSWFScriptFunction_Script::Alloc();
 					func->SetAbcFile( abcFile );
 					func->methodInfo = &method;
-					func->GetScope()->Append( scope[0] );
-					func->GetScope()->Append( stack.B().GetObject() );
+					func->SetScope( scope );
+					func->SetConstants( constants );
+					func->SetDefaultSprite( defaultSprite );
 					stack.Alloc() = idSWFScriptVar( func );
 					continue;
 				}
@@ -991,6 +1025,11 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 					}
 					continue;
 				}
+				InlineWordCode(returnvalue)
+				{
+					returnValue = stack.A();
+					[[fallthrough]];
+				}
 				InlineWordCode( returnvoid )
 				{
 					if( scope[scope.Num() - 1] )
@@ -1001,7 +1040,6 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 					scope.SetNum( scope.Num() - 1 );
 					continue;
 				}
-				//ExecWordCode( returnvalue );
 				InlineWordCode( constructsuper )
 				{
 					uint32 args = bitstream.ReadEncodedU32( );
@@ -1010,43 +1048,19 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 				}
 				InlineWordCode( constructprop )
 				{
-
-					//no need to call constructors.
+					//no need to call constructors for props that
 					const auto& cp = abcFile->constant_pool;
 					const auto& mn = abcFile->constant_pool.multinameInfos[bitstream.ReadEncodedU32( )];
 					const idStrPtr propName = ( idStrPtr ) &cp.utf8Strings[mn.nameIndex];
 					uint32 arg_count = bitstream.ReadEncodedU32( );
-					stack.Pop( arg_count );
-					continue;
-
-
-					idSWFParmList parms( arg_count );
-
-					for( int i = 0; i < parms.Num( ); i++ )
+					if( *propName == "Array" )
 					{
-						parms[parms.Num() - 1 - i] = stack.A();
-						stack.Pop( 1 );
-					}
-
-					idSWFScriptVar prop = stack.A();//scope[0]->Get(propName->c_str());
-					if( !prop.IsUndefined() && prop.IsObject() )
-					{
-						idSWFScriptObject* newProp = idSWFScriptObject::Alloc();
-						stack.Alloc() = newProp;
-						newProp->DeepCopy( prop.GetObject() );
-						if( newProp->HasProperty( "__constructor__" ) )
+						for( int i = 0; i < arg_count; i++ )
 						{
-							//common->DPrintf( "Calling constructor for %s%\n", propName->c_str( ) );
-							idSWFScriptVar instanceInit = newProp->Get( "__constructor__" );
-							( ( idSWFScriptFunction_Script* ) instanceInit.GetFunction( ) )->SetScope( *GetScope( ) );
-							instanceInit.GetFunction( )->Call( newProp, parms );
+							stack[stack.Num() - ( arg_count + 1 )].GetObject()->Set( i, stack[stack.Num() - arg_count + i] );
 						}
 					}
-					else
-					{
-						common->Warning( "Could not construct %s ", propName->c_str() );
-					}
-
+					stack.Pop( arg_count );
 					continue;
 				}
 				//ExecWordCode( callsuperid );
@@ -1059,11 +1073,36 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 				//ExecWordCode( sxi16 );
 				//ExecWordCode( applytype );
 				//ExecWordCode( DISABLED_pushfloat4 );
-				//ExecWordCode( newarray );
+				InlineWordCode( newarray )
+				{
+					auto* newArray = idSWFScriptObject::Alloc();
+
+					newArray->MakeArray();
+
+					uint32 args = bitstream.ReadEncodedU32();
+					for( int i = 0; i < args; i++ )
+					{
+						newArray->Set( i, stack.A() );
+						stack.Pop( 1 );
+					}
+
+					idSWFScriptVar baseObjConstructor = scope[0]->Get( "Object" );
+					idSWFScriptFunction* baseObj = baseObjConstructor.GetFunction();
+					newArray->SetPrototype( baseObj->GetPrototype() );
+					stack.Alloc().SetObject( newArray );
+
+					newArray->Release();
+					continue;
+				}
 				InlineWordCode( newobject );
 				InlineWordCode( newactivation )
 				{
-					stack.Alloc() = idSWFScriptObject::Alloc();
+					idSWFScriptObject* object = idSWFScriptObject::Alloc();
+					idSWFScriptVar baseObjConstructor = scope[0]->Get( "Object" );
+					idSWFScriptFunction* baseObj = baseObjConstructor.GetFunction();
+					object->SetPrototype( baseObj->GetPrototype() );
+					stack.Alloc().SetObject( object );
+					object->Release();
 					continue;
 				}
 				ExecWordCode( newclass );
@@ -1071,19 +1110,37 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 				//ExecWordCode ( newcatch );
 				//ExecWordCode ( findpropglobalstrict );
 				//ExecWordCode ( findpropglobal );
+				ExecWordCode( findproperty );
 				ExecWordCode( findpropstrict );
-				//ExecWordCode ( findproperty );
+
 				//ExecWordCode ( finddef );
 				ExecWordCode( getlex );
 				InlineWordCode( setproperty )
 				{
 					const auto& cp = abcFile->constant_pool;
-					const auto& mn = cp.multinameInfos[bitstream.ReadEncodedU32( )];
+					const auto& mn = cp.multinameInfos[bitstream.ReadEncodedU32()];
 					const auto& n = cp.utf8Strings[mn.nameIndex];
-					if (stack.B().IsUndefined())
-						stack.B() = idSWFScriptObject::Alloc();
-					stack.B( ).GetObject( )->Set( n, stack.A() );
-					stack.Pop( 1 );
+					idStr index = n;
+					idSWFScriptObject* target = nullptr;
+
+					if( mn.nameIndex && !stack.B().IsObject() )
+					{
+						target = scope[0];
+					}
+					else if( !mn.nameIndex )
+					{
+						index = stack.B().ToString();
+						idSWFScriptVar val = stack.A();
+						stack.Pop( 2 );
+						target = stack.A().GetObject();
+						stack.Alloc() = val;
+					}
+					else if( stack.B().IsObject() )
+					{
+						target = stack.B().GetObject();
+					}
+					target->Set( index, stack.A() );
+					stack.Pop( 2 );
 					continue;
 				}
 				InlineWordCode( getlocal )
@@ -1091,33 +1148,47 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 					stack.Alloc() = registers[bitstream.ReadEncodedU32()];
 					continue;
 				}
-				//ExecWordCode ( setlocal );
+				InlineWordCode( setlocal );
+				{
+					registers[bitstream.ReadEncodedU32()] = stack.A();
+					stack.Pop( 1 );
+					continue;
+				}
 				//ExecWordCode ( getglobalscope );
 				ExecWordCode( getscopeobject );
 				InlineWordCode( getproperty )
 				{
-
 					const auto& cp = abcFile->constant_pool;
-					const auto& mn = cp.multinameInfos[bitstream.ReadEncodedU32( )];
+					const auto& mn = cp.multinameInfos[bitstream.ReadEncodedU32()];
 					const auto& n = cp.utf8Strings[mn.nameIndex];
 
-					if( !stack.A().IsObject() )
-					{
-						common->Warning( "cant find property %s", n.c_str() );
-						stack.Pop( 1 );
-						stack.Alloc().SetUndefined();
-						continue;
-					}
-					auto* obj = stack.A().GetObject();
-					stack.Pop( 1 );
+					idStr index = n;
+					idSWFScriptObject* target = nullptr;
 
-					if( obj->HasProperty( n.c_str() ) )
+					if( mn.nameIndex && !stack.A().IsObject() )
 					{
-						stack.Alloc() = obj->Get( n.c_str() );
+						target = scope[0];
+					}
+					else if( !mn.nameIndex )
+					{
+						target = stack.B().GetObject();
+						index = stack.A().ToString();
+						stack.Pop( 1 );
 					}
 					else
 					{
-						stack.Alloc().SetUndefined();
+						target = stack.A().GetObject();
+					}
+
+					stack.Pop( 1 );
+
+					if( target->HasProperty( index.c_str() ) )
+					{
+						stack.Append( target->Get( index.c_str() ) );
+					}
+					else
+					{
+						stack.Alloc().SetObject( idSWFScriptObject::Alloc() );
 					}
 
 					continue;
@@ -1137,8 +1208,28 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 				//ExecWordCode ( 0x69 );
 				//ExecWordCode ( deleteproperty );
 				//ExecWordCode ( 0x6B );
-				//ExecWordCode ( getslot );
-				//ExecWordCode ( setslot );
+				InlineWordCode( getslot )
+				{
+					if( stack.A().IsObject() )
+					{
+						stack.Append( stack.A().GetObject()->Get( bitstream.ReadEncodedU32() ) );
+					}
+					continue;
+				}
+
+				InlineWordCode( setslot )
+				{
+					auto var = stack.A();
+
+					if( stack.B().IsUndefined() || stack.B().IsNULL() )
+					{
+						stack.B().SetObject( idSWFScriptObject::Alloc() );
+						stack.B().GetObject()->MakeArray();
+					}
+
+					stack.B().GetObject()->Set( bitstream.ReadEncodedU32(), var );
+					continue;
+				}
 				//ExecWordCode ( getglobalslot );
 				//ExecWordCode ( setglobalslot );
 				//ExecWordCode ( convert_s );
@@ -1155,7 +1246,30 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 				//ExecWordCode ( DISABLED_convert );
 				//ExecWordCode ( coerce );
 				//ExecWordCode ( coerce_b );
-				//ExecWordCode ( coerce_a );
+				InlineWordCode( coerce_a )
+				{
+					auto var = stack.A();
+					stack.Pop( 1 );
+					if( !stack.A().IsValid() )
+					{
+						stack.A().SetNULL();
+						stack.Append( var );
+					}
+					else
+					{
+						if( !var.IsUndefined() )
+						{
+							stack.Append( var.ToString() );
+						}
+						else
+						{
+							stack.Append( var );
+						}
+
+					}
+
+					continue;
+				}
 				//ExecWordCode ( coerce_i );
 				//ExecWordCode ( coerce_d );
 				//ExecWordCode ( coerce_s );
@@ -1163,7 +1277,25 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 				//ExecWordCode ( astypelate );
 				//ExecWordCode ( coerce_u );
 				//ExecWordCode ( coerce_o );
-				//ExecWordCode ( negate );
+				InlineWordCode( negate_i )
+				InlineWordCode( negate )
+				{
+					auto& val = stack.A( );
+					idSWFScriptVar result;
+					switch( val.GetType( ) )
+					{
+						case idSWFScriptVar::SWF_VAR_FLOAT:
+							val.SetFloat( -val.ToFloat() );
+							continue;
+						case idSWFScriptVar::SWF_VAR_INTEGER:
+							val.SetInteger( -val.ToInteger() );
+							continue;
+						default:
+							common->Warning( " Tried to increment incompatible type %s", val.TypeOf( ) );
+					}
+					continue;
+				}
+				InlineWordCode( increment_i )
 				InlineWordCode( increment )
 				{
 					auto& val = stack.A( );
@@ -1181,12 +1313,68 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 					}
 					continue;
 				}
-				//ExecWordCode ( inclocal );
-				//ExecWordCode ( decrement );
-				//ExecWordCode ( declocal );
+				InlineWordCode( inclocal_i )
+				InlineWordCode( inclocal )
+				{
+					auto& val = registers[bitstream.ReadEncodedU32()];
+					idSWFScriptVar result;
+					switch( val.GetType() )
+					{
+						case idSWFScriptVar::SWF_VAR_FLOAT:
+							val.SetFloat( val.ToFloat() + 1.0f );
+							continue;
+						case idSWFScriptVar::SWF_VAR_INTEGER:
+							val.SetInteger( val.ToInteger() + 1 );
+							continue;
+						default:
+							common->Warning( " Tried to increment incompatible type %s", val.TypeOf() );
+					}
+					continue;
+				}
+				InlineWordCode( decrement_i )
+				InlineWordCode( decrement )
+				{
+					auto& val = stack.A();
+					idSWFScriptVar result;
+					switch( val.GetType() )
+					{
+						case idSWFScriptVar::SWF_VAR_FLOAT:
+							val.SetFloat( val.ToFloat() - 1.0f );
+							continue;
+						case idSWFScriptVar::SWF_VAR_INTEGER:
+							val.SetInteger( val.ToInteger() + 1 );
+							continue;
+						default:
+							common->Warning( " Tried to decrement incompatible type %s", val.TypeOf() );
+					}
+					continue;
+				}
+				InlineWordCode( declocal_i );
+				InlineWordCode( declocal );
+				{
+					auto& val = registers[bitstream.ReadEncodedU32()];
+					idSWFScriptVar result;
+					switch( val.GetType() )
+					{
+						case idSWFScriptVar::SWF_VAR_FLOAT:
+							val.SetFloat( val.ToFloat() - 1.0f );
+							continue;
+						case idSWFScriptVar::SWF_VAR_INTEGER:
+							val.SetInteger( val.ToInteger() - 1 );
+							continue;
+						default:
+							common->Warning( " Tried to decrement incompatible type %s", val.TypeOf() );
+					}
+					continue;
+				}
 				//ExecWordCode ( typeof );
-				//ExecWordCode ( not );
+				InlineWordCode( not )
+				{
+					stack.A().SetBool( !stack.A().ToBool() );
+					continue;
+				}
 				//ExecWordCode ( bitnot );
+				InlineWordCode( add_i )
 				InlineWordCode( add )
 				{
 					auto& lH = stack.B();
@@ -1214,6 +1402,7 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 					stack.Alloc() = result;
 					continue;
 				}
+				InlineWordCode( subtract_i )
 				InlineWordCode( subtract )
 				{
 					auto& lH = stack.A();
@@ -1235,6 +1424,7 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 					stack.Alloc() = result;
 					continue;
 				}
+				InlineWordCode( multiply_i )
 				InlineWordCode( multiply )
 				{
 					auto& lH = stack.A();
@@ -1284,8 +1474,22 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 				//ExecWordCode ( bitand );
 				//ExecWordCode ( bitor );
 				//ExecWordCode ( bitxor );
-				//ExecWordCode ( equals );
-				//ExecWordCode ( strictequals );
+				InlineWordCode( equals )
+				{
+					auto& lH = stack.A();
+					auto& rH = stack.B();
+					stack.Pop( 2 );
+					stack.Alloc() = lH.AbstractEquals( rH );
+					continue;
+				}
+				InlineWordCode( strictequals )
+				{
+					auto& lH = stack.A();
+					auto& rH = stack.B();
+					stack.Pop( 2 );
+					stack.Alloc() = lH.StrictEquals( rH );
+					continue;
+				}
 				//ExecWordCode ( lessthan );
 				//ExecWordCode ( lessequals );
 				//ExecWordCode ( greaterthan );
@@ -1294,14 +1498,6 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 				//ExecWordCode ( istype );
 				//ExecWordCode ( istypelate );
 				//ExecWordCode ( in );
-				//ExecWordCode ( increment_i );
-				//ExecWordCode ( decrement_i );
-				//ExecWordCode ( inclocal_i );
-				//ExecWordCode ( declocal_i );
-				//ExecWordCode ( negate_i );
-				//ExecWordCode ( add_i );
-				//ExecWordCode ( subtract_i );
-				//ExecWordCode ( multiply_i );
 				InlineWordCode( getlocal0 )
 				{
 					stack.Alloc() = registers[0];
@@ -1325,21 +1521,25 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 				InlineWordCode( setlocal0 )
 				{
 					registers[0] = stack.A();
+					stack.Pop( 1 );
 					continue;
 				}
 				InlineWordCode( setlocal1 )
 				{
 					registers[1] = stack.A();
+					stack.Pop( 1 );
 					continue;
 				}
 				InlineWordCode( setlocal2 )
 				{
 					registers[2] = stack.A();
+					stack.Pop( 1 );
 					continue;
 				}
 				InlineWordCode( setlocal3 )
 				{
 					registers[3] = stack.A();
+					stack.Pop( 1 );
 					continue;
 				}
 				InlineWordCode( debug )
@@ -1352,16 +1552,24 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 				}
 				InlineWordCode( debugline )
 				InlineWordCode( debugfile )
-				uint32 nr = bitstream.ReadEncodedU32();
-				continue;
-				//ExecWordCode ( bkptline );
-				//ExecWordCode ( timestamp );
-				//ExecWordCode ( restargc );
-				//ExecWordCode ( restarg );
-				//ExecWordCode ( codes );
+				{
+					uint32 nr = bitstream.ReadEncodedU32();
+					continue;
+				}
+			//ExecWordCode ( bkptline );
+			//ExecWordCode ( timestamp );
+			//ExecWordCode ( restargc );
+			//ExecWordCode ( restarg );
+			//ExecWordCode ( codes );
+			default:
+			{
+				const AbcOpcodeInfo* info = &opcodeInfo[opCode];
+				common->DWarning( "^5Unhandled Opcode %s\n", info ? info->name : "Empty" );
+				DebugBreak();
+			}
 
 		}
 	}
 	abcCallstackLevel--;
-	return idSWFScriptVar( );
+	return returnValue;
 }

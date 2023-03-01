@@ -1102,6 +1102,7 @@ idSWFScriptObject_TextInstancePrototype::idSWFScriptObject_TextInstancePrototype
 
 	SWF_TEXT_NATIVE_VAR_SET( text );
 	SWF_TEXT_NATIVE_VAR_SET( _textLength );	// only works on single lines of text not multiline
+	SWF_TEXT_NATIVE_VAR_SET( length );	// only works on single lines of text not multiline
 	SWF_TEXT_NATIVE_VAR_SET( autoSize );
 	SWF_TEXT_NATIVE_VAR_SET( dropShadow );
 	SWF_TEXT_NATIVE_VAR_SET( _stroke );
@@ -1324,6 +1325,11 @@ SWF_TEXT_NATIVE_VAR_DEFINE_GET( maxscroll )
 SWF_TEXT_NATIVE_VAR_DEFINE_GET( _textLength )
 {
 	SWF_TEXT_PTHIS_GET( "_textLength" );
+	return pThis->GetTextLength();
+}
+SWF_TEXT_NATIVE_VAR_DEFINE_GET( length )
+{
+	SWF_TEXT_PTHIS_GET( "length" );
 	return pThis->GetTextLength();
 }
 
