@@ -468,7 +468,7 @@ bool idSWFSpriteInstance::RunActions()
 	}
 	actions.SetNum( 0 );
 
-	for ( int i = 0; i < functionActions.Num(); i++ )
+	for( int i = 0; i < functionActions.Num(); i++ )
 	{
 		functionActions[i]->Call( scriptObject, idSWFParmList() );
 	}

@@ -61,6 +61,19 @@ idSWFBitStream::idSWFBitStream()
 	Free();
 }
 
+void idSWFBitStream::LoadFromFile( idFile* file, uint32 len )
+{
+	Free();
+	free = true;
+	startp = ( const byte* )Mem_Alloc( len, TAG_SWF );
+	file->Read( ( byte* )startp, len );
+
+	endp = startp + len;
+	readp = startp;
+
+	ResetBits();
+}
+
 /*
 ========================
 idSWFBitStream::operator=

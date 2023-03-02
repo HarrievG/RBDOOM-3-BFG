@@ -45,6 +45,7 @@ public:
 	idSWFBitStream& operator=( idSWFBitStream& other );
 	idSWFBitStream& operator=( idSWFBitStream&& other );
 
+	void			LoadFromFile( idFile* file, uint32 len );
 	void			Load( const byte* data, uint32 len, bool copy );
 	void			Free();
 	const byte* 	Ptr()

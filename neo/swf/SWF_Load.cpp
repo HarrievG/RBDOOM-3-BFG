@@ -38,8 +38,9 @@ using namespace rapidjson;//bleh
 
 
 idCVar swf_fatalVersionMismatch( "swf_fatalVersionMismatch", "0", CVAR_BOOL, "Version number mismatch results in fatal error" );
-
-#define BSWF_VERSION 16		// bumped to 16 for storing atlas image dimensions for unbuffered loads
+// bumped to 16 for storing atlas image dimensions for unbuffered loads
+// should be bumped to 17 for storing ABC Tag
+#define BSWF_VERSION 16
 #define BSWF_MAGIC ( ( 'B' << 24 ) | ( 'S' << 16 ) | ( 'W' << 8 ) | BSWF_VERSION )
 
 // RB begin
@@ -620,6 +621,22 @@ bool idSWF::LoadBinary( const char* bfilename, ID_TIME_T sourceTimeStamp )
 			}
 		}
 	}
+
+	if( f->Tell() < f->Length() )
+	{
+		abcFile.LoadBinary( f );
+
+		f->ReadBig( num );
+		symbolClasses.symbols.SetNum( num );
+		for( int i = 0; i < symbolClasses.symbols.Num(); i++ )
+		{
+			f->ReadBig( symbolClasses.symbols[i].tag );
+			f->ReadString( symbolClasses.symbols[i].name );
+		}
+
+		DoABC( abcFile.AbcTagData );
+	}
+
 	delete f;
 
 	return true;
@@ -795,6 +812,14 @@ void idSWF::WriteBinary( const char* bfilename )
 				break;
 			}
 		}
+	}
+
+	abcFile.WriteBinary( file );
+	file->WriteBig( symbolClasses.symbols.Num() );
+	for( int i = 0; i < symbolClasses.symbols.Num(); i++ )
+	{
+		file->WriteBig( symbolClasses.symbols[i].tag );
+		file->WriteString( symbolClasses.symbols[i].name );
 	}
 }
 

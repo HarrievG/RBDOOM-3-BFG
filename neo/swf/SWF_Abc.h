@@ -201,6 +201,13 @@ struct SWF_AbcFile
 	idList<swfClass_info>		classes;		//class_info class[class_count]
 	idList<swfScript_info>		scripts;		//u30 script_count script_info script[script_count]
 	idList<swfMethod_body_info>	method_bodies;	//u30 method_body_count method_body_info method_body[method_body_count]
+
+	//Writing the whole bytestream as whole for now, but :
+	//	debug info plus unused tags and bytecode should be removed, constant pools need to stay the same
+	//	accessibility can also be removed.
+	idSWFBitStream				AbcTagData;
+	void WriteBinary( idFileLocal& file );
+	void LoadBinary( idFile* file );
 };
 
 struct SWF_SymbolClass

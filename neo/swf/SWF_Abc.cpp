@@ -205,6 +205,7 @@ void SWF_AbcFile::traceConstantPool( swfConstant_pool_info& constant_pool )
 	trace( "^8========================================================\n" );
 }
 
+
 void ReadMultiName( idSWFBitStream& bitstream , swfMultiname& target )
 {
 	target.type = ( swfConstantKind_t )bitstream.ReadU8();
@@ -746,13 +747,31 @@ void SWF_AbcFile::ReadMethodInfo( idSWFBitStream& bitstream , swfMethod_info& ne
 
 }
 
-//Remove Accessibility
 
+void SWF_AbcFile::WriteBinary( idFileLocal& file )
+{
+	file->WriteBig( ( int )AbcTagData.Length() );
+	file->Write( AbcTagData.Ptr(), AbcTagData.Length() );
+}
+
+void SWF_AbcFile::LoadBinary( idFile* file )
+{
+	uint32 len;
+	file->ReadBig( len );
+	AbcTagData.LoadFromFile( file, len );
+}
+
+//Remove Accessibility
 void idSWF::DoABC( idSWFBitStream& bitstream )
 {
-
 	SWF_AbcFile& newAbcFile = abcFile;
 	int strmSize = bitstream.Length( ) + 6; // codeLength(uin16) + recordLength(uin32)
+
+	if( !newAbcFile.AbcTagData.Length() )
+	{
+		newAbcFile.AbcTagData.Load( bitstream.Ptr(), bitstream.Length(), true );
+	}
+
 	uint32 flags = bitstream.ReadU32();
 	idStr name = bitstream.ReadString();
 	int dataSize = bitstream.Length( ) - name.Length( );
@@ -813,13 +832,9 @@ void idSWF::DoABC( idSWFBitStream& bitstream )
 	trace( "methBody_count %i \n", methBody_count );
 	for( uint i = 0; i < methBody_count; i++ )
 	{
-
 		auto& newMethBody = newAbcFile.method_bodies[i];
 		newAbcFile.ReadMethodBodyInfo( bitstream, newMethBody );
 	}
-
-	//Create trait objects
-	//resolve subclass/superclass relations.
 }
 
 void idSWF::SymbolClass( idSWFBitStream& bitstream )
@@ -840,8 +855,6 @@ void idSWF::SymbolClass( idSWFBitStream& bitstream )
 		newSymbol.name = bitstream.ReadString( );
 		trace( "SymbolClass ^5%i ^7tag ^5%i  ^2%s \n", i, newSymbol.tag, newSymbol.name.c_str() );
 	}
-
-	//load bytecode
 }
 
 
