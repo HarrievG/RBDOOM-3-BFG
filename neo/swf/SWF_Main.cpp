@@ -480,8 +480,8 @@ idSWF::idSWF( const char* filename_, idSoundWorld* soundWorld_ )
 	mainspriteInstance = spriteInstanceAllocator.Alloc();
 	mainspriteInstance->abcFile = &abcFile;
 	mainspriteInstance->scriptObject = idSWFScriptObject::Alloc( );
-	//stage class.
 
+	//stage class.
 	for( auto& symbol : symbolClasses.symbols )
 	{
 		if( !symbol.tag )
@@ -550,6 +550,7 @@ idSWF::idSWF( const char* filename_, idSoundWorld* soundWorld_ )
 
 	// Do this to touch any external references (like sounds)
 	// But disable script warnings because many globals won't have been created yet
+	//  THIS DOES NOT APPLY TO AS3.
 	extern idCVar swf_debug;
 	int debug = swf_debug.GetInteger();
 	swf_debug.SetInteger( 0 );
@@ -637,7 +638,6 @@ void idSWF::Activate( bool b )
 {
 	if( !isActive && b )
 	{
-		isActive = b;
 		inhibitControl = false;
 		lastRenderTime = Sys_Milliseconds();
 

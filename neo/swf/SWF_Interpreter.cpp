@@ -452,6 +452,14 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 	assert( abcFile );
 	idSWFScriptVar returnValue;
 
+	idSWFSpriteInstance* thisSprite = thisObject->GetSprite();
+	idSWFSpriteInstance* currentTarget = thisSprite;
+
+	if( currentTarget == NULL )
+	{
+		thisSprite = currentTarget = defaultSprite;
+	}
+
 	abcCallstackLevel++;
 	while( bitstream.Tell( ) < bitstream.Length( ) )
 	{
@@ -1025,7 +1033,7 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 					}
 					continue;
 				}
-				InlineWordCode(returnvalue)
+				InlineWordCode( returnvalue )
 				{
 					returnValue = stack.A();
 					[[fallthrough]];

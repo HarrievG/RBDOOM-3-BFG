@@ -95,7 +95,7 @@ void idSWFSpriteInstance::Init( idSWFSprite* _sprite, idSWFSpriteInstance* _pare
 	if( !actionScript )
 	{
 		actionScript = idSWFScriptFunction_Script::Alloc();
-		idList<idSWFScriptObject* > scope;
+		idList<idSWFScriptObject*, TAG_SWF > scope;
 		scope.Append( sprite->swf->globals );
 		scope.Append( scriptObject );
 		actionScript->SetScope( scope );
@@ -151,7 +151,6 @@ void idSWFSpriteInstance::FreeDisplayList()
 	}
 	displayList.SetNum( 0 );	// not calling Clear() so we don't continuously re-allocate memory
 	currentFrame = 0;
-	lastFrame = 0;
 }
 
 /*
@@ -373,10 +372,6 @@ bool idSWFSpriteInstance::Run()
 				FreeDisplayList();
 				RunTo( 1 );
 			}
-			else
-			{
-				lastFrame = currentFrame;
-			}
 		}
 		else
 		{
@@ -396,6 +391,7 @@ bool idSWFSpriteInstance::RunActions()
 	if( !isVisible )
 	{
 		actions.SetNum( 0 );
+		functionActions.SetNum( 0 );
 		return false;
 	}
 
@@ -414,16 +410,50 @@ bool idSWFSpriteInstance::RunActions()
 		}
 	}
 
-	if( firstRun && !scriptObject->HasProperty( "__eventDispatcher__" ) && scriptObject->HasProperty( "onLoad" ) )
+	if( firstRun && ( scriptObject->HasProperty( "__eventDispatcher__" ) || scriptObject->HasProperty( "onLoad" ) ) )
 	{
 		firstRun = false;
 		idSWFScriptVar onLoad = scriptObject->Get( "onLoad" );
-		if( !( ( idSWFScriptFunction_Script* )onLoad.GetFunction() )->GetScope()->Num() )
+		if( onLoad.IsValid() )
 		{
-			( ( idSWFScriptFunction_Script* )onLoad.GetFunction() )->GetScope()->Append( sprite->swf->globals );
+			if( !( ( idSWFScriptFunction_Script* )onLoad.GetFunction() )->GetScope()->Num() )
+			{
+				( ( idSWFScriptFunction_Script* )onLoad.GetFunction() )->GetScope()->Append( sprite->swf->globals );
+			}
+
+			onLoad.GetFunction()->Call( scriptObject, idSWFParmList() );
 		}
 
-		onLoad.GetFunction()->Call( scriptObject, idSWFParmList() );
+		if( scriptObject->HasProperty( "__eventDispatcher__" ) )
+		{
+			idSWFScriptObject* eventDispatcher = scriptObject->Get( "__eventDispatcher__" ).GetObject();
+			idSWFScriptVar var = eventDispatcher->Get( "addedToStage" );
+			if( var.IsFunction() )
+			{
+
+				idSWFScriptObject* eventObj = sprite->swf->globals
+											  ->Get( "EventDispatcher" ).GetObject()
+											  ->Get( "Event" ).GetObject()
+											  ->Get( "[Event]" ).GetObject();
+
+				idSWFScriptVar eventParm;
+				eventParm.SetObject( idSWFScriptObject::Alloc() );
+				eventParm.GetObject()->DeepCopy( eventObj );
+
+				idSWFScriptVar eventArg;
+				eventArg.SetObject( idSWFScriptObject::Alloc() );
+				eventArg.GetObject()->Set( "Event", eventParm );
+
+				idSWFParmList parms;
+				parms.Append( eventArg );
+				if( !( ( idSWFScriptFunction_Script* )var.GetFunction() )->GetScope()->Num() )
+				{
+					( ( idSWFScriptFunction_Script* )var.GetFunction() )->GetScope()->Append( sprite->swf->globals );
+				}
+				var.GetFunction()->Call( scriptObject, parms );
+				parms.Clear();
+			}
+		}
 	}
 
 	if( onEnterFrame.IsFunction() )
@@ -438,63 +468,17 @@ bool idSWFSpriteInstance::RunActions()
 	}
 	actions.SetNum( 0 );
 
+	for ( int i = 0; i < functionActions.Num(); i++ )
+	{
+		functionActions[i]->Call( scriptObject, idSWFParmList() );
+	}
+	functionActions.SetNum( 0 );
+
 	for( int i = 0; i < displayList.Num(); i++ )
 	{
 		if( displayList[i].spriteInstance != NULL )
 		{
 			Prefetch( displayList[i].spriteInstance, 0 );
-		}
-	}
-
-	if( firstRun && scriptObject->HasProperty( "__eventDispatcher__" ) )
-	{
-		firstRun = false;
-		idSWFScriptObject* eventDispatcher = scriptObject->Get( "__eventDispatcher__" ).GetObject();
-		idSWFScriptVar var = eventDispatcher->Get( "addedToStage" );
-		if( var.IsFunction() )
-		{
-
-			idSWFScriptObject* eventObj = sprite->swf->globals
-										  ->Get( "EventDispatcher" ).GetObject()
-										  ->Get( "Event" ).GetObject()
-										  ->Get( "[Event]" ).GetObject();
-
-			idSWFScriptVar eventParm;
-			eventParm.SetObject( idSWFScriptObject::Alloc() );
-			eventParm.GetObject()->DeepCopy( eventObj );
-
-			idSWFScriptVar eventArg;
-			eventArg.SetObject( idSWFScriptObject::Alloc() );
-			eventArg.GetObject()->Set( "Event", eventParm );
-
-			idSWFParmList parms;
-			parms.Append( eventArg );
-			if( !( ( idSWFScriptFunction_Script* )var.GetFunction() )->GetScope()->Num() )
-			{
-				( ( idSWFScriptFunction_Script* )var.GetFunction() )->GetScope()->Append( sprite->swf->globals );
-			}
-			var.GetFunction()->Call( scriptObject, parms );
-			parms.Clear();
-		}
-	}
-
-	//do frame scripts.
-	if( currentFrame && currentFrame != lastFrame && isPlaying )
-	{
-		idStr frameId = idStr( "frame" ) + idStr( currentFrame );
-		idSWFScriptObject* obj = scriptObject;
-		if( obj && obj->HasValidProperty( frameId.c_str() ) )
-		{
-			idSWFScriptVar frameFunc = obj->Get( frameId.c_str() );
-			if( frameFunc.IsFunction() )
-			{
-				idSWFScriptFunction* funcPtr = frameFunc.GetFunction();
-				if( !( ( idSWFScriptFunction_Script* )funcPtr )->GetScope()->Num() )
-				{
-					( ( idSWFScriptFunction_Script* )funcPtr )->SetScope( *actionScript->GetScope() );
-				}
-				funcPtr->Call( obj, idSWFParmList() );
-			}
 		}
 	}
 
@@ -506,7 +490,6 @@ bool idSWFSpriteInstance::RunActions()
 		}
 	}
 
-	firstRun = false;
 	return true;
 }
 
@@ -593,10 +576,7 @@ void idSWFSpriteInstance::RunTo( int targetFrame )
 	{
 		idSWFSprite::swfSpriteCommand_t& command = sprite->commands[ c ];
 
-		idStr frameId = idStr( "frame" ) + c;
-		idSWFScriptObject* obj = scriptObject;
-		bool hasAction = ( obj && obj->HasValidProperty( frameId.c_str() ) );
-		if( ( hasAction || command.tag == Tag_DoAction ) && c < firstActionCommand )
+		if( command.tag == Tag_DoAction  && c < firstActionCommand )
 		{
 			// Skip DoAction up to the firstActionCommand
 			// This is to properly support skipping to a specific frame
@@ -619,14 +599,24 @@ void idSWFSpriteInstance::RunTo( int targetFrame )
 				idLib::Printf( "Run Sprite: Unhandled tag %s\n", idSWF::GetTagName( command.tag ) );
 		}
 	}
-	idStr frameId = idStr( "frame" ) + targetFrame;
+
+	idStr frameId = idStr( "frame" ) + targetFrame ;
 	idSWFScriptObject* obj = scriptObject;
 	if( obj && obj->HasValidProperty( frameId.c_str() ) )
 	{
-		RunActions();
+		idSWFScriptVar frameFunc = obj->Get( frameId.c_str() );
+		if( frameFunc.IsFunction() )
+		{
+			idSWFScriptFunction* funcPtr = frameFunc.GetFunction();
+			if( !( ( idSWFScriptFunction_Script* )funcPtr )->GetScope()->Num() )
+			{
+				( ( idSWFScriptFunction_Script* )funcPtr )->SetScope( *actionScript->GetScope() );
+			}
+			DoAction( funcPtr );
+		}
+
 	}
 
-	lastFrame = currentFrame;
 	currentFrame = targetFrame;
 }
 
@@ -642,6 +632,11 @@ void idSWFSpriteInstance::DoAction( idSWFBitStream& bitstream )
 	action.data = bitstream.ReadData( bitstream.Length() );
 	action.dataLength = bitstream.Length();
 #endif
+}
+
+void idSWFSpriteInstance::DoAction( idSWFScriptFunction* function )
+{
+	functionActions.Alloc() = function;
 }
 
 /*
