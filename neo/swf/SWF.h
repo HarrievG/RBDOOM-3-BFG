@@ -225,7 +225,8 @@ public:
 
 	idSWFScriptObject* HitTest( idSWFSpriteInstance* spriteInstance, const swfRenderState_t& renderState, int x, int y, idSWFScriptObject* parentObject );
 
-	SWF_AbcFile				abcFile;
+	SWF_AbcFile		abcFile;
+	static bool		isMouseInClientArea;
 private:
 	idStr			filename;
 	ID_TIME_T		timestamp;
@@ -262,7 +263,7 @@ private:
 
 	static int		mouseX;		// mouse x coord for all flash files
 	static int		mouseY;		// mouse y coord for all flash files
-	static bool		isMouseInClientArea;
+
 
 	idSWFScriptObject* 	mouseObject;
 	idSWFScriptObject* hoverObject;

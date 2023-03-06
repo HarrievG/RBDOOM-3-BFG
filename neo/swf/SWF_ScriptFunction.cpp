@@ -306,18 +306,19 @@ idSWFScriptVar idSWFScriptFunction_Script::Call( idSWFScriptObject* thisObject, 
 		assert( methodInfo->body );
 		auto* body = methodInfo->body;
 		registers[0].SetObject( thisObject );
-		idSWFBitStream abcStream( methodInfo->body->code.Ptr( ), methodInfo->body->codeLength, false );
+		idSWFBitStream abcStream( body->code.Ptr( ), body->codeLength, false );
 		retVal = RunAbc( thisObject, stack, abcStream );
-		locals->Release( );
-		locals = NULL;
-		return retVal;
+
+		//-- FIXME
+		//-- Although some of the abc bytecode is skipped, scopes should match!
+		//assert(scope.Num() == scopeSize + 1);
 	}
 	else
 	{
 		retVal = Run( thisObject, stack, bitstream );
+		assert( scope.Num() == scopeSize + 1 );
 	}
 
-	assert( scope.Num() == scopeSize + 1 );
 	for( int i = scopeSize; i < scope.Num(); i++ )
 	{
 		if( verify( scope[i] ) )

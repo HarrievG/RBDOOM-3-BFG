@@ -421,6 +421,7 @@ bool idSWF::HandleEvent( const sysEvent_t* event )
 						idSWFParmList parms;
 						parms.Append( mouseObject ); // FIXME: Remove this
 						var.GetFunction()->Call( mouseObject, parms );
+						parms.Clear();
 					}
 					mouseObject->Release();
 					mouseObject = NULL;

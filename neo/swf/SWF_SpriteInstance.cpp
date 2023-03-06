@@ -72,12 +72,6 @@ void idSWFSpriteInstance::Init( idSWFSprite* _sprite, idSWFSpriteInstance* _pare
 	sprite = _sprite;
 	parent = _parent;
 	depth = _depth;
-	swfMethod_info* method = nullptr;
-
-	if( actionScript && actionScript->GetMethodInfo() )
-	{
-		method = actionScript->GetMethodInfo( );
-	}
 
 	frameCount = sprite->frameCount;
 
@@ -401,11 +395,14 @@ bool idSWFSpriteInstance::RunActions()
 		{
 			//common->DPrintf( "Calling constructor for %s%\n", name.c_str() );
 			idSWFScriptVar instanceInit = scriptObject->Get( "__constructor__" );
-			if( !( ( idSWFScriptFunction_Script* )instanceInit.GetFunction() )->GetScope()->Num() )
+			idSWFScriptFunction_Script* constructor = ( idSWFScriptFunction_Script* )instanceInit.GetFunction();
+			if( !actionScript->GetScope()->Num() )
 			{
-				( ( idSWFScriptFunction_Script* )instanceInit.GetFunction() )->SetScope( *actionScript->GetScope() );
+				actionScript->GetScope()->Alloc() = sprite->swf->globals;
 			}
-			instanceInit.GetFunction()->Call( scriptObject, idSWFParmList() );
+			actionScript->SetData( constructor->GetMethodInfo() );
+			actionScript->SetAbcFile( abcFile );
+			actionScript->Call( scriptObject, idSWFParmList() );
 			constructed = true;
 		}
 	}
@@ -446,11 +443,12 @@ bool idSWFSpriteInstance::RunActions()
 
 				idSWFParmList parms;
 				parms.Append( eventArg );
-				if( !( ( idSWFScriptFunction_Script* )var.GetFunction() )->GetScope()->Num() )
-				{
-					( ( idSWFScriptFunction_Script* )var.GetFunction() )->GetScope()->Append( sprite->swf->globals );
-				}
-				var.GetFunction()->Call( scriptObject, parms );
+
+				idSWFScriptFunction_Script* eventFunc = ( idSWFScriptFunction_Script* )var.GetFunction();
+
+				actionScript->SetData( eventFunc->GetMethodInfo() );
+				actionScript->SetAbcFile( abcFile );
+				actionScript->Call( scriptObject, parms );
 				parms.Clear();
 			}
 		}
@@ -470,7 +468,8 @@ bool idSWFSpriteInstance::RunActions()
 
 	for( int i = 0; i < functionActions.Num(); i++ )
 	{
-		functionActions[i]->Call( scriptObject, idSWFParmList() );
+		actionScript->SetData( ( ( idSWFScriptFunction_Script* )functionActions[i] )->GetMethodInfo() );
+		actionScript->Call( scriptObject, idSWFParmList() );
 	}
 	functionActions.SetNum( 0 );
 
@@ -614,7 +613,6 @@ void idSWFSpriteInstance::RunTo( int targetFrame )
 			}
 			DoAction( funcPtr );
 		}
-
 	}
 
 	currentFrame = targetFrame;

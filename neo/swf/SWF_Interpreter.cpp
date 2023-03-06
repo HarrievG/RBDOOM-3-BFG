@@ -324,6 +324,7 @@ void idSWFScriptFunction_Script::findpropstrict( SWF_AbcFile* file, idSWFStack& 
 	}
 	common->Warning( "idSWFScriptFunction_Script::findpropstrict cant find %s", propName->c_str() );
 	stack.Alloc().SetObject( idSWFScriptObject::Alloc() );
+	stack.A().GetObject()->Release();
 }
 
 void idSWFScriptFunction_Script::getlex( SWF_AbcFile* file, idSWFStack& stack, idSWFBitStream& bitstream )
@@ -418,11 +419,6 @@ void idSWFScriptFunction_Script::callpropvoid( SWF_AbcFile* file, idSWFStack& st
 		idSWFScriptVar& item = stack.A();
 		if( item.IsFunction() )
 		{
-			auto func = ( ( idSWFScriptFunction_Script* )item.GetFunction() );
-			if( !func->GetScope()->Num() )
-			{
-				func->SetScope( *GetScope() );
-			}
 			item.GetFunction()->Call( registers[0].GetObject(), parms );
 		}
 		else if( item.IsObject() )
@@ -430,10 +426,6 @@ void idSWFScriptFunction_Script::callpropvoid( SWF_AbcFile* file, idSWFStack& st
 			auto func = item.GetObject()->Get( funcName->c_str() );
 			if( func.IsFunction() )
 			{
-				if( !( ( idSWFScriptFunction_Script* )func.GetFunction() )->GetScope()->Num() )
-				{
-					( ( idSWFScriptFunction_Script* )func.GetFunction() )->SetScope( *GetScope() );
-				}
 				func.GetFunction()->Call( item.GetObject(), parms );
 			}
 		}
@@ -854,6 +846,7 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 				//ExecWordCode( pushwith );
 				InlineWordCode( popscope )
 				{
+					scope[scope.Num() - 1]->Release();
 					scope.SetNum( scope.Num() - 1 );
 					continue;
 				}
@@ -910,7 +903,7 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 				{
 					const auto& cp = abcFile->constant_pool.utf8Strings;
 					const auto& mn = cp[bitstream.ReadEncodedU32( )];
-					stack.Append( idSWFScriptString( mn.c_str() ) );
+					stack.Append( idSWFScriptString( mn ) );
 					continue;
 				}
 				InlineWordCode( pushint )
@@ -961,6 +954,7 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 					func->SetConstants( constants );
 					func->SetDefaultSprite( defaultSprite );
 					stack.Alloc() = idSWFScriptVar( func );
+					stack.A().GetFunction()->Release();
 					continue;
 				}
 				InlineWordCode( call )
@@ -1024,10 +1018,6 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 						}
 						if( func.IsFunction( ) )
 						{
-							if( !( ( idSWFScriptFunction_Script* )func.GetFunction() )->GetScope()->Num() )
-							{
-								( ( idSWFScriptFunction_Script* ) func.GetFunction( ) )->SetScope( *GetScope( ) );
-							}
 							stack.Alloc() = func.GetFunction( )->Call( item.GetObject( ), parms );
 						}
 					}
@@ -1040,12 +1030,11 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 				}
 				InlineWordCode( returnvoid )
 				{
-					if( scope[scope.Num() - 1] )
+					if( scope.Num() )
 					{
 						scope[scope.Num() - 1]->Release();
+						scope.SetNum( scope.Num() - 1 );
 					}
-
-					scope.SetNum( scope.Num() - 1 );
 					continue;
 				}
 				InlineWordCode( constructsuper )
@@ -1197,6 +1186,7 @@ idSWFScriptVar idSWFScriptFunction_Script::RunAbc( idSWFScriptObject* thisObject
 					else
 					{
 						stack.Alloc().SetObject( idSWFScriptObject::Alloc() );
+						stack.A().GetObject()->Release();
 					}
 
 					continue;
