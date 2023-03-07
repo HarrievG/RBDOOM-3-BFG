@@ -484,6 +484,8 @@ protected:
 	idRegisterList regList;
 
 	idWinBool	hideCursor;
+
+	idSWF* swf;
 };
 
 ID_INLINE void idWindow::AddDefinedVar( idWinVar* var )

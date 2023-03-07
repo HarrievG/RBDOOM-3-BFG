@@ -1174,7 +1174,7 @@ idSWFScriptVar idSWF::idSWFScriptFunction_shortcutKeys_clear::Call( idSWFScriptO
 	object->Set( "UPARROW", "UP" );
 	object->Set( "DOWNARROW", "DOWN" );
 
-	return "undefined";
+	return idSWFScriptVar();
 }
 
 idSWFScriptVar idSWF::idSWFScriptNativeVar_blackbars::Get( idSWFScriptObject* object )
@@ -1204,7 +1204,7 @@ idSWFScriptVar idSWF::idSWFScriptFunction_trace::Call( idSWFScriptObject* thisOb
 		common->Printf( "^1 [%s] ^8 % s\n", thisObject->GetSprite() ? thisObject->GetSprite()->name.c_str() : "NONAME",
 						parms[0].ToString().c_str() );
 	}
-	return "undefined";
+	return idSWFScriptVar();
 }
 
 idSWFScriptVar idSWF::idSWFScriptFunction_ArrayToString::Call( idSWFScriptObject* thisObject, const idSWFParmList& parms )
@@ -1226,7 +1226,7 @@ idSWFScriptVar idSWF::idSWFScriptFunction_registerUserMouse::Call( idSWFScriptOb
 {
 	common->Printf( "^1 registerUserMouse \n" );
 
-	return "undefined";
+	return idSWFScriptVar();
 }
 
 

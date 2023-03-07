@@ -419,6 +419,11 @@ void idSWFScriptFunction_Script::callpropvoid( SWF_AbcFile* file, idSWFStack& st
 		idSWFScriptVar& item = stack.A();
 		if( item.IsFunction() )
 		{
+			auto func = ( ( idSWFScriptFunction_Script* )item.GetFunction() );
+			if( !func->GetScope()->Num() )
+			{
+				func->SetScope( *GetScope() );
+			}
 			item.GetFunction()->Call( registers[0].GetObject(), parms );
 		}
 		else if( item.IsObject() )
@@ -426,6 +431,10 @@ void idSWFScriptFunction_Script::callpropvoid( SWF_AbcFile* file, idSWFStack& st
 			auto func = item.GetObject()->Get( funcName->c_str() );
 			if( func.IsFunction() )
 			{
+				if( !( ( idSWFScriptFunction_Script* )func.GetFunction() )->GetScope()->Num() )
+				{
+					( ( idSWFScriptFunction_Script* )func.GetFunction() )->SetScope( *GetScope() );
+				}
 				func.GetFunction()->Call( item.GetObject(), parms );
 			}
 		}
