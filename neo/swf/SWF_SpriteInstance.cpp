@@ -247,7 +247,8 @@ swfDisplayEntry_t* idSWFSpriteInstance::AddDisplayEntry( int depth, int characte
 				{
 					display.textInstance->scriptObject.DeepCopy( dcopy.GetObject() );
 				}
-				super->SetPrototype( display.textInstance->scriptObject.GetPrototype() );
+				
+				display.textInstance->scriptObject.SetPrototype( super );
 			}
 
 			display.textInstance->Init( dictEntry->edittext, sprite->GetSWF() );
