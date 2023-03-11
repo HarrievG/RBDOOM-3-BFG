@@ -238,7 +238,6 @@ swfDisplayEntry_t* idSWFSpriteInstance::AddDisplayEntry( int depth, int characte
 		else if( dictEntry->type == SWF_DICT_EDITTEXT )
 		{
 			display.textInstance = sprite->swf->textInstanceAllocator.Alloc();
-			display.textInstance->Init( dictEntry->edittext, sprite->GetSWF() );
 
 			if( dictEntry->scriptClass.IsValid( ) )
 			{
@@ -248,12 +247,10 @@ swfDisplayEntry_t* idSWFSpriteInstance::AddDisplayEntry( int depth, int characte
 				{
 					display.textInstance->scriptObject.DeepCopy( dcopy.GetObject() );
 				}
-				super->SetPrototype( display.spriteInstance->scriptObject->GetPrototype() );
-				display.spriteInstance->scriptObject->SetPrototype( super );
+				super->SetPrototype( display.textInstance->scriptObject.GetPrototype() );
 			}
 
-
-			//display.textInstance->scriptObject.Set( "onPress", "a" );
+			display.textInstance->Init( dictEntry->edittext, sprite->GetSWF() );
 		}
 		else if( dictEntry->type == SWF_DICT_TEXT )
 		{
