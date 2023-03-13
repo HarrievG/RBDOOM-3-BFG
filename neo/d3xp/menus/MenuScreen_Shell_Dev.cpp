@@ -30,6 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "../Game_local.h"
 
 const static int NUM_DEV_OPTIONS = 8;
+idCVar devMenuFromFile( "g_devMenuFromFile", "", CVAR_ARCHIVE, "loads the dev menu content from target filename containing a list of string value pairs.\n for example:\n\t \"game/mars_city1\", \"Mars City 1\"" );
 
 /*
 ========================
@@ -89,61 +90,112 @@ idMenuScreen_Shell_Dev::SetupDevOptions
 */
 void idMenuScreen_Shell_Dev::SetupDevOptions()
 {
-
 	devOptions.Clear();
+	idStr devFile = devMenuFromFile.GetString();
+	if( devFile.IsEmpty() )
+	{
+		devOptions.Append( devOption_t( "game/mars_city1", "Mars City 1" ) );
+		devOptions.Append( devOption_t( "game/mc_underground", "MC Underground" ) );
+		devOptions.Append( devOption_t( "game/mars_city2", "Mars City 2" ) );
+		devOptions.Append( devOption_t( "game/admin", "Admin" ) );
+		devOptions.Append( devOption_t( "game/alphalabs1", "Alpha Labs 1" ) );
+		devOptions.Append( devOption_t( "game/alphalabs2", "Alpha Labs 2" ) );
+		devOptions.Append( devOption_t( "game/alphalabs3", "Alpha Labs 3" ) );
+		devOptions.Append( devOption_t( "game/alphalabs4", "Alpha Labs 4" ) );
+		devOptions.Append( devOption_t( "game/enpro", "Enpro" ) );
+		devOptions.Append( devOption_t( "game/commoutside", "Comm outside" ) );
+		devOptions.Append( devOption_t( "game/comm1", "Comm 1" ) );
+		devOptions.Append( devOption_t( "game/recycling1", "Recycling 1" ) );
+		devOptions.Append( devOption_t( "game/recycling2", "Recycling 2" ) );
+		devOptions.Append( devOption_t( "game/monorail", "Monorail" ) );
+		devOptions.Append( devOption_t( "game/delta1", "Delta Labs 1" ) );
+		devOptions.Append( devOption_t( "game/delta2a", "Delta Labs 2a" ) );
+		devOptions.Append( devOption_t( "game/delta2b", "Delta Labs 2b" ) );
+		devOptions.Append( devOption_t( "game/delta3", "Delta Labs 3" ) );
+		devOptions.Append( devOption_t( "game/delta4", "Delta Labs 4" ) );
+		devOptions.Append( devOption_t( "game/hell1", "Hell 1" ) );
+		devOptions.Append( devOption_t( "game/delta5", "Delta Labs 5" ) );
+		devOptions.Append( devOption_t( "game/cpu", "CPU" ) );
+		devOptions.Append( devOption_t( "game/cpuboss", "CPU Boss" ) );
+		devOptions.Append( devOption_t( "game/site3", "Site 3" ) );
+		devOptions.Append( devOption_t( "game/caverns1", "Caverns 1" ) );
+		devOptions.Append( devOption_t( "game/caverns2", "Caverns 2" ) );
+		devOptions.Append( devOption_t( "game/hellhole", "Hell Hole" ) );
+		devOptions.Append( devOption_t( NULL, "-DOOM 3 Expansion-" ) );
+		devOptions.Append( devOption_t( "game/erebus1", "Erebus 1" ) );
+		devOptions.Append( devOption_t( "game/erebus2", "Erebus 2" ) );
+		devOptions.Append( devOption_t( "game/erebus3", "Erebus 3" ) );
+		devOptions.Append( devOption_t( "game/erebus4", "Erebus 4" ) );
+		devOptions.Append( devOption_t( "game/erebus5", "Erebus 5" ) );
+		devOptions.Append( devOption_t( "game/erebus6", "Erebus 6" ) );
+		devOptions.Append( devOption_t( "game/phobos1", "Phobos 1" ) );
+		devOptions.Append( devOption_t( "game/phobos2", "Phobos 2" ) );
+		devOptions.Append( devOption_t( "game/phobos3", "Phobos 3" ) );
+		devOptions.Append( devOption_t( "game/phobos4", "Phobos 4" ) );
+		devOptions.Append( devOption_t( "game/deltax", "Delta X" ) );
+		devOptions.Append( devOption_t( "game/hell", "Hell" ) );
+		devOptions.Append( devOption_t( NULL, "-Lost Missions-" ) );
+		devOptions.Append( devOption_t( "game/le_enpro1", "Enpro 1" ) );
+		devOptions.Append( devOption_t( "game/le_enpro2", "Enpro 2" ) );
+		devOptions.Append( devOption_t( "game/le_underground", "Undeground" ) );
+		devOptions.Append( devOption_t( "game/le_underground2", "Undeground 2" ) );
+		devOptions.Append( devOption_t( "game/le_exis1", "Exis 1" ) );
+		devOptions.Append( devOption_t( "game/le_exis2", "Exis 2" ) );
+		devOptions.Append( devOption_t( "game/le_hell", "Hell" ) );
+		devOptions.Append( devOption_t( "game/le_hell_post", "Hell Post" ) );
+		devOptions.Append( devOption_t( NULL, "-Test Maps-" ) );
+		devOptions.Append( devOption_t( "game/pdas", "PDAs" ) );
+		devOptions.Append( devOption_t( "testmaps/test_box", "Box" ) );
+	}
+	else
+	{
+		idLexer src( LEXFL_ALLOWPATHNAMES | LEXFL_NOSTRINGESCAPECHARS | LEXFL_NOSTRINGCONCAT );
 
-	devOptions.Append( devOption_t( "game/mars_city1", "Mars City 1" ) );
-	devOptions.Append( devOption_t( "game/mc_underground", "MC Underground" ) );
-	devOptions.Append( devOption_t( "game/mars_city2", "Mars City 2" ) );
-	devOptions.Append( devOption_t( "game/admin", "Admin" ) );
-	devOptions.Append( devOption_t( "game/alphalabs1", "Alpha Labs 1" ) );
-	devOptions.Append( devOption_t( "game/alphalabs2", "Alpha Labs 2" ) );
-	devOptions.Append( devOption_t( "game/alphalabs3", "Alpha Labs 3" ) );
-	devOptions.Append( devOption_t( "game/alphalabs4", "Alpha Labs 4" ) );
-	devOptions.Append( devOption_t( "game/enpro", "Enpro" ) );
-	devOptions.Append( devOption_t( "game/commoutside", "Comm outside" ) );
-	devOptions.Append( devOption_t( "game/comm1", "Comm 1" ) );
-	devOptions.Append( devOption_t( "game/recycling1", "Recycling 1" ) );
-	devOptions.Append( devOption_t( "game/recycling2", "Recycling 2" ) );
-	devOptions.Append( devOption_t( "game/monorail", "Monorail" ) );
-	devOptions.Append( devOption_t( "game/delta1", "Delta Labs 1" ) );
-	devOptions.Append( devOption_t( "game/delta2a", "Delta Labs 2a" ) );
-	devOptions.Append( devOption_t( "game/delta2b", "Delta Labs 2b" ) );
-	devOptions.Append( devOption_t( "game/delta3", "Delta Labs 3" ) );
-	devOptions.Append( devOption_t( "game/delta4", "Delta Labs 4" ) );
-	devOptions.Append( devOption_t( "game/hell1", "Hell 1" ) );
-	devOptions.Append( devOption_t( "game/delta5", "Delta Labs 5" ) );
-	devOptions.Append( devOption_t( "game/cpu", "CPU" ) );
-	devOptions.Append( devOption_t( "game/cpuboss", "CPU Boss" ) );
-	devOptions.Append( devOption_t( "game/site3", "Site 3" ) );
-	devOptions.Append( devOption_t( "game/caverns1", "Caverns 1" ) );
-	devOptions.Append( devOption_t( "game/caverns2", "Caverns 2" ) );
-	devOptions.Append( devOption_t( "game/hellhole", "Hell Hole" ) );
-	devOptions.Append( devOption_t( NULL, "-DOOM 3 Expansion-" ) );
-	devOptions.Append( devOption_t( "game/erebus1", "Erebus 1" ) );
-	devOptions.Append( devOption_t( "game/erebus2", "Erebus 2" ) );
-	devOptions.Append( devOption_t( "game/erebus3", "Erebus 3" ) );
-	devOptions.Append( devOption_t( "game/erebus4", "Erebus 4" ) );
-	devOptions.Append( devOption_t( "game/erebus5", "Erebus 5" ) );
-	devOptions.Append( devOption_t( "game/erebus6", "Erebus 6" ) );
-	devOptions.Append( devOption_t( "game/phobos1", "Phobos 1" ) );
-	devOptions.Append( devOption_t( "game/phobos2", "Phobos 2" ) );
-	devOptions.Append( devOption_t( "game/phobos3", "Phobos 3" ) );
-	devOptions.Append( devOption_t( "game/phobos4", "Phobos 4" ) );
-	devOptions.Append( devOption_t( "game/deltax", "Delta X" ) );
-	devOptions.Append( devOption_t( "game/hell", "Hell" ) );
-	devOptions.Append( devOption_t( NULL, "-Lost Missions-" ) );
-	devOptions.Append( devOption_t( "game/le_enpro1", "Enpro 1" ) );
-	devOptions.Append( devOption_t( "game/le_enpro2", "Enpro 2" ) );
-	devOptions.Append( devOption_t( "game/le_underground", "Undeground" ) );
-	devOptions.Append( devOption_t( "game/le_underground2", "Undeground 2" ) );
-	devOptions.Append( devOption_t( "game/le_exis1", "Exis 1" ) );
-	devOptions.Append( devOption_t( "game/le_exis2", "Exis 2" ) );
-	devOptions.Append( devOption_t( "game/le_hell", "Hell" ) );
-	devOptions.Append( devOption_t( "game/le_hell_post", "Hell Post" ) );
-	devOptions.Append( devOption_t( NULL, "-Test Maps-" ) );
-	devOptions.Append( devOption_t( "game/pdas", "PDAs" ) );
-	devOptions.Append( devOption_t( "testmaps/test_box", "Box" ) );
+		common->Printf( "Loading devMenu... " );
+
+		if( !src.LoadFile( devFile ) )
+		{
+			common->Error( "WARNING: couldn't load %s\n", devFile.c_str() );
+		}
+		else
+		{
+			idToken token;
+			devOptions.AssureSize( 100 );
+			int mapCount = 0;
+
+			while( src.ReadToken( &token ) )
+			{
+				devOption_t& newOption = devOptions[mapCount++];
+
+				if( devOptions.Num() > 100 )
+				{
+					common->Error( "WARNING: To many devmenu entries ! \n" );
+				}
+
+				newOption.map = NULL;
+
+				if( token != "NULL" )
+				{
+					newOption.cachedMap = token;
+					newOption.map = newOption.cachedMap.c_str();
+				}
+				if( !src.ReadToken( &token ) || token != "," )
+				{
+					common->Error( "Error: malformed devmap entry : \",\" expected as seperator for 2 entries @ %s\n", newOption.map );
+				}
+				if( !src.ReadToken( &token ) )
+				{
+					common->Error( "Error: malformed devmap entry @ %s\n", newOption.map );
+				}
+
+				newOption.cachedName = token;
+				newOption.name = newOption.cachedName.c_str();
+			}
+			devOptions.SetNum( mapCount );
+			common->Printf( "Loaded %i entries from %s!\n", mapCount, devFile.c_str() );
+		}
+
+	}
 
 	idList< idList< idStr, TAG_IDLIB_LIST_MENU >, TAG_IDLIB_LIST_MENU > menuOptions;
 

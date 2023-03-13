@@ -73,7 +73,7 @@ const char* idGameLocal::sufaceTypeNames[ MAX_SURFACE_TYPES ] =
 };
 
 idCVar net_usercmd_timing_debug( "net_usercmd_timing_debug", "0", CVAR_BOOL, "Print messages about usercmd timing." );
-
+idCVar ui_shellFileName( "ui_shellFileName", "shell", CVAR_SYSTEM | CVAR_GUI, "swf file to use when loading game UI shell" );
 
 // List of all defs used by the player that will stay on the fast timeline
 static const char* fastEntityList[] =
@@ -5925,7 +5925,7 @@ void idGameLocal::Shell_CreateMenu( bool inGame )
 		if( !inGame )
 		{
 			shellHandler->SetInGame( false );
-			Shell_Init( "shell", common->MenuSW() );
+			Shell_Init( ui_shellFileName.GetString(), common->MenuSW() );
 		}
 		else
 		{

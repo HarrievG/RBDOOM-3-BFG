@@ -758,7 +758,12 @@ void idMenuScreen_Shell_PartyLobby::UpdateLobby()
 			}
 		}
 
-		idSWFTextInstance* privacy = GetSprite()->GetScriptObject()->GetNestedText( "matchInfo", "txtPrivacy" );
+		idSWFTextInstance* privacy = NULL;
+		if( boundSprite )
+		{
+			privacy = GetSprite()->GetScriptObject()->GetNestedText( "matchInfo", "txtPrivacy" );
+		}
+
 		if( privacy != NULL )
 		{
 			if( isPeer )

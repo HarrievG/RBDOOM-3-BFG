@@ -872,6 +872,8 @@ public:
 
 		const char* 	map;
 		const char* 	name;
+		idStr			cachedName;
+		idStr			cachedMap;
 	};
 
 	idMenuScreen_Shell_Dev() :

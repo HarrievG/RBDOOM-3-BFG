@@ -110,6 +110,8 @@ void idMenuScreen_Shell_PressStart::Initialize( idMenuHandler* data )
 
 	startButton = new idMenuWidget_Button();
 	startButton->SetSpritePath( GetSpritePath(), "info", "btnStart" );
+	startButton->AddEventAction( WIDGET_EVENT_PRESS ).Set( WIDGET_ACTION_PRESS_FOCUSED, "buttonStart" );
+	startButton->Initialize( data );
 	AddChild( startButton );
 }
 
@@ -196,9 +198,8 @@ void idMenuScreen_Shell_PressStart::ShowScreen( const mainMenuTransition_t trans
 			if( startButton != NULL )
 			{
 				startButton->BindSprite( root );
-				startButton->SetLabel( "" );
+				startButton->SetLabel( "#str_swf_press_start" );
 			}
-
 			idSWFSpriteInstance* backing = GetSprite()->GetScriptObject()->GetNestedSprite( "backing" );
 			if( backing != NULL )
 			{
