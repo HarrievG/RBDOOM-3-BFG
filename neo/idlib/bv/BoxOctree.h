@@ -98,15 +98,19 @@ public:
 
 	// must be called before any other operations
 	void Init( const idBounds& worldBounds, HandleGetter getHandle );
+
 	// condense arrays in chunks and prune away empty chunks
 	void Condense();
+
 	// remove all elements
 	void Clear();
 
 	// add object with specified box
 	void Add( Pointer ptr, const idBounds& box );
+
 	// remove object
 	void Remove( Pointer ptr );
+
 	// update location of the object
 	// equivalent to Remove + Add, but often faster
 	void Update( Pointer ptr, const idBounds& box );
@@ -114,6 +118,7 @@ public:
 	// find objects with bounding box intersecting the specified box
 	// returns list of all chunks which may contain such objects
 	void QueryInBox( const idBounds& box, QueryResult& res ) const;
+
 	// find objects with bounding box intersecting the specified moving box
 	// returns list of all chunks which may contain such objects
 	void QueryInMovingBox( const idBounds& box, const idVec3& start, const idVec3& invDir, const idVec3& radius, QueryResult& res ) const;
@@ -139,13 +144,17 @@ private:
 
 	// this function gives access to handle within an object
 	HandleGetter getHandle = nullptr;
+
 	// space area at the root node, which is subdivided by octree
 	// note: objects may go outside worldBounds, but too many outliers will harm performance
 	idBounds worldBounds;
+
 	// 1 / worldSize for each coordinate
 	idVec3 invWorldSize;
+
 	// all nodes of octree
 	idList<OctreeNode> nodes;
+
 	// allocates ~4 MB blocks from where chunks are quickly allocated
 	idBlockAlloc<Chunk, 1024> allocator;
 };

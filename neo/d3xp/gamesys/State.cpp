@@ -324,12 +324,14 @@ stateResult_t rvStateThread::Execute()
 			}
 		}
 
+		// HarrievG begin
 		if( !owner )
 		{
 			call->node.Remove();
 			delete call;
 			continue;
 		}
+		// HarrievG end
 
 		// Actually call the state function
 		lastResult = ( stateResult_t )owner->Invoke( call->state, &call->parms );

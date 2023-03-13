@@ -420,21 +420,24 @@ void idRenderModelGLTF::InitFromFile( const char* fileName, const idImportOption
 				bones.Append( currentSkin->joints );
 				animCount = data->GetAnimationIds( nodes[bones[0]] , animIds );
 			}
+
 			if( localOptions )
 			{
 				if( localOptions->keepjoints.Num() )
 				{
 					KeepNodes( data, localOptions->keepjoints, bones );
 				}
+
 				if( localOptions->addOrigin )
 				{
-
 					AddOriginBone( data, bones, nodes[bones[0]]->parent );
 				}
+
 				if( localOptions->remapjoints.Num() )
 				{
 					RemapNodes( data, localOptions->remapjoints, bones );
 				}
+
 				if( localOptions->renamejoints.Num() )
 				{
 					RenameNodes( data, localOptions->renamejoints, bones );
@@ -609,7 +612,7 @@ bool idRenderModelGLTF::LoadBinaryModel( idFile* file, const ID_TIME_T sourceTim
 	}
 	SIMD_INIT_LAST_JOINT( invertedDefaultPose.Ptr(), md5joints.Num() );
 
-	model_state = hasAnimations ? DM_CONTINUOUS : DM_STATIC;
+	model_state = hasAnimations ? DM_CACHED : DM_STATIC;
 
 	lastMeshFromFile = this;
 	data = nullptr;
@@ -809,7 +812,6 @@ static idList<idJointQuat> GetPose( idList<gltfNode>& bones, idJointMat* poseMat
 
 		if( node->parent == nullptr )
 		{
-			//node->matrix *= blenderToDoomTransform;
 			node->matrix *= globalTransform;
 			trans = node->matrix;
 		}
@@ -875,7 +877,8 @@ static int CopyBones( gltfData* data, const idList<int>& bones, idList<gltfNode>
 idFile_Memory* idRenderModelGLTF::GetAnimBin( const idStr& animName, const ID_TIME_T sourceTimeStamp, const idImportOptions* options )
 {
 	assert( lastMeshFromFile );
-	///keep in sync with game!
+
+	//keep in sync with game!
 	static const byte B_ANIM_MD5_VERSION = 101;
 	static const unsigned int B_ANIM_MD5_MAGIC = ( 'B' << 24 ) | ( 'M' << 16 ) | ( 'D' << 8 ) | B_ANIM_MD5_VERSION;
 
@@ -932,12 +935,12 @@ idFile_Memory* idRenderModelGLTF::GetAnimBin( const idStr& animName, const ID_TI
 		rootID = lastMeshFromFile->rootID;
 		gltfNode* nodeRoot = nullptr;
 
-		if (rootID != -1 )
+		if( rootID != -1 )
 		{
 			nodeRoot = nodes[rootID];
 		}
 
-		if (nodeRoot != nullptr && nodeRoot->skin > -1)
+		if( nodeRoot != nullptr && nodeRoot->skin > -1 )
 		{
 			rootID = nodes[data->SkinList()[nodeRoot->skin]->skeleton]->children[0];
 		}
@@ -1685,7 +1688,7 @@ void idRenderModelGLTF::UpdateSurface( const struct renderEntity_s* ent, const i
 
 	idList<int> jointIds;
 
-	if( r_useGPUSkinning.GetBool() && glConfig.gpuSkinningAvailable )
+	if( r_useGPUSkinning.GetBool() )
 	{
 		if( tri->verts != NULL && tri->verts != verts )
 		{

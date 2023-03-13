@@ -9,7 +9,7 @@
 
 	959 constants
 	92 enums
-	474 classes/structs/unions
+	475 classes/structs/unions
 	3 templates
 	8 max inheritance level for 'iceMonsterZombieSawyer'
 
@@ -791,12 +791,12 @@ static constantInfo_t constantInfo[] = {
 	{ "int", "idMenuScreen_Shell_Gamepad::idMenuDataSource_GamepadSettings::MAX_GAMEPAD_FIELDS", "7" },
 	{ "int", "idMenuScreen_Shell_ControllerLayout::idMenuDataSource_LayoutSettings::LAYOUT_FIELD_LAYOUT", "0" },
 	{ "int", "idMenuScreen_Shell_ControllerLayout::idMenuDataSource_LayoutSettings::MAX_LAYOUT_FIELDS", "1" },
-	{ "int", "idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings::SYSTEM_FIELD_FULLSCREEN", "0" },
-	{ "int", "idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings::SYSTEM_FIELD_FRAMERATE", "1" },
-	{ "int", "idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings::SYSTEM_FIELD_VSYNC", "2" },
-	{ "int", "idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings::SYSTEM_FIELD_ANTIALIASING", "3" },
-	{ "int", "idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings::SYSTEM_FIELD_POSTFX", "4" },
-	{ "int", "idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings::SYSTEM_FIELD_SHADOWMAPPING", "5" },
+	{ "int", "idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings::SYSTEM_FIELD_RENDERAPI", "0" },
+	{ "int", "idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings::SYSTEM_FIELD_FULLSCREEN", "1" },
+	{ "int", "idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings::SYSTEM_FIELD_FRAMERATE", "2" },
+	{ "int", "idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings::SYSTEM_FIELD_VSYNC", "3" },
+	{ "int", "idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings::SYSTEM_FIELD_ANTIALIASING", "4" },
+	{ "int", "idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings::SYSTEM_FIELD_POSTFX", "5" },
 	{ "int", "idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings::SYSTEM_FIELD_SSAO", "6" },
 	{ "int", "idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings::SYSTEM_FIELD_AMBIENT_BRIGHTNESS", "7" },
 	{ "int", "idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings::SYSTEM_FIELD_BRIGHTNESS", "8" },
@@ -1996,12 +1996,12 @@ static enumValueInfo_t idMenuScreen_Shell_ControllerLayout_idMenuDataSource_Layo
 };
 
 static enumValueInfo_t idMenuScreen_Shell_SystemOptions_idMenuDataSource_SystemSettings_systemSettingFields_t_typeInfo[] = {
-	{ "SYSTEM_FIELD_FULLSCREEN", 0 },
-	{ "SYSTEM_FIELD_FRAMERATE", 1 },
-	{ "SYSTEM_FIELD_VSYNC", 2 },
-	{ "SYSTEM_FIELD_ANTIALIASING", 3 },
-	{ "SYSTEM_FIELD_POSTFX", 4 },
-	{ "SYSTEM_FIELD_SHADOWMAPPING", 5 },
+	{ "SYSTEM_FIELD_RENDERAPI", 0 },
+	{ "SYSTEM_FIELD_FULLSCREEN", 1 },
+	{ "SYSTEM_FIELD_FRAMERATE", 2 },
+	{ "SYSTEM_FIELD_VSYNC", 3 },
+	{ "SYSTEM_FIELD_ANTIALIASING", 4 },
+	{ "SYSTEM_FIELD_POSTFX", 5 },
 	{ "SYSTEM_FIELD_SSAO", 6 },
 	{ "SYSTEM_FIELD_AMBIENT_BRIGHTNESS", 7 },
 	{ "SYSTEM_FIELD_BRIGHTNESS", 8 },
@@ -2677,6 +2677,8 @@ static classVariableInfo_t idDeclModelDef_typeInfo[] = {
 	{ "idRenderModel *", "modelHandle", (intptr_t)(&((idDeclModelDef *)0)->modelHandle), sizeof( ((idDeclModelDef *)0)->modelHandle ) },
 	{ "idList < idAnim * , TAG_ANIM >", "anims", (intptr_t)(&((idDeclModelDef *)0)->anims), sizeof( ((idDeclModelDef *)0)->anims ) },
 	{ "const idDeclSkin *", "skin", (intptr_t)(&((idDeclModelDef *)0)->skin), sizeof( ((idDeclModelDef *)0)->skin ) },
+	{ "bool", "hasCustomRotationSet", (intptr_t)(&((idDeclModelDef *)0)->hasCustomRotationSet), sizeof( ((idDeclModelDef *)0)->hasCustomRotationSet ) },
+	{ "idAngles", "originalRotation", (intptr_t)(&((idDeclModelDef *)0)->originalRotation), sizeof( ((idDeclModelDef *)0)->originalRotation ) },
 	{ NULL, 0 }
 };
 
@@ -4304,6 +4306,7 @@ static classVariableInfo_t idAnimState_typeInfo[] = {
 	{ ": idActor *", "self", (intptr_t)(&((idAnimState *)0)->self), sizeof( ((idAnimState *)0)->self ) },
 	{ "idAnimator *", "animator", (intptr_t)(&((idAnimState *)0)->animator), sizeof( ((idAnimState *)0)->animator ) },
 	{ "idThread *", "thread", (intptr_t)(&((idAnimState *)0)->thread), sizeof( ((idAnimState *)0)->thread ) },
+	{ "rvStateThread", "stateThread", (intptr_t)(&((idAnimState *)0)->stateThread), sizeof( ((idAnimState *)0)->stateThread ) },
 	{ "int", "channel", (intptr_t)(&((idAnimState *)0)->channel), sizeof( ((idAnimState *)0)->channel ) },
 	{ "bool", "disabled", (intptr_t)(&((idAnimState *)0)->disabled), sizeof( ((idAnimState *)0)->disabled ) },
 	{ NULL, 0 }
@@ -6082,6 +6085,19 @@ static classVariableInfo_t iceMonsterZombieCommandoChaingun_typeInfo[] = {
 	{ NULL, 0 }
 };
 
+static classVariableInfo_t iceMonster_Turret_typeInfo[] = {
+	{ "boolean", "fire", (intptr_t)(&((iceMonster_Turret *)0)->fire), sizeof( ((iceMonster_Turret *)0)->fire ) },
+	{ "boolean", "attack_monsters", (intptr_t)(&((iceMonster_Turret *)0)->attack_monsters), sizeof( ((iceMonster_Turret *)0)->attack_monsters ) },
+	{ "idEntity", "light", (intptr_t)(&((iceMonster_Turret *)0)->light), sizeof( ((iceMonster_Turret *)0)->light ) },
+	{ "boolean", "light_is_on", (intptr_t)(&((iceMonster_Turret *)0)->light_is_on), sizeof( ((iceMonster_Turret *)0)->light_is_on ) },
+	{ "float", "attackTime", (intptr_t)(&((iceMonster_Turret *)0)->attackTime), sizeof( ((iceMonster_Turret *)0)->attackTime ) },
+	{ "int", "barrelCount", (intptr_t)(&((iceMonster_Turret *)0)->barrelCount), sizeof( ((iceMonster_Turret *)0)->barrelCount ) },
+	{ "int", "currentBarrel", (intptr_t)(&((iceMonster_Turret *)0)->currentBarrel), sizeof( ((iceMonster_Turret *)0)->currentBarrel ) },
+	{ "idStr", "currentBarrelStr", (intptr_t)(&((iceMonster_Turret *)0)->currentBarrelStr), sizeof( ((iceMonster_Turret *)0)->currentBarrelStr ) },
+	{ "idList < jointHandle_t >", "flashJointWorldHandles", (intptr_t)(&((iceMonster_Turret *)0)->flashJointWorldHandles), sizeof( ((iceMonster_Turret *)0)->flashJointWorldHandles ) },
+	{ NULL, 0 }
+};
+
 static classVariableInfo_t fuzzyseperator_t_typeInfo[] = {
 	{ "bool", "inUse", (intptr_t)(&((fuzzyseperator_t *)0)->inUse), sizeof( ((fuzzyseperator_t *)0)->inUse ) },
 	{ "int", "index", (intptr_t)(&((fuzzyseperator_t *)0)->index), sizeof( ((fuzzyseperator_t *)0)->index ) },
@@ -7067,7 +7083,8 @@ static classVariableInfo_t idMenuScreen_Shell_ControllerLayout_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuScreen_Shell_SystemOptions_idMenuDataSource_SystemSettings_typeInfo[] = {
-	{ ": int", "originalFramerate", (intptr_t)(&((idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings *)0)->originalFramerate), sizeof( ((idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings *)0)->originalFramerate ) },
+	{ ": idStr", "originalRenderAPI", (intptr_t)(&((idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings *)0)->originalRenderAPI), sizeof( ((idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings *)0)->originalRenderAPI ) },
+	{ "int", "originalFramerate", (intptr_t)(&((idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings *)0)->originalFramerate), sizeof( ((idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings *)0)->originalFramerate ) },
 	{ "int", "originalAntialias", (intptr_t)(&((idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings *)0)->originalAntialias), sizeof( ((idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings *)0)->originalAntialias ) },
 	{ "int", "originalVsync", (intptr_t)(&((idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings *)0)->originalVsync), sizeof( ((idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings *)0)->originalVsync ) },
 	{ "float", "originalBrightness", (intptr_t)(&((idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings *)0)->originalBrightness), sizeof( ((idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings *)0)->originalBrightness ) },
@@ -7722,6 +7739,7 @@ static classTypeInfo_t classTypeInfo[] = {
 	{ "iceMonsterZombieSecurityPistol", "iceMonsterZombie", sizeof(iceMonsterZombieSecurityPistol), iceMonsterZombieSecurityPistol_typeInfo },
 	{ "iceMonsterZombieCommandoTentacle", "iceMonsterZombie", sizeof(iceMonsterZombieCommandoTentacle), iceMonsterZombieCommandoTentacle_typeInfo },
 	{ "iceMonsterZombieCommandoChaingun", "idAI", sizeof(iceMonsterZombieCommandoChaingun), iceMonsterZombieCommandoChaingun_typeInfo },
+	{ "iceMonster_Turret", "idAI", sizeof(iceMonster_Turret), iceMonster_Turret_typeInfo },
 	{ "fuzzyseperator_t", "", sizeof(fuzzyseperator_t), fuzzyseperator_t_typeInfo },
 	{ "weight_t", "", sizeof(weight_t), weight_t_typeInfo },
 	{ "weightconfig_t", "", sizeof(weightconfig_t), weightconfig_t_typeInfo },

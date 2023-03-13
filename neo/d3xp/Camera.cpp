@@ -755,6 +755,7 @@ void idCameraAnim::Event_Activate( idEntity* _activator )
 
 void idCameraAnim::gltfLoadAnim( idStr gltfFileName, idStr animName )
 {
+	// TODO HarrievG: we dont want to load the gltb all the time. write custom binary format !
 	GLTF_Parser gltf;
 	if( gltf.Load( gltfFileName ) )
 	{
