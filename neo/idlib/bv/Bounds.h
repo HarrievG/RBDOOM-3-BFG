@@ -63,6 +63,7 @@ public:
 	void			Clear();									// inside out bounds
 	void			Zero();									// single point at origin
 
+	float			GetMaxExtent() const;
 	idVec3			GetCenter() const;						// returns center of bounds
 	float			GetRadius() const;						// returns the radius relative to the bounds origin
 	float			GetRadius( const idVec3& center ) const;		// returns the radius relative to the given center
