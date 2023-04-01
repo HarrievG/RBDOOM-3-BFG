@@ -1,0 +1,1 @@
++set r_fullscreen 1 +set com_allowConsole 1 +set developer 0 +set fs_debug 0 +set win_outputDebugString 1 +set fs_basepath "E:\SteamLibrary\steamapps\common\DOOM 3 BFG Edition" +set fs_game "mod_icedhellfire"

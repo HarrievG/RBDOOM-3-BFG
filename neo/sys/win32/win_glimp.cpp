@@ -52,8 +52,7 @@ If you have questions concerning this license or the applicable additional terms
 #include <sys/DeviceManager.h>
 extern DeviceManager* deviceManager;
 
-
-
+idCVar r_WinCenter( "r_WinCenter", "0", CVAR_BOOL, "1 = try to center window on main monitor, 0 = dont try to reposition" );
 /*
 ========================
 GLimp_GetOldGammaRamp
@@ -632,9 +631,12 @@ bool DeviceManager::CreateWindowDeviceAndSwapChain( const glimpParms_t& parms, c
 	// SRS - if in windowed mode, start with centered windowed on default display, afterwards use r_windowX / r_windowY
 	if( parms.fullScreen == 0 )
 	{
-		if( !GetCenteredWindowDimensions( x, y, w, h ) )
+		if( r_WinCenter.GetBool() )
 		{
-			return false;
+			if( !GetCenteredWindowDimensions( x, y, w, h ) )
+			{
+				return false;
+			}
 		}
 	}
 

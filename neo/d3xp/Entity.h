@@ -759,6 +759,29 @@ public:
 	void 					Event_GetJointAngle( jointHandle_t jointnum );
 };
 
+class idInteractable : public idAnimatedEntity
+{
+	CLASS_PROTOTYPE( idInteractable );
+
+	idInteractable() : currentInteractor( NULL ) {};
+	virtual				~idInteractable() {};
+
+	virtual void		Interact( idPlayer* player ) { };
+	virtual bool		CanBeInteractedWith()
+	{
+		return currentInteractor != NULL;
+	}
+protected:
+	idPlayer* currentInteractor;
+};
+
+typedef struct interactResult_s
+{
+	idInteractable* interactee;
+	idPlayer* interactor;
+	bool			succeeded;
+} interactResult_t;
+
 
 class SetTimeState
 {

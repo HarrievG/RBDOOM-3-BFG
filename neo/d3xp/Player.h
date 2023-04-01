@@ -839,6 +839,7 @@ private:
 	int						landTime;
 
 
+	idEntityPtr<idInteractable> currentInteractable;
 	int						currentWeapon;
 	idPredictedValue< int >	idealWeapon;
 	int						previousWeapon;
@@ -887,6 +888,7 @@ private:
 	int						talkCursor;				// show the state of the focusCharacter (0 == can't talk/dead, 1 == ready to talk, 2 == busy talking)
 	int						focusTime;
 	idAFEntity_Vehicle* 	focusVehicle;
+	idInteractable*			focusInteractable;
 	idUserInterface* 		cursor;
 
 	// full screen guis track mouse movements directly
@@ -939,7 +941,9 @@ private:
 	void					FireWeapon();
 	void					Weapon_Combat();
 	void					Weapon_NPC();
+	//void					Weapon_Vehicle();
 	void					Weapon_GUI();
+	void					Interact();
 	void					UpdateWeapon();
 	void					UpdateFlashlight();
 	void					FlashlightOn();

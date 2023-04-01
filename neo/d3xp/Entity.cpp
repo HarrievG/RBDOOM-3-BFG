@@ -6939,3 +6939,6 @@ void idAnimatedEntity::Event_GetJointAngle( jointHandle_t jointnum )
 	idVec3 vec( ang[ 0 ], ang[ 1 ], ang[ 2 ] );
 	idThread::ReturnVector( vec );
 }
+
+CLASS_DECLARATION( idAnimatedEntity, idInteractable )
+END_CLASS

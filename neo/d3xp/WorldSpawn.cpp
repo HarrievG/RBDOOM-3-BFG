@@ -68,9 +68,11 @@ void idWorldspawn::Spawn()
 
 	assert( gameLocal.world == NULL );
 	gameLocal.world = this;
-
-	g_gravity.SetFloat( spawnArgs.GetFloat( "gravity", va( "%f", DEFAULT_GRAVITY ) ) );
-
+	kv = spawnArgs.FindKey( "gravity" );
+	if( kv )
+	{
+		g_gravity.SetFloat( spawnArgs.GetFloat( "gravity", va( "%f", DEFAULT_GRAVITY ) ) );
+	}
 	// RB: start some background music Quake style
 	SetMusicTrack();
 

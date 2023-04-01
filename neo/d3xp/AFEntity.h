@@ -146,7 +146,7 @@ idAFEntity_Base
 ===============================================================================
 */
 
-class idAFEntity_Base : public idAnimatedEntity
+class idAFEntity_Base : public idInteractable
 {
 public:
 	CLASS_PROTOTYPE( idAFEntity_Base );
@@ -159,6 +159,9 @@ public:
 	void					Save( idSaveGame* savefile ) const;
 	void					Restore( idRestoreGame* savefile );
 
+	virtual void			Interact( idPlayer* player );
+	virtual bool			CanBeInteractedWith();
+	virtual void			Use( ) {};
 	virtual void			Think();
 	virtual void			AddDamageEffect( const trace_t& collision, const idVec3& velocity, const char* damageDefName );
 	virtual void			GetImpactInfo( idEntity* ent, int id, const idVec3& point, impactInfo_t* info );
@@ -352,10 +355,9 @@ public:
 	idAFEntity_Vehicle();
 
 	void					Spawn();
-	void					Use( idPlayer* player );
+	virtual void			Use( );
 
 protected:
-	idPlayer* 				player;
 	jointHandle_t			eyesJoint;
 	jointHandle_t			steeringWheelJoint;
 	float					wheelRadius;

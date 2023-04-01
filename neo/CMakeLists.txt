@@ -853,6 +853,9 @@ set(GAMED3XP_SOURCES
 	d3xp/Weapon.cpp
 	d3xp/WorldSpawn.cpp)
 
+file(GLOB RC_INCLUDES d3xp/roidc/*.h)
+file(GLOB RC_SOURCES d3xp/roidc/*.cpp)
+
 file(GLOB GAMED3XP_AI_INCLUDES d3xp/ai/*.h)
 file(GLOB GAMED3XP_AI_SOURCES d3xp/ai/*.cpp)
 
@@ -1263,7 +1266,8 @@ source_group("game-d3xp\\physics" FILES ${GAMED3XP_PHYSICS_SOURCES})
 source_group("game-d3xp\\script" FILES ${GAMED3XP_SCRIPT_INCLUDES})
 source_group("game-d3xp\\script" FILES ${GAMED3XP_SCRIPT_SOURCES})
 
-
+source_group("game-rc" FILES ${RC_INCLUDES})
+source_group("game-rc" FILES ${RC_SOURCES})
 
 
 source_group("sys\\win32" FILES ${WIN32_INCLUDES})
@@ -1397,6 +1401,8 @@ set(RBDOOM3_INCLUDES
 			${GAMED3XP_WEAPON_INCLUDES}
 			${GAMED3XP_PHYSICS_INCLUDES}
 			${GAMED3XP_SCRIPT_INCLUDES}
+
+			${RC_INCLUDES}
 			)
 			
 set(RBDOOM3_SOURCES
@@ -1448,6 +1454,8 @@ set(RBDOOM3_SOURCES
 			${GAMED3XP_MENUS_SOURCES}
 			${GAMED3XP_PHYSICS_SOURCES}
 			${GAMED3XP_SCRIPT_SOURCES}
+
+			${RC_SOURCES}
 			)
 
 macro(AddSubdirectory dirName)

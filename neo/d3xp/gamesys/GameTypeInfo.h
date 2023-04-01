@@ -9,9 +9,9 @@
 
 	959 constants
 	92 enums
-	475 classes/structs/unions
+	478 classes/structs/unions
 	3 templates
-	8 max inheritance level for 'iceMonsterZombieSawyer'
+	9 max inheritance level for 'iceMonsterZombieSawyer'
 
 ===================================================================================
 */
@@ -3794,6 +3794,18 @@ static classVariableInfo_t idAnimatedEntity_typeInfo[] = {
 	{ NULL, 0 }
 };
 
+static classVariableInfo_t idInteractable_typeInfo[] = {
+	{ ": idPlayer *", "currentInteractor", (intptr_t)(&((idInteractable *)0)->currentInteractor), sizeof( ((idInteractable *)0)->currentInteractor ) },
+	{ NULL, 0 }
+};
+
+static classVariableInfo_t interactResult_t_typeInfo[] = {
+	{ "idInteractable *", "interactee", (intptr_t)(&((interactResult_t *)0)->interactee), sizeof( ((interactResult_t *)0)->interactee ) },
+	{ "idPlayer *", "interactor", (intptr_t)(&((interactResult_t *)0)->interactor), sizeof( ((interactResult_t *)0)->interactor ) },
+	{ "bool", "succeeded", (intptr_t)(&((interactResult_t *)0)->succeeded), sizeof( ((interactResult_t *)0)->succeeded ) },
+	{ NULL, 0 }
+};
+
 static classVariableInfo_t SetTimeState_typeInfo[] = {
 	{ ": bool", "activated", (intptr_t)(&((SetTimeState *)0)->activated), sizeof( ((SetTimeState *)0)->activated ) },
 	{ "bool", "previousFast", (intptr_t)(&((SetTimeState *)0)->previousFast), sizeof( ((SetTimeState *)0)->previousFast ) },
@@ -3999,8 +4011,7 @@ static classVariableInfo_t idAFEntity_WithAttachedHead_typeInfo[] = {
 };
 
 static classVariableInfo_t idAFEntity_Vehicle_typeInfo[] = {
-	{ ": idPlayer *", "player", (intptr_t)(&((idAFEntity_Vehicle *)0)->player), sizeof( ((idAFEntity_Vehicle *)0)->player ) },
-	{ "jointHandle_t", "eyesJoint", (intptr_t)(&((idAFEntity_Vehicle *)0)->eyesJoint), sizeof( ((idAFEntity_Vehicle *)0)->eyesJoint ) },
+	{ ": jointHandle_t", "eyesJoint", (intptr_t)(&((idAFEntity_Vehicle *)0)->eyesJoint), sizeof( ((idAFEntity_Vehicle *)0)->eyesJoint ) },
 	{ "jointHandle_t", "steeringWheelJoint", (intptr_t)(&((idAFEntity_Vehicle *)0)->steeringWheelJoint), sizeof( ((idAFEntity_Vehicle *)0)->steeringWheelJoint ) },
 	{ "float", "wheelRadius", (intptr_t)(&((idAFEntity_Vehicle *)0)->wheelRadius), sizeof( ((idAFEntity_Vehicle *)0)->wheelRadius ) },
 	{ "float", "steerAngle", (intptr_t)(&((idAFEntity_Vehicle *)0)->steerAngle), sizeof( ((idAFEntity_Vehicle *)0)->steerAngle ) },
@@ -5133,6 +5144,7 @@ static classVariableInfo_t idPlayer_typeInfo[] = {
 	{ "idVec3", "viewBob", (intptr_t)(&((idPlayer *)0)->viewBob), sizeof( ((idPlayer *)0)->viewBob ) },
 	{ "int", "landChange", (intptr_t)(&((idPlayer *)0)->landChange), sizeof( ((idPlayer *)0)->landChange ) },
 	{ "int", "landTime", (intptr_t)(&((idPlayer *)0)->landTime), sizeof( ((idPlayer *)0)->landTime ) },
+	{ "idEntityPtr < idInteractable >", "currentInteractable", (intptr_t)(&((idPlayer *)0)->currentInteractable), sizeof( ((idPlayer *)0)->currentInteractable ) },
 	{ "int", "currentWeapon", (intptr_t)(&((idPlayer *)0)->currentWeapon), sizeof( ((idPlayer *)0)->currentWeapon ) },
 	{ "idPredictedValue < int >", "idealWeapon", (intptr_t)(&((idPlayer *)0)->idealWeapon), sizeof( ((idPlayer *)0)->idealWeapon ) },
 	{ "int", "previousWeapon", (intptr_t)(&((idPlayer *)0)->previousWeapon), sizeof( ((idPlayer *)0)->previousWeapon ) },
@@ -5169,6 +5181,7 @@ static classVariableInfo_t idPlayer_typeInfo[] = {
 	{ "int", "talkCursor", (intptr_t)(&((idPlayer *)0)->talkCursor), sizeof( ((idPlayer *)0)->talkCursor ) },
 	{ "int", "focusTime", (intptr_t)(&((idPlayer *)0)->focusTime), sizeof( ((idPlayer *)0)->focusTime ) },
 	{ "idAFEntity_Vehicle *", "focusVehicle", (intptr_t)(&((idPlayer *)0)->focusVehicle), sizeof( ((idPlayer *)0)->focusVehicle ) },
+	{ "idInteractable *", "focusInteractable", (intptr_t)(&((idPlayer *)0)->focusInteractable), sizeof( ((idPlayer *)0)->focusInteractable ) },
 	{ "idUserInterface *", "cursor", (intptr_t)(&((idPlayer *)0)->cursor), sizeof( ((idPlayer *)0)->cursor ) },
 	{ "int", "oldMouseX", (intptr_t)(&((idPlayer *)0)->oldMouseX), sizeof( ((idPlayer *)0)->oldMouseX ) },
 	{ "int", "oldMouseY", (intptr_t)(&((idPlayer *)0)->oldMouseY), sizeof( ((idPlayer *)0)->oldMouseY ) },
@@ -6982,6 +6995,8 @@ static classVariableInfo_t idMenuScreen_Shell_Bindings_typeInfo[] = {
 static classVariableInfo_t idMenuScreen_Shell_Dev_devOption_t_typeInfo[] = {
 	{ "const char *", "map", (intptr_t)(&((idMenuScreen_Shell_Dev::devOption_t *)0)->map), sizeof( ((idMenuScreen_Shell_Dev::devOption_t *)0)->map ) },
 	{ "const char *", "name", (intptr_t)(&((idMenuScreen_Shell_Dev::devOption_t *)0)->name), sizeof( ((idMenuScreen_Shell_Dev::devOption_t *)0)->name ) },
+	{ "idStr", "cachedName", (intptr_t)(&((idMenuScreen_Shell_Dev::devOption_t *)0)->cachedName), sizeof( ((idMenuScreen_Shell_Dev::devOption_t *)0)->cachedName ) },
+	{ "idStr", "cachedMap", (intptr_t)(&((idMenuScreen_Shell_Dev::devOption_t *)0)->cachedMap), sizeof( ((idMenuScreen_Shell_Dev::devOption_t *)0)->cachedMap ) },
 	{ NULL, 0 }
 };
 
@@ -7403,6 +7418,11 @@ static classVariableInfo_t idThread_typeInfo[] = {
 	{ NULL, 0 }
 };
 
+static classVariableInfo_t rcPilotable_typeInfo[] = {
+	{ "idPhysics_RigidBody", "physicsObj", (intptr_t)(&((rcPilotable *)0)->physicsObj), sizeof( ((rcPilotable *)0)->physicsObj ) },
+	{ NULL, 0 }
+};
+
 static classTypeInfo_t classTypeInfo[] = {
 	{ "idEventDef", "", sizeof(idEventDef), idEventDef_typeInfo },
 	{ "idEvent", "", sizeof(idEvent), idEvent_typeInfo },
@@ -7530,6 +7550,8 @@ static classTypeInfo_t classTypeInfo[] = {
 	{ "idEntity", "idClass", sizeof(idEntity), idEntity_typeInfo },
 	{ "damageEffect_t", "", sizeof(damageEffect_t), damageEffect_t_typeInfo },
 	{ "idAnimatedEntity", "idEntity", sizeof(idAnimatedEntity), idAnimatedEntity_typeInfo },
+	{ "idInteractable", "idAnimatedEntity", sizeof(idInteractable), idInteractable_typeInfo },
+	{ "interactResult_t", "", sizeof(interactResult_t), interactResult_t_typeInfo },
 	{ "SetTimeState", "", sizeof(SetTimeState), SetTimeState_typeInfo },
 	{ "idCursor3D", "idEntity", sizeof(idCursor3D), idCursor3D_typeInfo },
 	{ "idDragEntity", "", sizeof(idDragEntity), idDragEntity_typeInfo },
@@ -7545,7 +7567,7 @@ static classTypeInfo_t classTypeInfo[] = {
 	{ "idMultiModelAF", "idEntity", sizeof(idMultiModelAF), idMultiModelAF_typeInfo },
 	{ "idChain", "idMultiModelAF", sizeof(idChain), idChain_typeInfo },
 	{ "idAFAttachment", "idAnimatedEntity", sizeof(idAFAttachment), idAFAttachment_typeInfo },
-	{ "idAFEntity_Base", "idAnimatedEntity", sizeof(idAFEntity_Base), idAFEntity_Base_typeInfo },
+	{ "idAFEntity_Base", "idInteractable", sizeof(idAFEntity_Base), idAFEntity_Base_typeInfo },
 	{ "idAFEntity_Gibbable", "idAFEntity_Base", sizeof(idAFEntity_Gibbable), idAFEntity_Gibbable_typeInfo },
 	{ "idAFEntity_Generic", "idAFEntity_Gibbable", sizeof(idAFEntity_Generic), idAFEntity_Generic_typeInfo },
 	{ "idAFEntity_WithAttachedHead", "idAFEntity_Gibbable", sizeof(idAFEntity_WithAttachedHead), idAFEntity_WithAttachedHead_typeInfo },
@@ -7879,6 +7901,7 @@ static classTypeInfo_t classTypeInfo[] = {
 	{ "prstack_t", "", sizeof(prstack_t), prstack_t_typeInfo },
 	{ "idInterpreter", "", sizeof(idInterpreter), idInterpreter_typeInfo },
 	{ "idThread", "idClass", sizeof(idThread), idThread_typeInfo },
+	{ "rcPilotable", "idInteractable", sizeof(rcPilotable), rcPilotable_typeInfo },
 	{ NULL, NULL, 0, NULL }
 };
 

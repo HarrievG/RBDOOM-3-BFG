@@ -1609,7 +1609,7 @@ idPlayer::idPlayer():
 	focusUI					= NULL;
 	focusCharacter			= NULL;
 	talkCursor				= 0;
-	focusVehicle			= NULL;
+	focusInteractable		= NULL;
 	cursor					= NULL;
 
 	oldMouseX				= 0;
@@ -1817,7 +1817,7 @@ void idPlayer::Init()
 	focusUI					= NULL;
 	focusCharacter			= NULL;
 	talkCursor				= 0;
-	focusVehicle			= NULL;
+	focusInteractable		= NULL;
 
 	// remove any damage effects
 	playerView.ClearEffects();
@@ -5532,6 +5532,86 @@ idUserInterface* idPlayer::ActiveGui()
 	return focusUI;
 }
 
+
+/*
+===============
+idPlayer::Interact
+===============
+*/
+
+void idPlayer::Interact()
+{
+	StopFiring();
+	bool wasUseDown = ( oldButtons & ( BUTTON_USE ) ) != 0;
+	bool isUseDown = ( usercmd.buttons & ( BUTTON_USE ) ) != 0;
+	if( isUseDown && !wasUseDown )
+	{
+		if( currentInteractable )
+		{
+			if( currentInteractable.IsValid() )
+			{
+				currentInteractable->Interact( this );
+			}
+			currentInteractable = NULL;
+
+			physicsObj.EnableClip();
+			Show();
+			Event_EnableWeapon();
+		}
+		else
+		{
+			SetPhysics( &physicsObj );
+			physicsObj.DisableClip();
+			Hide();
+			Event_DisableWeapon();
+			currentInteractable = focusInteractable;
+			currentInteractable->Interact( this );
+		}
+	}
+}
+
+
+/*
+===============
+idPlayer::Weapon_Vehicle
+===============
+*/
+
+//void idPlayer::Weapon_Vehicle()
+//{
+//	StopFiring();
+//	bool wasUseDown = ( oldButtons & ( BUTTON_USE ) ) != 0;
+//	bool isUseDown = ( usercmd.buttons & ( BUTTON_USE ) ) != 0;
+//	if( currentVehicle )
+//	{
+//		if( isUseDown && !wasUseDown )
+//		{
+//			if( currentVehicle.IsValid() )
+//			{
+//				currentVehicle->Use( this );
+//			}
+//			currentVehicle = NULL;
+//
+//			physicsObj.EnableClip();
+//			Show();
+//			Event_EnableWeapon();
+//		}
+//	}
+//	else
+//	{
+//		//weapon.GetEntity()->LowerWeapon();
+//		if( isUseDown && !wasUseDown )
+//		{
+//			focusVehicle->Use( this );
+//			SetPhysics( &physicsObj );
+//			physicsObj.DisableClip();
+//			Hide();
+//			Event_DisableWeapon();
+//			currentVehicle = focusVehicle;
+//		}
+//	}
+//}
+
 /*
 ===============
 idPlayer::Weapon_Combat
@@ -5858,6 +5938,10 @@ void idPlayer::UpdateWeapon()
 	else 	if( focusCharacter && ( focusCharacter->health > 0 ) )
 	{
 		Weapon_NPC();
+	}
+	else if( ( focusInteractable && focusInteractable->CanBeInteractedWith() ) || currentInteractable )
+	{
+		Interact();
 	}
 	else
 	{
@@ -6360,11 +6444,11 @@ Clears the focus cursor
 */
 void idPlayer::ClearFocus()
 {
-	focusCharacter	= NULL;
-	focusGUIent		= NULL;
-	focusUI			= NULL;
-	focusVehicle	= NULL;
-	talkCursor		= 0;
+	focusCharacter		= NULL;
+	focusGUIent			= NULL;
+	focusUI				= NULL;
+	focusInteractable	= NULL;
+	talkCursor			= 0;
 }
 
 /*
@@ -6385,7 +6469,7 @@ void idPlayer::UpdateFocus()
 	idUserInterface* oldUI;
 	idAI*		oldChar;
 	int			oldTalkCursor;
-	idAFEntity_Vehicle* oldVehicle;
+	idInteractable* oldInteractable;
 	int			i, j;
 	idVec3		start, end;
 	bool		allowFocus;
@@ -6416,7 +6500,7 @@ void idPlayer::UpdateFocus()
 	oldUI			= focusUI;
 	oldChar			= focusCharacter;
 	oldTalkCursor	= talkCursor;
-	oldVehicle		= focusVehicle;
+	oldInteractable = focusInteractable;
 
 	if( focusTime <= gameLocal.time )
 	{
@@ -6504,7 +6588,19 @@ void idPlayer::UpdateFocus()
 				continue;
 			}
 
-			if( ent->IsType( idAFEntity_Vehicle::Type ) )
+			if( ent->IsType( idInteractable::Type )  && ent != this )
+			{
+				gameLocal.clip.TracePoint( trace, start, end, MASK_SHOT_RENDERMODEL, this );
+				if( ( trace.fraction < 1.0f ) && ( trace.c.entityNum == ent->entityNumber ) )
+				{
+					ClearFocus();
+					focusInteractable = static_cast<idInteractable*>( ent );
+					focusTime = gameLocal.time + FOCUS_TIME;
+					break;
+				}
+				continue;
+			}
+			else if( ent->IsType( idAFEntity_Vehicle::Type ) )  // trying to remove.
 			{
 				gameLocal.clip.TracePoint( trace, start, end, MASK_SHOT_RENDERMODEL, this );
 				if( ( trace.fraction < 1.0f ) && ( trace.c.entityNum == ent->entityNumber ) )
@@ -7526,30 +7622,31 @@ idPlayer::UseVehicle
 */
 void idPlayer::UseVehicle()
 {
-	trace_t	trace;
-	idVec3 start, end;
-	idEntity* ent;
-
-	if( GetBindMaster() && GetBindMaster()->IsType( idAFEntity_Vehicle::Type ) )
-	{
-		Show();
-		static_cast<idAFEntity_Vehicle*>( GetBindMaster() )->Use( this );
-	}
-	else
-	{
-		start = GetEyePosition();
-		end = start + viewAngles.ToForward() * 80.0f;
-		gameLocal.clip.TracePoint( trace, start, end, MASK_SHOT_RENDERMODEL, this );
-		if( trace.fraction < 1.0f )
-		{
-			ent = gameLocal.entities[ trace.c.entityNum ];
-			if( ent && ent->IsType( idAFEntity_Vehicle::Type ) )
-			{
-				Hide();
-				static_cast<idAFEntity_Vehicle*>( ent )->Use( this );
-			}
-		}
-	}
+	assert( 0 );
+	//trace_t	trace;
+	//idVec3 start, end;
+	//idEntity* ent;
+	//
+	//if( GetBindMaster() && GetBindMaster()->IsType( idAFEntity_Vehicle::Type ) )
+	//{
+	//	Show();
+	//	static_cast<idAFEntity_Vehicle*>( GetBindMaster() )->Use( this );
+	//}
+	//else
+	//{
+	//	start = GetEyePosition();
+	//	end = start + viewAngles.ToForward() * 80.0f;
+	//	gameLocal.clip.TracePoint( trace, start, end, MASK_SHOT_RENDERMODEL, this );
+	//	if( trace.fraction < 1.0f )
+	//	{
+	//		ent = gameLocal.entities[ trace.c.entityNum ];
+	//		if( ent && ent->IsType( idAFEntity_Vehicle::Type ) )
+	//		{
+	//			Hide();
+	//			static_cast<idAFEntity_Vehicle*>( ent )->Use( this );
+	//		}
+	//	}
+	//}
 }
 
 /*

@@ -577,7 +577,7 @@ void idAFAttachment::UnlinkCombat()
 
 const idEventDef EV_SetConstraintPosition( "SetConstraintPosition", "sv" );
 
-CLASS_DECLARATION( idAnimatedEntity, idAFEntity_Base )
+CLASS_DECLARATION( idInteractable, idAFEntity_Base )
 EVENT( EV_SetConstraintPosition,	idAFEntity_Base::Event_SetConstraintPosition )
 END_CLASS
 
@@ -639,6 +639,11 @@ void idAFEntity_Base::Restore( idRestoreGame* savefile )
 	LinkCombat();
 
 	af.Restore( savefile );
+}
+
+bool idAFEntity_Base::CanBeInteractedWith()
+{
+	return idInteractable::CanBeInteractedWith() && !fl.takedamage || health > 0;
 }
 
 /*
@@ -1890,7 +1895,7 @@ idAFEntity_Vehicle::idAFEntity_Vehicle
 */
 idAFEntity_Vehicle::idAFEntity_Vehicle()
 {
-	player				= NULL;
+	currentInteractor				= NULL;
 	eyesJoint			= INVALID_JOINT;
 	steeringWheelJoint	= INVALID_JOINT;
 	wheelRadius			= 0.0f;
@@ -1931,7 +1936,7 @@ void idAFEntity_Vehicle::Spawn()
 	spawnArgs.GetFloat( "wheelRadius", "20", wheelRadius );
 	spawnArgs.GetFloat( "steerSpeed", "5", steerSpeed );
 
-	player = NULL;
+	currentInteractor = NULL;
 	steerAngle = 0.0f;
 
 	const char* smokeName = spawnArgs.GetString( "smoke_vehicle_dust", "muzzlesmoke" );
@@ -1943,35 +1948,45 @@ void idAFEntity_Vehicle::Spawn()
 
 /*
 ================
-idAFEntity_Vehicle::Use
+idAFEntity_Base::Interact
 ================
 */
-void idAFEntity_Vehicle::Use( idPlayer* other )
+void idAFEntity_Base::Interact( idPlayer* player )
 {
-	idVec3 origin;
-	idMat3 axis;
-
-	if( player )
+	if( currentInteractor )
 	{
-		if( player == other )
+		if( currentInteractor == player )
 		{
-			other->Unbind();
-			player = NULL;
+			player->Unbind();
+			currentInteractor = NULL;
 
 			af.GetPhysics()->SetComeToRest( true );
 		}
 	}
 	else
 	{
-		player = other;
-		animator.GetJointTransform( eyesJoint, gameLocal.time, origin, axis );
-		origin = renderEntity.origin + origin * renderEntity.axis;
-		player->GetPhysics()->SetOrigin( origin );
-		player->BindToBody( this, 0, true );
+		currentInteractor = player;
+		Use();
+
 
 		af.GetPhysics()->SetComeToRest( false );
 		af.GetPhysics()->Activate();
 	}
+}
+
+/*
+================
+idAFEntity_Vehicle::Use
+================
+*/
+void idAFEntity_Vehicle::Use( )
+{
+	idVec3 origin;
+	idMat3 axis;
+	animator.GetJointTransform( eyesJoint, gameLocal.time, origin, axis );
+	origin = renderEntity.origin + origin * renderEntity.axis;
+	currentInteractor->GetPhysics()->SetOrigin( origin );
+	currentInteractor->BindToBody( this, 0, true );
 }
 
 /*
@@ -1983,7 +1998,7 @@ float idAFEntity_Vehicle::GetSteerAngle()
 {
 	float idealSteerAngle, angleDelta;
 
-	idealSteerAngle = player->usercmd.rightmove * ( 30.0f / 128.0f );
+	idealSteerAngle = currentInteractor->usercmd.rightmove * ( 30.0f / 128.0f );
 	angleDelta = idealSteerAngle - steerAngle;
 
 	if( angleDelta > steerSpeed )
@@ -2111,15 +2126,15 @@ void idAFEntity_VehicleSimple::Think()
 	if( thinkFlags & TH_THINK )
 	{
 
-		if( player )
+		if( currentInteractor )
 		{
 			// capture the input from a player
 			velocity = g_vehicleVelocity.GetFloat();
-			if( player->usercmd.forwardmove < 0 )
+			if( currentInteractor->usercmd.forwardmove < 0 )
 			{
 				velocity = -velocity;
 			}
-			force = idMath::Fabs( player->usercmd.forwardmove * g_vehicleForce.GetFloat() ) * ( 1.0f / 128.0f );
+			force = idMath::Fabs( currentInteractor->usercmd.forwardmove * g_vehicleForce.GetFloat() ) * ( 1.0f / 128.0f );
 			steerAngle = GetSteerAngle();
 		}
 
@@ -2340,15 +2355,15 @@ void idAFEntity_VehicleFourWheels::Think()
 	if( thinkFlags & TH_THINK )
 	{
 
-		if( player )
+		if( currentInteractor )
 		{
 			// capture the input from a player
 			velocity = g_vehicleVelocity.GetFloat();
-			if( player->usercmd.forwardmove < 0 )
+			if( currentInteractor->usercmd.forwardmove < 0 )
 			{
 				velocity = -velocity;
 			}
-			force = idMath::Fabs( player->usercmd.forwardmove * g_vehicleForce.GetFloat() ) * ( 1.0f / 128.0f );
+			force = idMath::Fabs( currentInteractor->usercmd.forwardmove * g_vehicleForce.GetFloat() ) * ( 1.0f / 128.0f );
 			steerAngle = GetSteerAngle();
 		}
 
@@ -2532,6 +2547,10 @@ void idAFEntity_VehicleSixWheels::Spawn()
 		}
 	}
 
+	force = 0.0f;
+	velocity = 0.0f;
+	steerAngle = 0.0f;
+
 	memset( wheelAngles, 0, sizeof( wheelAngles ) );
 	BecomeActive( TH_THINK );
 }
@@ -2551,15 +2570,15 @@ void idAFEntity_VehicleSixWheels::Think()
 	if( thinkFlags & TH_THINK )
 	{
 
-		if( player )
+		if( currentInteractor )
 		{
 			// capture the input from a player
 			velocity = g_vehicleVelocity.GetFloat();
-			if( player->usercmd.forwardmove < 0 )
+			if( currentInteractor->usercmd.forwardmove < 0 )
 			{
 				velocity = -velocity;
 			}
-			force = idMath::Fabs( player->usercmd.forwardmove * g_vehicleForce.GetFloat() ) * ( 1.0f / 128.0f );
+			force = idMath::Fabs( currentInteractor->usercmd.forwardmove * g_vehicleForce.GetFloat() ) * ( 1.0f / 128.0f );
 			steerAngle = GetSteerAngle();
 		}
 
