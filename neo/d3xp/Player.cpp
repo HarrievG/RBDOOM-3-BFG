@@ -8241,7 +8241,7 @@ void idPlayer::Move_Interpolated( float fraction )
 	{
 		newEyeOffset = pm_crouchviewheight.GetFloat();
 	}
-	else if( GetBindMaster() && GetBindMaster()->IsType( idAFEntity_Vehicle::Type ) )
+	else if( GetBindMaster() &&( GetBindMaster()->IsType( idAFEntity_Vehicle::Type ) || GetBindMaster()->IsType(rcPilotable::Type)))
 	{
 		newEyeOffset = 0.0f;
 	}
@@ -8383,7 +8383,7 @@ void idPlayer::Move()
 	{
 		newEyeOffset = pm_crouchviewheight.GetFloat();
 	}
-	else if( GetBindMaster() && GetBindMaster()->IsType( idAFEntity_Vehicle::Type ) )
+	else if( GetBindMaster() && (GetBindMaster()->IsType( idAFEntity_Vehicle::Type ) || GetBindMaster()->IsType(rcPilotable::Type)))
 	{
 		newEyeOffset = 0.0f;
 	}
@@ -10636,7 +10636,7 @@ void idPlayer::GetViewPos( idVec3& origin, idMat3& axis ) const
 		axis = angles.ToMat3();
 		origin = GetEyePosition();
 	}
-	else
+	else 
 	{
 		origin = GetEyePosition() + viewBob;
 		angles = viewAngles + viewBobAngles + playerView.AngleOffset();
@@ -10759,7 +10759,7 @@ void idPlayer::CalculateRenderView()
 		{
 			OffsetThirdPersonView( pm_thirdPersonAngle.GetFloat(), pm_thirdPersonRange.GetFloat(), pm_thirdPersonHeight.GetFloat(), pm_thirdPersonClip.GetBool() );
 		}
-		else if( pm_thirdPersonDeath.GetBool() )
+		else if( health <= 0 && pm_thirdPersonDeath.GetBool() )
 		{
 			range = gameLocal.time < minRespawnTime ? ( gameLocal.time + RAGDOLL_DEATH_TIME - minRespawnTime ) * ( 120.0f / RAGDOLL_DEATH_TIME ) : 120.0f;
 			OffsetThirdPersonView( 0.0f, 20.0f + range, 0.0f, false );
@@ -12759,7 +12759,7 @@ float idPlayer::GetViewHeight()
 	{
 		newEyeOffset = pm_crouchviewheight.GetFloat();
 	}
-	else if( GetBindMaster() && GetBindMaster()->IsType( idAFEntity_Vehicle::Type ) )
+	else if( GetBindMaster() && GetBindMaster()->IsType( idAFEntity_Vehicle::Type ) || GetBindMaster()->IsType(rcPilotable::Type))
 	{
 		newEyeOffset = 0.0f;
 	}

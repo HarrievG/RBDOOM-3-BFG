@@ -764,7 +764,6 @@ class idInteractable : public idAnimatedEntity
 	CLASS_PROTOTYPE( idInteractable );
 
 	idInteractable() : currentInteractor( NULL ) {};
-	virtual				~idInteractable() {};
 
 	virtual void		Interact( idPlayer* player ) { };
 	virtual bool		CanBeInteractedWith()
