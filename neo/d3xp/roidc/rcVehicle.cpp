@@ -3,7 +3,9 @@
 #pragma hdrstop
 
 #include "../Game_local.h"
-idCVar g_PilotableDebug(				"g_PilotableDebug",		"0",			CVAR_GAME | CVAR_BOOL, "" );
+
+idCVar g_PilotableDebug(	"g_PilotableDebug",		"0",			CVAR_GAME | CVAR_BOOL, "" );
+idCVar g_ShipPodLargeDebug(	"g_ShipPodLargeDebug",	"1",			CVAR_GAME | CVAR_BOOL, "" );
 
 CLASS_DECLARATION( idInteractable , rcPilotable )
 EVENT( EV_Activate, rcPilotable::Event_Activate )
@@ -86,6 +88,7 @@ void rcPilotable::Interact( idPlayer* player )
 			player->GetPhysics()->GetClipModel()->Enable();
 			currentInteractor = NULL;
 			physicsObj.SetGravity( gameLocal.GetGravity() );
+			OnExit();
 			
 		}
 	}
@@ -107,6 +110,7 @@ void rcPilotable::Interact( idPlayer* player )
 		currentInteractor->BindToJoint(this, animator.GetJointHandle("body"), true );
 		currentInteractor->GetPhysics()->GetClipModel()->Disable();
 		physicsObj.SetGravity(vec3_zero);
+		OnEnter();
 	}
 	common->Warning( " ^3 %s ^7 is interacted with \n", GetName() );
 }
@@ -132,10 +136,10 @@ void rcPilotable::Think()
 
 		force = idMath::Fabs(currentInteractor->usercmd.forwardmove * 1000) * (1.0f / 128.0f);
 
-		physicsObj.SetAngularVelocity(currentInteractor->GetDeltaViewAngles().ToAngularVelocity());
+		//physicsObj.SetAngularVelocity(currentInteractor->GetDeltaViewAngles().ToAngularVelocity());
 		physicsObj.SetAxis(currentInteractor->firstPersonViewAxis);
 
-		if (force != 0.0f)
+		if ( currentInteractor->usercmd.forwardmove > 0)//force != 0.0f)
 		{
 			if (currentInteractor->usercmd.forwardmove < 0)
 			{
@@ -191,4 +195,117 @@ void rcPilotable::Event_Activate( idEntity* activator )
 	physicsObj.EnableImpact();
 
 	BecomeActive(TH_THINK);
+}
+
+CLASS_DECLARATION(rcPilotable, rcShipPodLarge)
+END_CLASS
+
+
+rcShipPodLarge::rcShipPodLarge()
+{
+
+}
+
+void rcShipPodLarge::Spawn()
+{
+	prtBackCenter = AddThrusterFx("thruster_red_big.prt", "Thruster_Back_Center");
+	prtBackTop = AddThrusterFx("thrusterBlue.prt", "Thruster_Back_Top");
+	prtBackBottom = AddThrusterFx("thrusterBlue.prt", "Thruster_Back_Bottom");
+}
+
+idFuncEmitter* rcShipPodLarge::AddThrusterFx(idStr fx, idStr bone)
+{
+	idEntity* existing = GetEmitter(bone + fx);
+	if (existing)
+	{
+		return (idFuncEmitter*)existing;
+	}
+
+	jointHandle_t thrusterJoint = animator.GetJointHandle(bone);
+	if (thrusterJoint != INVALID_JOINT)
+	{
+		idVec3 thrusterOrigin;
+		idMat3 thrusterAxis;
+
+		animator.GetJointTransform(thrusterJoint, FRAME2MS(0), thrusterOrigin, thrusterAxis);
+		thrusterOrigin = renderEntity.origin + thrusterOrigin * renderEntity.axis;
+
+		idFuncEmitter* thrusterEnt;
+		idDict thrusterArgs;
+
+		thrusterArgs.Set("model", fx);
+		thrusterArgs.Set("origin", thrusterOrigin.ToString());
+		thrusterArgs.SetBool("start_off", true);
+
+		thrusterEnt = static_cast<idFuncEmitter*>(gameLocal.SpawnEntityType(idFuncEmitter::Type, &thrusterArgs));
+
+		thrusterEnt->SetOrigin( thrusterOrigin );
+		
+		//particles are authored aiming up. + 7 degrees when thirdperson 
+		thrusterAxis *= idAngles(0, 0, -97.0f).ToMat3();
+		thrusterEnt->SetAxis(thrusterAxis);
+
+		funcEmitter_t newEmitter;
+		strcpy(newEmitter.name, bone+fx);
+		newEmitter.particle = (idFuncEmitter*)thrusterEnt;
+		newEmitter.joint = thrusterJoint;
+		funcEmitters.Set(newEmitter.name, newEmitter);
+
+		newEmitter.particle->BindToJoint(this, thrusterJoint, true);
+		newEmitter.particle->BecomeActive(TH_THINK);
+		newEmitter.particle->Hide();
+		newEmitter.particle->PostEventMS(&EV_Activate, 0, this);
+		newEmitter.particle->SetAxis(thrusterAxis);
+
+		return thrusterEnt;
+	}
+	
+}
+
+idEntity* rcShipPodLarge::GetEmitter(const char* name)
+{
+	funcEmitter_t* emitter;
+	funcEmitters.Get(name, &emitter);
+	if (emitter)
+	{
+		return emitter->particle;
+	}
+	return NULL;
+}
+
+void rcShipPodLarge::Think()
+{
+	rcPilotable::Think();
+
+	//use forward vector to fire back up and down
+	//input for big center
+	//input ? player yaw for left top and right top
+	//stationary ? player yaw for left right thrusters
+
+	if (currentInteractor && currentInteractor->usercmd.forwardmove > 0)
+	{
+		prtBackCenter->Show();
+	}
+	else
+	{
+		prtBackCenter->Hide();
+	}
+
+	if (g_ShipPodLargeDebug.GetBool())
+	{
+		for (int i = 0; i < funcEmitters.Num(); i++)
+		{
+			funcEmitter_t* emitter = funcEmitters.GetIndex(i);
+			idVec3 origin = emitter->particle->GetPhysics()->GetOrigin();
+			gameRenderWorld->DebugArrow(colorGreen, origin, origin + emitter->particle->GetPhysics()->GetAxis().ToAngles().ToForward() * 200.0f, 2);
+		}
+	}
+}
+
+void rcShipPodLarge::OnEnter()
+{
+}
+
+void rcShipPodLarge::OnExit()
+{
 }
