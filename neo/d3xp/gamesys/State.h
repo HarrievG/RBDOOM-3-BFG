@@ -1,6 +1,9 @@
 #ifndef __SYS_STATE_H__
 #define __SYS_STATE_H__
 
+
+#define MAX_STATE_CALLS		50
+
 typedef enum
 {
 	SRESULT_OK,				// Call was made successfully
@@ -9,14 +12,15 @@ typedef enum
 	SRESULT_DONE_WAIT,		// Done with current state, wait a frame then move to next
 	SRESULT_WAIT,			// Wait a frame and re-run current state
 	SRESULT_IDLE,			// State thread is currently idle (ie. no states)
+	SRESULT_DONE_FRAME,		// HarrievG : sets to SRESULT_DONE and waits?
 	SRESULT_SETSTAGE,		// Sets the current stage of the current state and reruns the state
-	SRESULT_DONE_FRAME,
+
 	// NOTE: this has to be the last result becuase the stage is added to
 	//		 the result.
-	SRESULT_SETDELAY = SRESULT_SETSTAGE + 20
+	SRESULT_SETDELAY = SRESULT_SETSTAGE + MAX_STATE_CALLS
 } stateResult_t;
 
-#define MAX_STATE_CALLS		50
+
 
 #define SRESULT_STAGE(x)	((stateResult_t)((int)SRESULT_SETSTAGE + (int)(x)))
 #define SRESULT_DELAY(x)	((stateResult_t)((int)SRESULT_SETDELAY + (int)(x)))

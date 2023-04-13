@@ -5,9 +5,9 @@
 class rcPilotable : public idInteractable
 {
 public:
-	CLASS_PROTOTYPE(rcPilotable);
+	CLASS_PROTOTYPE( rcPilotable );
 	void			Spawn();
-	virtual void	Interact(idPlayer* player);
+	virtual void	Interact( idPlayer* player );
 	virtual bool	CanBeInteractedWith();
 
 	virtual void	Think();
@@ -24,7 +24,7 @@ protected:
 	idClipModel*			clipModel;
 	float					steerAngle;
 	float					steerSpeed;
-	
+
 	float					maxSpeed;
 	float					deltaTime;
 };
@@ -35,8 +35,8 @@ public:
 	CLASS_PROTOTYPE( rcShipPodLarge );
 	rcShipPodLarge();
 	void			Spawn();
-	idFuncEmitter*	AddThrusterFx(idStr fx, idStr bone);
-	idEntity*		GetEmitter(const char* name);
+	idFuncEmitter*	AddThrusterFx( idStr fx, idStr bone );
+	idEntity*		GetEmitter( const char* name );
 
 	virtual void	Think();
 

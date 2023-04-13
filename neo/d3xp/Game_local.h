@@ -1035,6 +1035,6 @@ const int	CINEMATIC_SKIP_DELAY	= SEC2MS( 2.0f );
 
 //RC
 #include "roidc/rcVehicle.h"
-
+#include "roidc/rcRoids.h"
 
 #endif	/* !__GAME_LOCAL_H__ */

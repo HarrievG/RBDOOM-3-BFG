@@ -876,7 +876,8 @@ void idAI::Event_RadiusDamageFromJoint( const char* jointname, const char* damag
 		joint = animator.GetJointHandle( jointname );
 		if( joint == INVALID_JOINT )
 		{
-			gameLocal.Error( "Unknown joint '%s' on %s", jointname, GetEntityDefName() );
+			gameLocal.Warning( "Event_RadiusDamageFromJoint: Unknown joint '%s' on %s", jointname, GetEntityDefName() );
+			return;
 		}
 		GetJointWorldTransform( joint, gameLocal.time, org, axis );
 	}
@@ -934,7 +935,7 @@ bool idAI::MeleeAttackToJoint( const char* jointname, const char* meleeDefName )
 	joint = animator.GetJointHandle( jointname );
 	if( joint == INVALID_JOINT )
 	{
-		gameLocal.Error( "Unknown joint '%s' on %s", jointname, GetEntityDefName() );
+		gameLocal.Error( "MeleeAttackToJoint: Unknown joint '%s' on %s", jointname, GetEntityDefName() );
 	}
 	animator.GetJointTransform( joint, gameLocal.time, end, axis );
 	end = physicsObj.GetOrigin() + ( end + modelOffset ) * viewAxis * physicsObj.GetGravityAxis();
@@ -1998,7 +1999,8 @@ bool idAI::CanHitEnemyFromJoint( const char* jointname )
 	jointHandle_t joint = animator.GetJointHandle( jointname );
 	if( joint == INVALID_JOINT )
 	{
-		gameLocal.Error( "Unknown joint '%s' on %s", jointname, GetEntityDefName() );
+		gameLocal.Warning( "CanHitEnemyFromJoint: Unknown joint '%s' on %s", jointname, GetEntityDefName() );
+		return false;
 	}
 	animator.GetJointTransform( joint, gameLocal.time, muzzle, axis );
 	muzzle = org + ( muzzle + modelOffset ) * viewAxis * physicsObj.GetGravityAxis();

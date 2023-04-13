@@ -910,4 +910,6 @@ private:
 
 #include "../bots/Bot.h"
 
+#include "../roidc/ai/ships/drone_miner.h"
+
 #endif /* !__AI_H__ */

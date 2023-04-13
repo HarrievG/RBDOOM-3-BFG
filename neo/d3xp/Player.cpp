@@ -8193,6 +8193,11 @@ void idPlayer::Move_Interpolated( float fraction )
 		physicsObj.SetContents( 0 );
 		physicsObj.SetMovementType( PM_FREEZE );
 	}
+	else if( GetBindMaster() && GetBindMaster()->IsType( rcPilotable::Type ) )
+	{
+		physicsObj.SetContents( 0 );
+		physicsObj.SetMovementType( PM_FREEZE ) ;
+	}
 	else
 	{
 		physicsObj.SetContents( CONTENTS_BODY );
@@ -8241,7 +8246,7 @@ void idPlayer::Move_Interpolated( float fraction )
 	{
 		newEyeOffset = pm_crouchviewheight.GetFloat();
 	}
-	else if( GetBindMaster() &&( GetBindMaster()->IsType( idAFEntity_Vehicle::Type ) || GetBindMaster()->IsType(rcPilotable::Type)))
+	else if( GetBindMaster() && ( GetBindMaster()->IsType( idAFEntity_Vehicle::Type ) || GetBindMaster()->IsType( rcPilotable::Type ) ) )
 	{
 		newEyeOffset = 0.0f;
 	}
@@ -8335,6 +8340,11 @@ void idPlayer::Move()
 		physicsObj.SetContents( 0 );
 		physicsObj.SetMovementType( PM_FREEZE );
 	}
+	else if( GetBindMaster() && GetBindMaster()->IsType( rcPilotable::Type ) )
+	{
+		physicsObj.SetContents( 0 );
+		physicsObj.SetMovementType( PM_FREEZE );
+	}
 	else
 	{
 		physicsObj.SetContents( CONTENTS_BODY );
@@ -8383,7 +8393,7 @@ void idPlayer::Move()
 	{
 		newEyeOffset = pm_crouchviewheight.GetFloat();
 	}
-	else if( GetBindMaster() && (GetBindMaster()->IsType( idAFEntity_Vehicle::Type ) || GetBindMaster()->IsType(rcPilotable::Type)))
+	else if( GetBindMaster() && ( GetBindMaster()->IsType( idAFEntity_Vehicle::Type ) || GetBindMaster()->IsType( rcPilotable::Type ) ) )
 	{
 		newEyeOffset = 0.0f;
 	}
@@ -10636,7 +10646,7 @@ void idPlayer::GetViewPos( idVec3& origin, idMat3& axis ) const
 		axis = angles.ToMat3();
 		origin = GetEyePosition();
 	}
-	else 
+	else
 	{
 		origin = GetEyePosition() + viewBob;
 		angles = viewAngles + viewBobAngles + playerView.AngleOffset();
@@ -12759,7 +12769,7 @@ float idPlayer::GetViewHeight()
 	{
 		newEyeOffset = pm_crouchviewheight.GetFloat();
 	}
-	else if( GetBindMaster() && GetBindMaster()->IsType( idAFEntity_Vehicle::Type ) || GetBindMaster()->IsType(rcPilotable::Type))
+	else if( GetBindMaster() && GetBindMaster()->IsType( idAFEntity_Vehicle::Type ) || GetBindMaster()->IsType( rcPilotable::Type ) )
 	{
 		newEyeOffset = 0.0f;
 	}

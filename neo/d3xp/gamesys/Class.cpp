@@ -248,6 +248,31 @@ void idTypeInfo::Shutdown()
 }
 
 
+const char * idTypeInfo::GetEnumTypeInfo(const char* enumTypeName, int value)
+{
+	int index = 0;
+	while (enumTypeInfo[index].values && enumTypeInfo[index].typeName)
+	{
+		enumTypeInfo_t& current = enumTypeInfo[index];
+		if (enumTypeInfo[index].typeName && !idStr::Cmp(enumTypeName, enumTypeInfo[index].typeName))
+		{
+			int enumIdx = 0;
+			
+			while (current.values[enumIdx].name )
+			{
+				const enumValueInfo_t& currentEnum = current.values[enumIdx];
+				if (currentEnum.value == value)
+				{
+					return currentEnum.name;
+				}
+				enumIdx++;
+			}
+		}
+		index++;
+	}
+	return nullptr;
+}
+
 /***********************************************************************
 
   idClass

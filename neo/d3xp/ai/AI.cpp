@@ -3296,19 +3296,26 @@ void idAI::GetMuzzle( const char* jointname, idVec3& muzzle, idMat3& axis )
 {
 	jointHandle_t joint;
 
-	if( !jointname || !jointname[ 0 ] )
+	if( jointname && jointname[0] )
 	{
+		joint = animator.GetJointHandle( jointname );
+	}
+
+	bool defaulted = joint == INVALID_JOINT;
+
+	if(	defaulted  || !jointname || !jointname[ 0 ] )
+	{
+		if( defaulted )
+		{
+			gameLocal.Warning( "GetMuzzle: Unknown joint '%s' on %s", jointname, GetEntityDefName() );
+		}
+
 		muzzle = physicsObj.GetOrigin() + viewAxis[ 0 ] * physicsObj.GetGravityAxis() * 14;
 		muzzle -= physicsObj.GetGravityNormal() * physicsObj.GetBounds()[ 1 ].z * 0.5f;
 	}
 	else
 	{
 		joint = animator.GetJointHandle( jointname );
-		if( joint == INVALID_JOINT )
-		{
-			gameLocal.Error( "Unknown joint '%s' on %s", jointname, GetEntityDefName() );
-		}
-		GetJointWorldTransform( joint, gameLocal.time, muzzle, axis );
 	}
 }
 
