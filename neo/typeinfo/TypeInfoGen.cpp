@@ -553,10 +553,10 @@ void idTypeInfoGen::ParseScope( const char* scope, bool isTemplate, idParser& sr
 		}
 		else if( token == "public" || token == "protected" || token == "private" )
 		{
+			if ( !src.ExpectTokenString( ":" ) ) {
+				common->FatalError("!src.ExpectTokenString( \":\" ) after %s", token);
+			}
 
-			//if ( !src.ExpectTokenString( ":" ) ) {
-			//	break;
-			//}
 			varType = "";
 			isConst = false;
 			isStatic = false;
@@ -1059,7 +1059,6 @@ void idTypeInfoGen::CreateTypeInfo( const char* path )
 {
 	int i, j, inheritance;
 	idStr fileName;
-	idFileList* files;
 	idParser src;
 
 	common->Printf( "Type Info Generator v" TYPE_INFO_GEN_VERSION " (c) 2004 id Software\n" );
@@ -1289,6 +1288,7 @@ void idTypeInfoGen::WriteTypeInfo( const char* fileName ) const
 		idStr typeName = info->scope + info->typeName;
 		idStr typeInfoName = typeName;
 		CleanName( typeInfoName );
+
 
 		if( typeInfoName == "class_25_class_25" )  // were the hell is this coming from?
 		{
