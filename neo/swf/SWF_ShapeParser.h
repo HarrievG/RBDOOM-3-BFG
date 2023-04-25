@@ -36,7 +36,6 @@ This class handles parsing and triangulating a shape
 class idSWFShapeParser
 {
 public:
-	struct swfSPDrawLine_t;
 	idSWFShapeParser() { }
 	void Parse( idSWFBitStream& bitstream, idSWFShape& shape, int recordType );
 	void ParseMorph( idSWFBitStream& bitstream, idSWFShape& shape );
