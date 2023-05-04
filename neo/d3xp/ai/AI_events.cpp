@@ -1513,6 +1513,7 @@ void idAI::Event_GetJumpVelocity( const idVec3& pos, float speed, float max_heig
 idAI::EntityInAttackCone
 =====================
 */
+//YAW ONLY
 bool idAI::EntityInAttackCone( idEntity* ent )
 {
 	float	attack_cone;
@@ -2389,6 +2390,7 @@ void idAI::Event_StopThinking()
 idAI::Event_GetTurnDelta
 =====================
 */
+//YAW ONLY
 void idAI::Event_GetTurnDelta()
 {
 	float amount;
@@ -2960,6 +2962,7 @@ void idAI::Event_SetTurnRate( float rate )
 idAI::Event_AnimTurn
 ================
 */
+//YAW ONLY
 void idAI::Event_AnimTurn( float angles )
 {
 	turnVel = 0.0f;

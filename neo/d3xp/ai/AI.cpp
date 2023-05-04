@@ -48,6 +48,8 @@ idAI::idAI()
 	blockedMoveTime		= 750;
 	blockedAttackTime	= 750;
 	turnRate			= 360.0f;
+	turnRateAngles		= idAngles( 180.0f, 180.0f, 180.0f );
+	turnVelAngles.Zero();
 	turnVel				= 0.0f;
 	anim_turn_yaw		= 0.0f;
 	anim_turn_amount	= 0.0f;
@@ -101,6 +103,9 @@ idAI::idAI()
 	fl.neverDormant		= false;		// AI's can go dormant
 	current_yaw			= 0.0f;
 	ideal_yaw			= 0.0f;
+	ideal_angles.Zero();
+	current_angles.Zero();
+	yaw_angles_only     = true;
 
 	spawnClearMoveables	= false;
 	harvestEnt			= NULL;
@@ -727,23 +732,26 @@ void idAI::Spawn()
 		return;
 	}
 
-	spawnArgs.GetInt(	"team",					"1",		team );
-	spawnArgs.GetInt(	"rank",					"0",		rank );
-	spawnArgs.GetInt(	"fly_offset",			"0",		fly_offset );
-	spawnArgs.GetFloat( "fly_speed",			"100",		fly_speed );
-	spawnArgs.GetFloat( "fly_bob_strength",		"50",		fly_bob_strength );
-	spawnArgs.GetFloat( "fly_bob_vert",			"2",		fly_bob_horz );
-	spawnArgs.GetFloat( "fly_bob_horz",			"2.7",		fly_bob_vert );
-	spawnArgs.GetFloat( "fly_seek_scale",		"4",		fly_seek_scale );
-	spawnArgs.GetFloat( "fly_roll_scale",		"90",		fly_roll_scale );
-	spawnArgs.GetFloat( "fly_roll_max",			"60",		fly_roll_max );
-	spawnArgs.GetFloat( "fly_pitch_scale",		"45",		fly_pitch_scale );
-	spawnArgs.GetFloat( "fly_pitch_max",		"30",		fly_pitch_max );
+	spawnArgs.GetBool(	"yaw_angles_only",		"1",					yaw_angles_only );
+	spawnArgs.GetInt(	"team",					"1",					team );
+	spawnArgs.GetInt(	"rank",					"0",					rank );
+	spawnArgs.GetInt(	"fly_offset",			"0",					fly_offset );
+	spawnArgs.GetFloat( "fly_speed",			"100",					fly_speed );
+	spawnArgs.GetFloat( "fly_bob_strength",		"50",					fly_bob_strength );
+	spawnArgs.GetFloat( "fly_seek_scale",		"4",					fly_seek_scale );
+	spawnArgs.GetFloat( "fly_roll_scale",		"90",					fly_roll_scale );
+	spawnArgs.GetFloat( "fly_roll_max",			"60",					fly_roll_max );
+	spawnArgs.GetFloat( "fly_pitch_scale",		"45",					fly_pitch_scale );
+	spawnArgs.GetFloat( "fly_pitch_max",		"30",					fly_pitch_max );
 
-	spawnArgs.GetFloat( "melee_range",			"64",		melee_range );
-	spawnArgs.GetFloat( "projectile_height_to_distance_ratio",	"1", projectile_height_to_distance_ratio );
+	spawnArgs.GetFloat( "melee_range",			"64",					melee_range );
+	spawnArgs.GetFloat( "projectile_height_to_distance_ratio",	"1",	projectile_height_to_distance_ratio );
 
-	spawnArgs.GetFloat( "turn_rate",			"360",		turnRate );
+	spawnArgs.GetFloat( "turn_rate",			"360",					turnRate );
+
+	idVec3 anglerate = idVec3( 180.0f );
+	spawnArgs.GetVector( "turn_rate_angles",	"360 360 360",			anglerate );
+	turnRateAngles.Set( anglerate.x, anglerate.y, anglerate.z );
 
 	spawnArgs.GetBool( "talks",					"0",		talks );
 	if( spawnArgs.GetString( "npc_name", NULL ) != NULL )
@@ -923,9 +931,18 @@ void idAI::Spawn()
 
 	SetPhysics( &physicsObj );
 
-	physicsObj.GetGravityAxis().ProjectVector( viewAxis[ 0 ], local_dir );
-	current_yaw		= local_dir.ToYaw();
-	ideal_yaw		= idMath::AngleNormalize180( current_yaw );
+	if( yaw_angles_only )
+	{
+		physicsObj.GetGravityAxis().ProjectVector( viewAxis[0], local_dir );
+		current_yaw		= local_dir.ToYaw();
+		ideal_yaw		= idMath::AngleNormalize180( current_yaw );
+	}
+	else
+	{
+		current_angles = viewAxis.ToAngles();
+		ideal_angles = current_angles;
+		ideal_angles.Normalize180();
+	}
 
 	move.blockTime = 0;
 
@@ -1304,8 +1321,20 @@ void idAI::Think()
 
 		current_yaw += deltaViewAngles.yaw;
 		ideal_yaw = idMath::AngleNormalize180( ideal_yaw + deltaViewAngles.yaw );
+		current_angles += deltaViewAngles;
+		ideal_angles = ideal_angles + deltaViewAngles;
+		ideal_angles.Normalize180();
+
 		deltaViewAngles.Zero();
-		viewAxis = idAngles( 0, current_yaw, 0 ).ToMat3();
+
+		if( yaw_angles_only )
+		{
+			viewAxis = idAngles( 0, current_yaw, 0 ).ToMat3();
+		}
+		else
+		{
+			viewAxis = current_angles.ToMat3();
+		}
 
 		if( num_cinematics )
 		{
@@ -3794,6 +3823,7 @@ bool idAI::UpdateAnimationControllers()
 	idVec3		left;
 	idVec3 		dir;
 	idVec3 		orientationJointPos;
+	idAngles	orientationAngles;
 	idVec3 		localDir;
 	idAngles 	newLookAng;
 	idAngles	diff;
@@ -3885,13 +3915,30 @@ bool idAI::UpdateAnimationControllers()
 
 	currentFocusPos = currentFocusPos + ( focusPos - currentFocusPos ) * eyeFocusRate;
 
-	// determine yaw from origin instead of from focus joint since joint may be offset, which can cause us to bounce between two angles
+	// determine yaw from origin instead or from focus joint since joint may be offset, which can cause us to bounce between two angles
 	dir = focusPos - orientationJointPos;
-	newLookAng.yaw = idMath::AngleNormalize180( dir.ToYaw() - orientationJointYaw );
-	newLookAng.roll = 0.0f;
-	newLookAng.pitch = 0.0f;
 
-#if 0
+	if( yaw_angles_only )
+	{
+		newLookAng.yaw = idMath::AngleNormalize180( dir.ToYaw() - orientationJointYaw );
+		newLookAng.roll = 0.0f;
+		newLookAng.pitch = 0.0f;
+
+		// determine pitch from joint position
+		dir = focusPos - eyepos;
+		dir.NormalizeFast();
+		orientationJointAxis.ProjectVector( dir, localDir );
+		newLookAng.pitch = -idMath::AngleNormalize180( localDir.ToPitch() );
+		newLookAng.roll = 0.0f;
+
+	}
+	else
+	{
+		newLookAng = dir.ToAngles() - orientationJointAxis.ToAngles();
+		newLookAng.Normalize180();
+	}
+
+#if 1
 	gameRenderWorld->DebugLine( colorRed, orientationJointPos, focusPos, 1 );
 	gameRenderWorld->DebugLine( colorYellow, orientationJointPos, orientationJointPos + orientationJointAxis[ 0 ] * 32.0f, 1 );
 	gameRenderWorld->DebugLine( colorGreen, orientationJointPos, orientationJointPos + newLookAng.ToForward() * 48.0f, 1 );

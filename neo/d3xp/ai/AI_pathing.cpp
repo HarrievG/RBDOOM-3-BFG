@@ -414,7 +414,7 @@ int GetObstacles( const idPhysics* physics, const idAAS* aas, const idEntity* ig
 				}
 			}
 		}
-		else if( obEnt->IsType( idMoveable::Type ) )
+		else if( obEnt->IsType( idMoveable::Type ) || obEnt->IsType( idInteractable::Type ) )
 		{
 			// moveables are considered obstacles
 		}
@@ -1079,6 +1079,83 @@ bool FindOptimalPath( const pathNode_t* root, const obstacle_t* obstacles, int n
 			}
 		}
 	}
+
+	return pathToGoalExists;
+}
+
+
+bool idAI::FindPathAroundObstacles3d( const idPhysics* physics, const idAAS* aas, const idEntity* ignore, const idVec3& startPos, const idVec3& seekPos, obstaclePath_t& path )
+{
+	int numObstacles, areaNum, insideObstacle;
+	obstacle_t obstacles[MAX_OBSTACLES];
+	idBounds clipBounds;
+	idBounds bounds;
+	pathNode_t* root;
+	bool pathToGoalExists;
+
+	path.seekPos = seekPos;
+	path.firstObstacle = NULL;
+	path.startPosOutsideObstacles = startPos;
+	path.startPosObstacle = NULL;
+	path.seekPosOutsideObstacles = seekPos;
+	path.seekPosObstacle = NULL;
+
+	if( !aas )
+	{
+		return true;
+	}
+
+	bounds[1] = aas->GetSettings()->boundingBoxes[0][1];
+	bounds[0] = -bounds[1];
+	bounds[1].z = 32.0f;
+
+	// get the AAS area number and a valid point inside that area
+	areaNum = aas->PointReachableAreaNum( path.startPosOutsideObstacles, bounds, ( AREA_REACHABLE_WALK | AREA_REACHABLE_FLY ) );
+	aas->PushPointIntoAreaNum( areaNum, path.startPosOutsideObstacles );
+
+	// get all the nearby obstacles
+	numObstacles = GetObstacles( physics, aas, ignore, areaNum, path.startPosOutsideObstacles, path.seekPosOutsideObstacles, obstacles, MAX_OBSTACLES, clipBounds );
+
+	// get a source position outside the obstacles
+	GetPointOutsideObstacles( obstacles, numObstacles, path.startPosOutsideObstacles.ToVec2(), &insideObstacle, NULL );
+	if( insideObstacle != -1 )
+	{
+		path.startPosObstacle = obstacles[insideObstacle].entity;
+	}
+
+	// get a goal position outside the obstacles
+	GetPointOutsideObstacles( obstacles, numObstacles, path.seekPosOutsideObstacles.ToVec2(), &insideObstacle, NULL );
+	if( insideObstacle != -1 )
+	{
+		path.seekPosObstacle = obstacles[insideObstacle].entity;
+	}
+
+	// if start and destination are pushed to the same point, we don't have a path around the obstacle
+	if( ( path.seekPosOutsideObstacles.ToVec2() - path.startPosOutsideObstacles.ToVec2() ).LengthSqr() < Square( 1.0f ) )
+	{
+		if( ( seekPos.ToVec2() - startPos.ToVec2() ).LengthSqr() > Square( 2.0f ) )
+		{
+			return false;
+		}
+	}
+
+	// build a path tree
+	root = BuildPathTree( obstacles, numObstacles, clipBounds, path.startPosOutsideObstacles.ToVec2(), path.seekPosOutsideObstacles.ToVec2(), path );
+
+	// draw the path tree
+	if( ai_showObstacleAvoidance.GetBool() )
+	{
+		DrawPathTree( root, physics->GetOrigin().z );
+	}
+
+	// prune the tree
+	PrunePathTree( root, path.seekPosOutsideObstacles.ToVec2() );
+
+	// find the optimal path
+	pathToGoalExists = FindOptimalPath( root, obstacles, numObstacles, physics->GetOrigin().z, physics->GetLinearVelocity(), path.seekPos );
+
+	// free the tree
+	FreePathTree_r( root );
 
 	return pathToGoalExists;
 }

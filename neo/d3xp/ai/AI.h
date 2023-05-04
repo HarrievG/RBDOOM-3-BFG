@@ -234,6 +234,7 @@ public:
 	moveCommand_t			moveCommand;
 	moveStatus_t			moveStatus;
 	idVec3					moveDest;
+	idMat3					moveDestAxis;		// used for move that alight with this orientation at destination.
 	idVec3					moveDir;			// used for wandering and slide moves
 	idEntityPtr<idEntity>	goalEntity;
 	idVec3					goalEntityOrigin;	// move to entity uses this to avoid checking the floor position every frame
@@ -278,6 +279,8 @@ public:
 	// Outputs a list of all monsters to the console.
 	static void				List_f( const idCmdArgs& args );
 
+	// Finds a 3d path around dynamic obstacles.
+	static bool				FindPathAroundObstacles3d( const idPhysics* physics, const idAAS* aas, const idEntity* ignore, const idVec3& startPos, const idVec3& seekPos, obstaclePath_t& path );
 	// Finds a path around dynamic obstacles.
 	static bool				FindPathAroundObstacles( const idPhysics* physics, const idAAS* aas, const idEntity* ignore, const idVec3& startPos, const idVec3& seekPos, obstaclePath_t& path );
 
@@ -325,13 +328,18 @@ protected:
 	int						blockedAttackTime;
 
 	// turning
+	idAngles				ideal_angles;
 	float					ideal_yaw;
 	float					current_yaw;
+	idAngles				current_angles;
 	float					turnRate;
+	idAngles				turnRateAngles;
 	float					turnVel;
+	idAngles				turnVelAngles;
 	float					anim_turn_yaw;
 	float					anim_turn_amount;
 	float					anim_turn_angles;
+	bool					yaw_angles_only;
 
 	// physics
 	idPhysics_Monster		physicsObj;
@@ -542,7 +550,10 @@ protected:
 	void					BlockedFailSafe();
 
 	// movement control
+
 	void					StopMove( moveStatus_t status );
+
+	bool					FacePoint( const idVec3* point );
 	bool					FaceEnemy();
 	bool					FaceEntity( idEntity* ent );
 	bool					DirectMoveToPosition( const idVec3& pos );
@@ -552,6 +563,7 @@ protected:
 	bool					MoveToEnemy();
 	bool					MoveToEntity( idEntity* ent );
 	bool					MoveToPosition( const idVec3& pos );
+	bool					MoveToPositionOriented( const idVec3& pos , const idMat3& axis );
 	bool					MoveToCover( idEntity* entity, const idVec3& pos );
 	bool					SlideToPosition( const idVec3& pos, float time );
 	bool					WanderAround();
@@ -564,9 +576,12 @@ protected:
 
 	// turning
 	bool					FacingIdeal();
+	bool					FacingIdealOrientation();
+	bool					FacingIdealOrientation() const;
 	void					Turn();
 	bool					TurnToward( float yaw );
 	bool					TurnToward( const idVec3& pos );
+	bool					TurnToward( const idAngles& orientation );
 
 	// enemy management
 	bool					EnemyPositionValid() const;

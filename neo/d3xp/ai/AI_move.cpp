@@ -35,24 +35,6 @@ If you have questions concerning this license or the applicable additional terms
 #include "AASCallback_FindCoverArea.h"
 #include "AASCallback_FindAttackPosition.h"
 
-
-static const char* moveCommandString[NUM_MOVE_COMMANDS] =
-{
-	"MOVE_NONE",
-	"MOVE_FACE_ENEMY",
-	"MOVE_FACE_ENTITY",
-	"MOVE_TO_ENEMY",
-	"MOVE_TO_ENEMYHEIGHT",
-	"MOVE_TO_ENTITY",
-	"MOVE_OUT_OF_RANGE",
-	"MOVE_TO_ATTACK_POSITION",
-	"MOVE_TO_COVER",
-	"MOVE_TO_POSITION",
-	"MOVE_TO_POSITION_DIRECT",
-	"MOVE_SLIDE_TO_POSITION",
-	"MOVE_WANDER"
-};
-
 /*
 =====================
 idMoveState::idMoveState
@@ -64,6 +46,7 @@ idMoveState::idMoveState()
 	moveCommand = MOVE_NONE;
 	moveStatus = MOVE_STATUS_DONE;
 	moveDest.Zero();
+	moveDestAxis = mat3_identity;
 	moveDir.Set( 1.0f, 0.0f, 0.0f );
 	goalEntity = NULL;
 	goalEntityOrigin.Zero();
@@ -400,7 +383,12 @@ idAI::DrawRoute
 */
 void idAI::DrawRoute() const
 {
-	if( aas && move.toAreaNum && move.moveCommand != MOVE_NONE && move.moveCommand != MOVE_WANDER && move.moveCommand != MOVE_FACE_ENEMY && move.moveCommand != MOVE_FACE_ENTITY && move.moveCommand != MOVE_TO_POSITION_DIRECT )
+	if( aas && move.toAreaNum
+			&& move.moveCommand != MOVE_NONE
+			&& move.moveCommand != MOVE_WANDER
+			&& move.moveCommand != MOVE_FACE_ENEMY
+			&& move.moveCommand != MOVE_FACE_ENTITY
+			&& move.moveCommand != MOVE_TO_POSITION_DIRECT )
 	{
 		if( move.moveType == MOVETYPE_FLY )
 		{
@@ -616,6 +604,7 @@ void idAI::StopMove( moveStatus_t status )
 	move.toAreaNum = 0;
 	move.goalEntity = NULL;
 	move.moveDest = physicsObj.GetOrigin();
+	move.moveDestAxis = mat3_identity;
 	AI_DEST_UNREACHABLE = false;
 	AI_OBSTACLE_IN_PATH = false;
 	AI_BLOCKED = false;
@@ -628,7 +617,6 @@ void idAI::StopMove( moveStatus_t status )
 	move.lastMoveOrigin.Zero();
 	move.lastMoveTime = gameLocal.time;
 }
-
 
 /*
 =====================
@@ -1080,6 +1068,66 @@ bool idAI::MoveToPosition( const idVec3& pos )
 	}
 
 	move.moveDest = org;
+	move.goalEntity = NULL;
+	move.moveCommand = MOVE_TO_POSITION;
+	move.moveStatus = MOVE_STATUS_MOVING;
+	move.startTime = gameLocal.time;
+	move.speed = fly_speed;
+	AI_MOVE_DONE = false;
+	AI_DEST_UNREACHABLE = false;
+	AI_FORWARD = true;
+
+	return true;
+}
+
+/*
+=====================
+idAI::MoveToPositionOriented
+=====================
+*/
+bool idAI::MoveToPositionOriented( const idVec3& pos, const idMat3& axis )
+{
+	idVec3		org;
+	int			areaNum;
+	aasPath_t	path;
+
+	if( yaw_angles_only )
+	{
+		common->Warning( "Cant MoveToPositionOriented when only using yaw" );
+		return false;
+	}
+
+	if( ReachedPos( pos, move.moveCommand ) )
+	{
+		StopMove( MOVE_STATUS_DONE );
+		return true;
+	}
+
+	org = pos;
+	move.toAreaNum = 0;
+	if( aas )
+	{
+		move.toAreaNum = PointReachableAreaNum( org );
+		aas->PushPointIntoAreaNum( move.toAreaNum, org );
+
+		areaNum = PointReachableAreaNum( physicsObj.GetOrigin() );
+		if( !PathToGoal( path, areaNum, physicsObj.GetOrigin(), move.toAreaNum, org ) )
+		{
+			StopMove( MOVE_STATUS_DEST_UNREACHABLE );
+			AI_DEST_UNREACHABLE = true;
+			return false;
+		}
+	}
+
+	if( !move.toAreaNum && !NewWanderDir( org ) )
+	{
+		StopMove( MOVE_STATUS_DEST_UNREACHABLE );
+		AI_DEST_UNREACHABLE = true;
+		return false;
+	}
+
+	move.moveDest = org;
+	move.moveDestAxis = axis;
 	move.goalEntity = NULL;
 	move.moveCommand = MOVE_TO_POSITION;
 	move.moveStatus = MOVE_STATUS_MOVING;
@@ -1642,6 +1690,7 @@ void idAI::Turn()
 	float diff;
 	float diff2;
 	float turnAmount;
+	idAngles turnAmountAngles;
 	animFlags_t animflags;
 
 	if( !turnRate )
@@ -1680,6 +1729,11 @@ void idAI::Turn()
 	}
 	else
 	{
+		idAngles angleDiff = ideal_angles - current_angles;
+		angleDiff.Normalize180();
+		turnVelAngles += AI_TURN_SCALE * angleDiff * MS2SEC( gameLocal.time - gameLocal.previousTime );
+		turnVelAngles.Clamp( -turnRateAngles, turnRateAngles );
+
 		diff = idMath::AngleNormalize180( ideal_yaw - current_yaw );
 		turnVel += AI_TURN_SCALE * diff * MS2SEC( gameLocal.time - gameLocal.previousTime );
 		if( turnVel > turnRate )
@@ -1690,7 +1744,24 @@ void idAI::Turn()
 		{
 			turnVel = -turnRate;
 		}
+
+		turnAmountAngles = turnVelAngles * MS2SEC( gameLocal.time - gameLocal.previousTime ) ;
 		turnAmount = turnVel * MS2SEC( gameLocal.time - gameLocal.previousTime );
+
+		for( int i = 0; i < 3; i++ )
+		{
+			if( ( angleDiff[i] >= 0.0f ) && ( turnAmountAngles[i] >= angleDiff[i] ) )
+			{
+				turnVel = angleDiff[i] / MS2SEC( gameLocal.time - gameLocal.previousTime );
+				turnAmountAngles[i] = angleDiff[i];
+			}
+			else if( ( angleDiff[i] <= 0.0f ) && ( turnAmountAngles[i] <= angleDiff[i] ) )
+			{
+				turnVel = angleDiff[i] / MS2SEC( gameLocal.time - gameLocal.previousTime );
+				turnAmountAngles[i] = angleDiff[i];
+			}
+		}
+
 		if( ( diff >= 0.0f ) && ( turnAmount >= diff ) )
 		{
 			turnVel = diff / MS2SEC( gameLocal.time - gameLocal.previousTime );
@@ -1701,6 +1772,15 @@ void idAI::Turn()
 			turnVel = diff / MS2SEC( gameLocal.time - gameLocal.previousTime );
 			turnAmount = diff;
 		}
+
+		current_angles += turnAmountAngles;
+		current_angles.Normalize180();
+		idAngles angleDiff2 = ideal_angles - current_angles;
+		if( angleDiff2.ToAngularVelocity().LengthFast() < 0.1f )
+		{
+			current_angles = ideal_angles;
+		}
+
 		current_yaw += turnAmount;
 		current_yaw = idMath::AngleNormalize180( current_yaw );
 		diff2 = idMath::AngleNormalize180( ideal_yaw - current_yaw );
@@ -1710,15 +1790,99 @@ void idAI::Turn()
 		}
 	}
 
-	viewAxis = idAngles( 0, current_yaw, 0 ).ToMat3();
+	if( yaw_angles_only )
+	{
+		viewAxis = idAngles( 0, current_yaw, 0 ).ToMat3();
+	}
+	else
+	{
+		viewAxis = current_angles.ToForward().ToMat3();
+	}
 
 	if( ai_debugMove.GetBool() )
 	{
 		const idVec3& org = physicsObj.GetOrigin();
-		gameRenderWorld->DebugLine( colorRed, org, org + idAngles( 0, ideal_yaw, 0 ).ToForward() * 64, 1 );
-		gameRenderWorld->DebugLine( colorGreen, org, org + idAngles( 0, current_yaw, 0 ).ToForward() * 48, 1 );
-		gameRenderWorld->DebugLine( colorYellow, org, org + idAngles( 0, current_yaw + turnVel, 0 ).ToForward() * 32, 1 );
+
+		if( !ai_debugMoveAngles.GetBool() )
+		{
+			gameRenderWorld->DebugLine( colorRed, org, org + idAngles( 0, ideal_yaw, 0 ).ToForward() * 64, 1 );
+			gameRenderWorld->DebugLine( colorGreen, org, org + idAngles( 0, current_yaw, 0 ).ToForward() * 48, 1 );
+			gameRenderWorld->DebugLine( colorYellow, org, org + idAngles( 0, current_yaw + turnVel, 0 ).ToForward() * 32, 1 );
+		}
+		else
+		{
+			idVec3 iForward, iRight, iUp;
+			ideal_angles.ToVectors( &iForward, &iRight, &iUp );
+			idVec3 cForward, cRight, cUp;
+			current_angles.ToVectors( &cForward, &cRight, &cUp );
+			idVec3 accForward, accRight, accUp;
+			( current_angles + turnRateAngles ).ToVectors( &accForward, &accRight, &accUp );
+
+			gameRenderWorld->DebugLine( colorRed, org, org + iForward * 64, 1 );
+			gameRenderWorld->DebugLine( colorGreen, org, org + cForward * 48, 1 );
+			gameRenderWorld->DebugLine( colorYellow, org, org + accForward * 32, 1 );
+
+
+			gameRenderWorld->DebugLine( colorRed / 2, org, org + iRight * 64, 1 );
+			gameRenderWorld->DebugLine( colorGreen / 2, org, org + cRight * 48, 1 );
+			gameRenderWorld->DebugLine( colorYellow / 2, org, org + accRight * 32, 1 );
+
+			gameRenderWorld->DebugLine( colorRed / 4, org, org + iUp * 64, 1 );
+			gameRenderWorld->DebugLine( colorGreen / 4, org, org + cUp * 48, 1 );
+			gameRenderWorld->DebugLine( colorYellow / 4, org, org + accUp * 32, 1 );
+
+		}
+
+
+		gameRenderWorld->DrawText( va( "%d,%d,%d", ( int )( ideal_angles.pitch ), ( int )( ideal_angles.yaw ), ( int )ideal_angles.roll ), GetPhysics()->GetOrigin(), 0.3f, colorDkGrey, gameLocal.GetLocalPlayer()->viewAngles.ToMat3() );
+
 	}
+}
+
+
+/*
+=====================
+idAI::FacingIdealOrientation
+=====================
+*/
+bool idAI::FacingIdealOrientation()
+{
+	idAngles diff;
+
+	if( turnRateAngles.yaw == 0 && turnRateAngles.pitch == 0 && turnRateAngles.roll == 0 )
+	{
+		return true;
+	}
+
+	diff = current_angles - ideal_angles;
+	diff.Normalize180();
+	if( diff.ToAngularVelocity().LengthFast() < 0.01f )
+	{
+		// force it to be exact
+		current_angles = ideal_angles;
+		return true;
+	}
+
+	return false;
+}
+
+bool idAI::FacingIdealOrientation() const
+{
+	idAngles diff;
+
+	if( turnRateAngles.yaw == 0 && turnRateAngles.pitch == 0 && turnRateAngles.roll == 0 )
+	{
+		return true;
+	}
+
+	diff = current_angles - ideal_angles;
+	diff.Normalize180();
+	if( diff.ToAngularVelocity().LengthFast() < 0.01f )
+	{
+		return true;
+	}
+
+	return false;
 }
 
 /*
@@ -1781,6 +1945,19 @@ bool idAI::TurnToward( const idVec3& pos )
 	bool result = FacingIdeal();
 	return result;
 }
+
+bool idAI::TurnToward( const idAngles& orientation )
+{
+	idMat3 dir;
+	float lengthSqr;
+
+	ideal_angles = orientation;
+	ideal_angles.Normalize180();
+
+	bool result = FacingIdealOrientation();
+	return result;
+}
+
 
 
 /***********************************************************************
@@ -2378,10 +2555,14 @@ void idAI::AdjustFlyHeight( idVec3& vel, const idVec3& goalPos )
 		{
 			end.z = lastVisibleEnemyPos.z + lastVisibleEnemyEyeOffset.z + fly_offset;
 		}
-		else
+		else if( yaw_angles_only )
 		{
 			// just use the default eye height for the player
 			end.z = goalPos.z + DEFAULT_FLY_OFFSET + fly_offset;
+		}
+		else
+		{
+			end.z = goalPos.z + DEFAULT_FLY_OFFSET;
 		}
 
 		gameLocal.clip.Translation( trace, origin, end, physicsObj.GetClipModel(), mat3_identity, MASK_MONSTERSOLID, this );
@@ -2419,7 +2600,9 @@ void idAI::AdjustFlySpeed( idVec3& vel )
 	// gradually speed up/slow down to desired speed
 	speed = vel.Normalize();
 	speed += ( move.speed - speed ) * MS2SEC( gameLocal.time - gameLocal.previousTime );
-	if( speed < 0.0f )
+
+	//getting wierd epsilon errors here.
+	if( speed < 1e-7f )
 	{
 		speed = 0.0f;
 	}
@@ -2440,18 +2623,41 @@ void idAI::FlyTurn()
 {
 	if( move.moveCommand == MOVE_FACE_ENEMY )
 	{
-		TurnToward( lastVisibleEnemyPos );
+		if( yaw_angles_only )
+		{
+			TurnToward( lastVisibleEnemyPos );
+		}
+		else
+		{
+			TurnToward( ( lastVisibleEnemyPos - GetPhysics()->GetOrigin() ).ToAngles() );
+		}
 	}
 	else if( ( move.moveCommand == MOVE_FACE_ENTITY ) && move.goalEntity.GetEntity() )
 	{
-		TurnToward( move.goalEntity.GetEntity()->GetPhysics()->GetOrigin() );
+		if( yaw_angles_only )
+		{
+			TurnToward( move.goalEntity.GetEntity()->GetPhysics()->GetOrigin() );
+		}
+		else
+		{
+			TurnToward( ( move.goalEntity.GetEntity()->GetPhysics()->GetOrigin() - GetPhysics()->GetOrigin() ).ToAngles() );
+		}
 	}
 	else if( move.speed > 0.0f )
 	{
 		const idVec3& vel = physicsObj.GetLinearVelocity();
 		if( vel.ToVec2().LengthSqr() > 0.1f )
 		{
-			TurnToward( vel.ToYaw() );
+			if( yaw_angles_only )
+			{
+				TurnToward( vel.ToYaw() );
+			}
+			else
+			{
+				idVec3 vn = vel;
+				vn.NormalizeFast();
+				TurnToward( vn.ToAngles() );
+			}
 		}
 	}
 	Turn();
@@ -2476,7 +2682,7 @@ void idAI::FlyMove()
 
 	if( ai_debugMove.GetBool() )
 	{
-		gameLocal.Printf( "%d: %s: %s, vel = %.2f, sp = %.2f, maxsp = %.2f\n", gameLocal.time, name.c_str(), moveCommandString[move.moveCommand], physicsObj.GetLinearVelocity().Length(), move.speed, fly_speed );
+		gameLocal.Printf( "%d: %s: %s, vel = %.2f, sp = %.2f, maxsp = %.2f\n", gameLocal.time, name.c_str(), idTypeInfo::GetEnumTypeInfo( "moveCommand_t", move.moveCommand ), physicsObj.GetLinearVelocity().Length(), move.speed, fly_speed );
 	}
 
 	if( move.moveCommand != MOVE_TO_POSITION_DIRECT )
@@ -2497,7 +2703,7 @@ void idAI::FlyMove()
 		// add in bobbing
 		AddFlyBob( vel );
 
-		if( enemy.GetEntity() && ( move.moveCommand != MOVE_TO_POSITION ) )
+		if( yaw_angles_only && enemy.GetEntity() &&  move.moveCommand != MOVE_TO_POSITION )
 		{
 			AdjustFlyHeight( vel, goalPos );
 		}
