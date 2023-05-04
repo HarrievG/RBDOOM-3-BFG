@@ -387,7 +387,7 @@ public:
 	bool						IsType( const idTypeInfo& superclass ) const;
 	bool						RespondsTo( const idEventDef& ev ) const;
 
-	static const char*			GetEnumTypeInfo(const char* enumTypeName, int value) ;
+	static const char*			GetEnumTypeInfo( const char* enumTypeName, int value ) ;
 };
 
 /*
