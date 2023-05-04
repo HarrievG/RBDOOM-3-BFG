@@ -33,7 +33,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "AAS_local.h"
 
 #define SUBSAMPLE_WALK_PATH		1
-#define SUBSAMPLE_FLY_PATH		0
+#define SUBSAMPLE_FLY_PATH		1
 
 const int		maxWalkPathIterations		= 10;
 const float		maxWalkPathDistance			= 500.0f;
