@@ -541,6 +541,9 @@ file(GLOB IRRXML_SOURCES libs/irrxml/src/*.cpp)
 file(GLOB IMGUI_INCLUDES libs/imgui/*.h)
 file(GLOB IMGUI_SOURCES libs/imgui/*.cpp)
 
+file(GLOB IMGUI_NODE_EDITOR_INCLUDES extern/imgui-node-editor/*.h)
+file(GLOB IMGUI_NODE_EDITOR_SOURCES extern/imgui-node-editor/*.cpp)
+
 file(GLOB STB_INCLUDES libs/stb/*.h)
 
 file(GLOB MESA_INCLUDES libs/mesa/*.h)
@@ -1176,6 +1179,9 @@ source_group("libs\\irrxml" FILES ${IRRXML_SOURCES})
 source_group("libs\\imgui" FILES ${IMGUI_INCLUDES})
 source_group("libs\\imgui" FILES ${IMGUI_SOURCES})
 
+source_group("extern\\imgui-node-editor" FILES ${IMGUI_NODE_EDITOR_INCLUDES})
+source_group("extern\\imgui-node-editor" FILES ${IMGUI_NODE_EDITOR_SOURCES})
+
 source_group("libs\\stb" FILES ${STB_INCLUDES})
 
 source_group("libs\\mesa" FILES ${MESA_INCLUDES})
@@ -1372,6 +1378,7 @@ set(RBDOOM3_INCLUDES
 			${IRRXML_INCLUDES}
 			${FRAMEWORK_IMGUI_INCLUDES}
 			${IMGUI_INCLUDES}
+			${IMGUI_NODE_EDITOR_INCLUDES}
 			${STB_INCLUDES}
 			${MESA_INCLUDES}
 			${TINYEXR_INCLUDES}
@@ -1434,6 +1441,7 @@ set(RBDOOM3_SOURCES
 			${IRRXML_SOURCES}
 			${FRAMEWORK_IMGUI_SOURCES}
 			${IMGUI_SOURCES}
+			${IMGUI_NODE_EDITOR_SOURCES}
 			${MIKKTSPACE_SOURCES}
 			${JPEG_SOURCES}
 			${PNG_SOURCES}
