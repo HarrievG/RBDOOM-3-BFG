@@ -502,6 +502,7 @@ void Render()
 			if( g_EDcontext )
 			{
 				ED_Simple_OnStop( g_EDcontext );
+				g_EDcontext = nullptr;
 			}
 		}
 
