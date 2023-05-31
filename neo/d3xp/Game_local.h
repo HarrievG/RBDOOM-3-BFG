@@ -113,6 +113,7 @@ void gameError( const char* fmt, ... );
 
 
 class idWeapon;
+class iceWeaponObject;
 
 //============================================================================
 
@@ -1036,5 +1037,8 @@ const int	CINEMATIC_SKIP_DELAY	= SEC2MS( 2.0f );
 //RC
 #include "roidc/rcVehicle.h"
 #include "roidc/rcRoids.h"
+#include "roidc/weapons/Weapon_space_rifle_blaster.h"
+
+
 
 #endif	/* !__GAME_LOCAL_H__ */

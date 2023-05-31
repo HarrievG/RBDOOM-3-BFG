@@ -4,11 +4,8 @@
 
 #include "../../../Game_local.h"
 #include "d3xp/gamesys/Class.h"
-//#include "d3xp/gamesys/GameTypeInfo.h"
 
-
-
-idCVar g_DroneMinerDebug( "g_PilotableDebug", "1", CVAR_GAME | CVAR_BOOL, "" );
+idCVar g_DroneMinerDebug( "g_DroneMinerDebug", "1", CVAR_GAME | CVAR_BOOL, "" );
 
 #define DRONE_FIRE_RATE		0.1
 #define DRONE_MIN_ATTACK_TIME	1.5
@@ -25,14 +22,14 @@ void rcDrone_Miner::Spawn()
 
 float rcDrone_Miner::GetMaxRange()
 {
-	//The linear velocity of a physics object is a vector that defines the
-	//translation of the center of mass in units per second.
+	// "The linear velocity of a physics object is a vector that defines the
+	// translation of the center of mass in units per second."
+	//this should become an calculation which takes "thruster burn time" into account
 	return 5000.0f;
 }
 
 void rcDrone_Miner::Init()
 {
-
 	idBounds	bounds;
 	idVec3		pos;
 	idMat3		axis;
@@ -42,7 +39,7 @@ void rcDrone_Miner::Init()
 	tm.SetupDodecahedron( bounds.GetMaxExtent() * 1.1f );
 	clipModel = new( TAG_PHYSICS_CLIP_ENTITY ) idClipModel( tm );
 	GetPhysics()->SetClipModel( clipModel, 1.0f );
-
+	targetMine = nullptr;
 	float team = 0.0f;
 
 	// don't take damage
@@ -60,34 +57,52 @@ void rcDrone_Miner::Init()
 
 stateResult_t rcDrone_Miner::state_WakeUp( stateParms_t* parms )
 {
-	Event_SetMoveType( MOVETYPE_FLY );
+	//idAI::state_WakeUp(parms);
+	GetPhysics()->SetGravity( vec3_zero );
+	disableGravity = true;
+	if( cinematic )
+	{
+		Event_SetState( "state_Cine" );
+		Event_SetMoveType( MOVETYPE_ANIM );
+	}
+	else
+	{
+		Event_SetMoveType( MOVETYPE_FLY );
 
-	Event_SetState( "state_WaitForCommands" );
-	return SRESULT_DONE;
+		Event_SetState( "state_WaitForCommands" );
+	}
+
+	return SRESULT_DONE_FRAME;
 }
 
 stateResult_t rcDrone_Miner::state_WaitForCommands( stateParms_t* parms )
 {
 	Event_SetState( "state_Mining" );
-	return SRESULT_DONE;
+	return SRESULT_DONE_FRAME;
 	//return SRESULT_WAIT;
 }
 
 
-stateResult_t rcDrone_Miner::state_Mining(stateParms_t* parms)
+stateResult_t rcDrone_Miner::state_Mining( stateParms_t* parms )
 {
 	idVec3 origin = GetPhysics()->GetOrigin();
-	if (g_DroneMinerDebug.GetBool())
+	idMat3 axis = GetPhysics()->GetAxis();
+	idVec3 dir = ( renderEntity.axis *  axis )[0];
+	dir.Normalize();
+
+	if( g_DroneMinerDebug.GetBool() )
 	{
 		//idClass::Get
-		gameRenderWorld->DrawText(va("%s", idTypeInfo::GetEnumTypeInfo("state_Mining_t", parms->stage)), origin + idVec3(0.0f,0.0f,clipModel->GetBounds().GetMaxExtent()/4.0f), 0.5f, colorYellow, gameLocal.GetLocalPlayer()->viewAngles.ToMat3());
-		if ( targetAsteroid.IsValid() )
+		gameRenderWorld->DrawText( va( "%s", idTypeInfo::GetEnumTypeInfo( "state_Mining_t", parms->stage ) ), origin + idVec3( 0.0f, 0.0f, clipModel->GetBounds().GetMaxExtent() / 4.0f ), 0.5f, colorYellow, gameLocal.GetLocalPlayer()->viewAngles.ToMat3() );
+		if( targetAsteroid.IsValid() )
 		{
-			gameRenderWorld->DebugArrow(colorDkGrey, origin, targetAsteroid->GetPhysics()->GetOrigin(), 10, 2);
-			gameRenderWorld->DrawText(va("%d", (int)(targetAsteroid->GetPhysics()->GetOrigin() - origin).Length()), origin, 1, colorDkGrey, gameLocal.GetLocalPlayer()->viewAngles.ToMat3());
+			//gameRenderWorld->DebugArrow(colorMdGrey, origin, GetPhysics()->GetAxis()[0], 10, 2);
+			gameRenderWorld->DrawText( va( "%d", ( int )( targetAsteroid->GetPhysics()->GetOrigin() - origin ).Length() ), origin, 1, colorDkGrey, gameLocal.GetLocalPlayer()->viewAngles.ToMat3() );
 		}
-	}
 
+		gameRenderWorld->DebugArrow( colorDkGrey, origin, origin + dir * 200, 10, 2 );
+
+	}
 	switch( parms->stage )
 	{
 		case STAGE_FIND_ASTEROID:
@@ -95,7 +110,11 @@ stateResult_t rcDrone_Miner::state_Mining(stateParms_t* parms)
 			idTraceModel tm;
 			tm.SetupBox( GetMaxRange() );
 			idClipModel* clipModels[MAX_GENTITIES];
+			const asteroidMine_s* tmpMine = nullptr;
+			const rcAsteroid* tmpRoid = nullptr;
 			int numClipModels = gameLocal.clip.ClipModelsTouchingBounds( tm.bounds, CONTENTS_SOLID, clipModels, MAX_GENTITIES );
+			float closestMineSqrd = idMath::INFINITUM;
+			float newDist = 0.0f;
 			for( int i = 0 ; i < numClipModels; i++ )
 			{
 				idEntity* clippedEntity = clipModels[i]->GetEntity();
@@ -103,19 +122,66 @@ stateResult_t rcDrone_Miner::state_Mining(stateParms_t* parms)
 				{
 					//is this sorted by distance?
 					targetAsteroid = static_cast<const rcAsteroid*>( clippedEntity );
-					parms->stage = STAGE_MOVE_TO_ASTEROID;
-					return SRESULT_WAIT;
+					targetMine = &targetAsteroid->GetClosestMine( origin );
+					newDist = ( targetMine->alignPos - origin ).LengthSqr();
+					if( newDist < closestMineSqrd )
+					{
+						closestMineSqrd = newDist;
+						tmpMine = targetMine;
+						tmpRoid = targetAsteroid;
+					}
 				}
+			}
+			targetAsteroid = tmpRoid;
+			targetMine = tmpMine;
+
+			parms->stage = STAGE_MOVE_TO_ASTEROID;
+			MoveToPositionOriented( targetMine->alignPos, targetMine->alignAxis );
+			AI_RUN = true;
+
+			return SRESULT_WAIT;
+		}
+		break;
+		case STAGE_MOVE_TO_ASTEROID:
+		{
+			float distToAlign = ( targetMine->alignPos - origin ).Length();
+			if( distToAlign < 200 )
+			{
+				fly_speed = 100;
+				MoveToPositionOriented( targetMine->alignPos + targetMine->alignAxis[0] * 100, targetMine->alignAxis );
+				parms->stage = STAGE_ALIGN_TO_MINE_ON_ASTEROID;
+			}
+
+			return SRESULT_WAIT;
+		}
+		break;
+		case STAGE_ALIGN_TO_MINE_ON_ASTEROID:
+		{
+			if( move.moveStatus == MOVE_STATUS_DONE && TurnToward( targetMine->alignAxis.ToAngles() ) )
+			{
+				parms->stage = STAGE_MINE;
 			}
 			return SRESULT_WAIT;
 		}
-		case STAGE_MOVE_TO_ASTEROID:
+		break;
+		case STAGE_MINE:
+
+			if( ( targetMine->alignPos - origin ).Length() > 250.0f )
+			{
+				MoveToPositionOriented( targetMine->alignPos + targetMine->alignAxis[0] * 100, targetMine->alignAxis );
+				parms->stage = STAGE_MOVE_TO_ASTEROID;
+			}
+			else if( g_DroneMinerDebug.GetBool() )
+			{
+				gameRenderWorld->DebugArrow( colorPink, origin, origin + targetMine->alignAxis[0] * 100, 10, 2 );
+				gameRenderWorld->DebugArrow( colorOrange, origin, origin + GetPhysics()->GetLinearVelocity(), 10, 2 );
+			}
+
+
+
 			return SRESULT_WAIT;
 			break;
-		case STAGE_MINE_SILICON:
-			return SRESULT_WAIT;
-			break;
-		case STAGE_DEPOSIT_SILICON:
+		case STAGE_DEPOSIT:
 			break;
 		case STAGE_RETURN_TO_ASTEROID:
 			break;
@@ -126,9 +192,15 @@ stateResult_t rcDrone_Miner::state_Mining(stateParms_t* parms)
 	return SRESULT_ERROR;
 }
 
+stateResult_t rcDrone_Miner::state_Cine( stateParms_t* parms )
+{
+	return SRESULT_DONE_FRAME;
+}
+
 stateResult_t rcDrone_Miner::state_Begin( stateParms_t* parms )
 {
 	Event_SetMoveType( MOVETYPE_FLY );
+	GetPhysics()->SetGravity( vec3_zero );
 
 	if( GetIntKey( "trigger" ) )
 	{
@@ -150,7 +222,7 @@ void rcDrone_Miner::AI_Begin()
 stateResult_t	rcDrone_Miner::combat_attack( stateParms_t* parms )
 {
 	//should never hit, satisfying compiler.
-	assert( 0, "DANGER DANGER, MR ROBINSON" );
+	assert( 0 );
 	return SRESULT_DONE;
 }
 

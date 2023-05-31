@@ -1,15 +1,17 @@
 
 #pragma once
 
-enum state_Mining_t
+typedef enum
 {
 	STAGE_FIND_ASTEROID = 0,
 	STAGE_MOVE_TO_ASTEROID,
-	STAGE_MINE_SILICON,
-	STAGE_DEPOSIT_SILICON,
+	STAGE_ALIGN_TO_MINE_ON_ASTEROID,
+	STAGE_MINE,
+	STAGE_DEPOSIT,
 	STAGE_RETURN_TO_ASTEROID,
-};
+} state_Mining_t;
 
+struct asteroidMine_s;
 class rcAsteroid;
 class rcDrone_Miner : public idAI
 {
@@ -47,6 +49,8 @@ private:
 	stateResult_t				state_WaitForCommands( stateParms_t* parms );
 	stateResult_t				state_Mining( stateParms_t* parms );
 
+	stateResult_t				state_Cine( stateParms_t* parms );
+
 	stateResult_t				state_Begin( stateParms_t* parms );
 	stateResult_t				state_Idle( stateParms_t* parms );
 	stateResult_t				state_Combat( stateParms_t* parms );
@@ -57,6 +61,7 @@ private:
 	boolean		light_is_on;
 
 	idEntityPtr<rcAsteroid> targetAsteroid;
+	const asteroidMine_s* targetMine;
 	idList< jointHandle_t> flashJointWorldHandles;
 	//////////////////////////////////////////////////////////////////////////
 	idClipModel* clipModel;

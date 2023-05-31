@@ -299,7 +299,7 @@ void rcShipPodLarge::Think()
 	}
 	else if( prtBackCenter->GetRenderEntity()->shaderParms[SHADERPARM_PARTICLE_STOPTIME] == 0 )
 	{
-		prtBackCenter->GetRenderEntity()->shaderParms[SHADERPARM_PARTICLE_STOPTIME] = MS2SEC( gameLocal.time ) + 1;
+		prtBackCenter->GetRenderEntity()->shaderParms[SHADERPARM_PARTICLE_STOPTIME] = MS2SEC( gameLocal.time + 1 );
 	}
 
 	if( g_ShipPodLargeDebug.GetBool() )
