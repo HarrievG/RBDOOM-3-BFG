@@ -859,6 +859,9 @@ file(GLOB RC_SOURCES d3xp/roidc/*.cpp)
 file(GLOB RC_AI_SHIPS_INCLUDES d3xp/roidc/ai/ships/*.h)
 file(GLOB RC_AI_SHIPS_SOURCES d3xp/roidc/ai/ships/*.cpp)
 
+file(GLOB RC_WEAPON_INCLUDES d3xp/roidc/weapons/*.h)
+file(GLOB RC_WEAPON_SOURCES d3xp/roidc/weapons/*.cpp)
+
 file(GLOB GAMED3XP_AI_INCLUDES d3xp/ai/*.h)
 file(GLOB GAMED3XP_AI_SOURCES d3xp/ai/*.cpp)
 
@@ -1273,6 +1276,8 @@ source_group("game-rc" FILES ${RC_INCLUDES})
 source_group("game-rc" FILES ${RC_SOURCES})
 source_group("game-rc\\ai\\ships" FILES ${RC_AI_SHIPS_INCLUDES})
 source_group("game-rc\\ai\\ships" FILES ${RC_AI_SHIPS_SOURCES})
+source_group("game-rc\\weapons" FILES ${RC_WEAPON_INCLUDES})
+source_group("game-rc\\weapons" FILES ${RC_WEAPON_SOURCES})
 
 source_group("sys\\win32" FILES ${WIN32_INCLUDES})
 source_group("sys\\win32" FILES ${WIN32_SOURCES})
@@ -1408,6 +1413,7 @@ set(RBDOOM3_INCLUDES
 
 			${RC_INCLUDES}
 			${RC_AI_SHIPS_INCLUDES}
+			${RC_WEAPON_INCLUDES}
 
 			)
 			
@@ -1463,6 +1469,7 @@ set(RBDOOM3_SOURCES
 
 			${RC_SOURCES}
 			${RC_AI_SHIPS_SOURCES}
+			${RC_WEAPON_SOURCES}
 			)
 
 macro(AddSubdirectory dirName)
