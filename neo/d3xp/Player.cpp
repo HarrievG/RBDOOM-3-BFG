@@ -5644,7 +5644,7 @@ void idPlayer::Weapon_Combat()
 		idealWeapon = currentWeapon;
 	}
 
-	if( idealWeapon != currentWeapon &&  idealWeapon.Get() < MAX_WEAPONS )
+	if( idealWeapon != currentWeapon &&  ( idealWeapon.Get() < MAX_WEAPONS  && idealWeapon.Get() >= 0 ) )
 	{
 		if( weaponCatchup )
 		{

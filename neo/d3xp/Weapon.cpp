@@ -1080,7 +1080,13 @@ void idWeapon::GetWeaponDef( const char* objectname, int ammoinclip )
 	flashJointView = animator.GetJointHandle( "flash" );
 	ejectJointView = animator.GetJointHandle( "eject" );
 	guiLightJointView = animator.GetJointHandle( "guiLight" );
+
 	ventLightJointView = animator.GetJointHandle( "ventLight" );
+	idStr ventJoint = weaponDef->dict.GetString( "vent_joint" );
+	if ( ventJoint.Length() > 0 )
+	{
+		ventLightJointView = animator.GetJointHandle( ventJoint );
+	}
 
 	idStr smokeJoint = weaponDef->dict.GetString( "smoke_joint" );
 	if( smokeJoint.Length() > 0 )
