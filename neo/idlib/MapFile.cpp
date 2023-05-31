@@ -2779,7 +2779,7 @@ unsigned int MapPolygonMesh::GetGeometryCRC() const
 {
 	unsigned int i;
 	unsigned int crc = 0;
-	for( i = 0; i < verts.Num(); i++ )
+	for( i = 0; i < ( unsigned int )verts.Num(); i++ )
 	{
 #if 0
 		crc ^= StringCRC( ( verts[i].xyz * ( i + 1 ) ).ToString() );
@@ -2790,7 +2790,7 @@ unsigned int MapPolygonMesh::GetGeometryCRC() const
 #endif
 	}
 
-	for( i = 0; i < polygons.Num(); i++ )
+	for( i = 0; i < ( unsigned int ) polygons.Num(); i++ )
 	{
 		const MapPolygon& poly = polygons[i];
 		crc ^= StringCRC( poly.GetMaterial() + idStr( i ) );
