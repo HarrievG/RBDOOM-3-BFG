@@ -863,7 +863,7 @@ idEntityFx* idEntityFx::StartFx( const char* fx, const idVec3* useOrigin, const 
 		nfx->SetAxis( ( useAxis ) ? *useAxis : ent->GetPhysics()->GetAxis() );
 	}
 
-	if( bind )
+	if( bind && !nfx->Joint() )
 	{
 		// never bind to world spawn
 		if( ent != gameLocal.world )
