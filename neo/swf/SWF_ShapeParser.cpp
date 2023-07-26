@@ -31,27 +31,43 @@ If you have questions concerning this license or the applicable additional terms
 
 #pragma warning( disable: 4189 ) // local variable is initialized but not referenced
 
-void idSWFShapeParser::MakeCap( idSWFShapeParser::swfSPDrawLine_t& spld, idSWFShapeDrawLine& ld, swfSPMorphEdge_t& edge, bool end )
+void idSWFShapeParser::MakeCap( idSWFShapeParser::swfSPDrawLine_t& spld, idSWFShapeDrawLine& ld, swfSPMorphEdge_t& edge, bool start )
 {
-
 	//figure out what the orientation of the cap is.
+	uint16 v0StartIndex = edge.start.v0;
+	uint16 v1StartIndex = ( edge.start.cp == 0xFFFF ) ? edge.start.v1 : edge.start.cp;
 
-	idVec2 up = ( verts[edge.start.v0] - verts[edge.start.v1] );
-	idVec2 down = ( verts[edge.end.v1] - verts[edge.end.v0] );
+	uint16 v0EndIndex = ( edge.end.cp == 0xFFFF ) ? edge.end.v0 : edge.end.cp;
+	uint16 v1EndIndex = edge.end.v1;
+
+	uint16 v0 = v0StartIndex;
+	uint16 v1 = v1StartIndex;
+
+	if( !start )
+	{
+		v0 = v0EndIndex;
+		v1 = v1EndIndex;
+	}
+
+	idVec2 up = ( verts[v0] - verts[v1] );
+	idVec2 down = ( verts[v1] - verts[v0] );
 	idVec2 cross = idVec2( down.y, -down.x );
 	idVec2 crossUp = idVec2( up.y, -up.x );
 
 	uint8 vertIndex;
-	if( end )
+	if( !start )
 	{
-		vertIndex = edge.start.v1;
+		vertIndex = v1;
 	}
 	else
 	{
-		vertIndex = edge.start.v0;
+		vertIndex = v0;
 		cross = crossUp;
 	}
 
+	float scale = ( float )( 1.0f / 20 ) * ( ld.style.startWidth * 0.5 ) ;
+
+	//vert
 	int capCenterIdx = ld.startVerts.AddUnique( verts[vertIndex] );
 	int pointCnt;
 	float x, z;
@@ -61,41 +77,27 @@ void idSWFShapeParser::MakeCap( idSWFShapeParser::swfSPDrawLine_t& spld, idSWFSh
 	float angle = idMath::ATan( xup.y - cross.y, xup.x - cross.x ) + idMath::PI;
 
 	idMath::SinCos( angle, s, c );
-	float scale = ( float ) ld.style.startWidth / 40;
+
 	matrix.xx = c * scale;
 	matrix.yx = s * scale;
 	matrix.xy = -s * scale;
 	matrix.yy = c * scale;
 	int A, B;
-	for( float w = 0.0; w <= 180 ; w += 10 )
+	for( float w = -10; w <= 180 + 10; w += 10 )
 	{
-
-		if( !w )
-		{
-			idMath::SinCos( DEG2RAD( w ), z, x );
-		}
-		else
-		{
-			idMath::SinCos( DEG2RAD( w ), z, x );
-		}
+		idMath::SinCos( DEG2RAD( w ), z, x );
 
 		ld.indices.Append( capCenterIdx );
 		A = ld.startVerts.AddUnique( matrix.Transform( idVec2( x, z ) ) + ld.startVerts[capCenterIdx] );
 
-		if( w > 10 )
+		if( w >= 0.0f )
 		{
 			ld.indices.Append( B );
 			ld.indices.Append( A );
 			ld.indices.Append( capCenterIdx );
-
-		}
-		else if( w + 10 <= 180 )
-		{
-			w += 10;
 		}
 
 		ld.indices.Append( A );
-
 
 		idMath::SinCos( DEG2RAD( w ), z, x );
 		B = ld.startVerts.AddUnique( matrix.Transform( idVec2( x , z ) ) + ld.startVerts[capCenterIdx] );
@@ -147,36 +149,55 @@ void idSWFShapeParser::Parse( idSWFBitStream& bitstream, idSWFShape& shape, int 
 		for( int e = 0; e < spld.edges.Num(); e++ )
 		{
 			//startcap
-			if( ld.style.startCapStyle == 0 && ld.style.startWidth > 60 && spld.edges.Num() )
+			//only supporting round
+			if( ld.style.startCapStyle == 0 )
 			{
-				MakeCap( spld, ld, spld.edges[e], false );
+				MakeCap( spld, ld, spld.edges[e], true );
 			}
-			//joint.
-			idVec2 up = ( verts[ spld.edges[e].start.v0 ] - verts[ spld.edges[e].start.v1 ] );
-			idVec2 down = ( verts[ spld.edges[e].start.v1 ] - verts[ spld.edges[e].start.v0 ] );
+
+			uint16 v0StartIndex = spld.edges[e].start.v0;
+			uint16 v1StartIndex = ( spld.edges[e].start.cp == 0xFFFF ) ? spld.edges[e].start.v1 : spld.edges[e].start.cp;
+
+			uint16 v0EndIndex = ( spld.edges[e].end.cp == 0xFFFF ) ? spld.edges[e].end.v0 : spld.edges[e].end.cp;
+			uint16 v1EndIndex = spld.edges[e].end.v1;
+
+			uint16 v0 = v0StartIndex;
+			uint16 v1 = v1StartIndex;
+
+			idVec2 up = ( verts[v0] - verts[v1] );
+			idVec2 down = ( verts[v1] - verts[v0] );
 			idVec2 cross = idVec2( down.y, -down.x );
 			idVec2 crossUp = idVec2( up.y, -up.x );
-			idVec2 offSetA = crossUp * ( ( 1.0f / down.Length() ) * ld.style.startWidth / 20 );
-			idVec2 offSetB =  cross * ( ( 1.0f / down.Length() ) * ld.style.startWidth / 40 );
 
-			int v0 = ld.startVerts.AddUnique( verts[ spld.edges[e].start.v0 ] + offSetB );
-			int v0x = ld.startVerts.AddUnique( verts[ spld.edges[e].start.v0 ]  +  offSetA  + offSetB );
-			ld.indices.Append( v0 );
+			float scale = ( float )( 1.0f / 20 ) * ( ld.style.startWidth * 0.5 );
+
+			idVec2 offSetA = crossUp * ( ( ( 1.0f / 20 ) / down.Length() ) * ld.style.startWidth ) * 0.5f ;
+			idVec2 offSetB =  cross * ( ( ( 1.0f / 20 ) / down.Length() ) * ld.style.startWidth ) * 0.5f;
+
+			v0 = ld.startVerts.AddUnique( verts[ spld.edges[e].start.v0 ]  - offSetB );
+			int v0x = ld.startVerts.AddUnique( verts[ spld.edges[e].start.v0 ]  -  offSetA );
+
+			//straight line
 			if( spld.edges[e].start.cp == 0xFFFF )
 			{
+				ld.indices.Append( v0 );
 				ld.indices.Append( v0x );
 			}
-			int last = v0x;
+
 			// Rather then tesselating curves at run time, we do them once here by inserting a vert every 10 units
 			// It may not wind up being 10 actual pixels when rendered because the shape may have scaling applied to it
 			if( spld.edges[e].start.cp != 0xFFFF )
 			{
 				assert( spld.edges[e].end.cp != 0xFFFF );
-				float length1 = ( verts[ spld.edges[e].start.v0 ] - verts[ spld.edges[e].start.v1 ] ).Length();
-				float length2 = ( verts[ spld.edges[e].end.v0 ] - verts[ spld.edges[e].end.v1 ] ).Length();
+				float length1 = ( verts[ spld.edges[e].start.v0 ] - verts[ spld.edges[e].start.v1 ] ).Length() * scale;
+				float length2 = ( verts[ spld.edges[e].end.v0 ] - verts[ spld.edges[e].end.v1 ] ).Length() * scale;
 				int numPoints = 1 + idMath::Ftoi( Max( length1, length2 ) / 10.0f );
 				int lastV1;
-				int lastV2;
+				int last;
+				v0 = ld.startVerts.AddUnique( verts[spld.edges[e].end.v0] + offSetB );
+				v0x = ld.startVerts.AddUnique( verts[spld.edges[e].end.v0] + offSetA );
+				ld.indices.Append( v0 );
+
 				for( int ti = 0; ti < numPoints; ti++ )
 				{
 					float t0 = ( ti + 1 ) / ( ( float ) numPoints + 1.0f );
@@ -203,11 +224,11 @@ void idSWFShapeParser::Parse( idSWFBitStream& bitstream, idSWFShape& shape, int 
 					idVec2 idown = p2 - p1;
 					idVec2 icross = idVec2( idown.y, -idown.x );
 					idVec2 icrossUp = idVec2( iup.y, -iup.x );
-					idVec2 ioffSetA = icrossUp * ( ( 1.0f / idown.Length( ) ) * ld.style.startWidth / 20 );
-					idVec2 ioffSetB = icross * ( ( 1.0f / idown.Length( ) ) * ld.style.startWidth / 40 );
+					idVec2 ioffSetA = icrossUp * ( ( ( 1.0f / 20 ) / idown.Length() ) * ld.style.startWidth ) * 0.5f;
+					idVec2 ioffSetB = icross * ( ( ( 1.0f / 20 ) / idown.Length() ) * ld.style.startWidth ) * 0.5f;
 
-					int v1 = ld.startVerts.AddUnique( p1 + ioffSetB ) ;
-					int v2 = ld.startVerts.AddUnique( p1 + ioffSetA + ioffSetB ) ;
+					v1 = ld.startVerts.AddUnique( p1 + ioffSetB );
+					int v2 = ld.startVerts.AddUnique( p1 + ioffSetA );
 
 					if( ti > 0 )
 					{
@@ -215,33 +236,72 @@ void idSWFShapeParser::Parse( idSWFBitStream& bitstream, idSWFShape& shape, int 
 						ld.indices.Append( lastV1 );
 					}
 
-					if( ti == 0 )
-					{
-						ld.indices.Append( v2 );
-					}
 					ld.indices.Append( v1 );
 					ld.indices.Append( v2 );
 					if( ti > 0 )
 					{
 						ld.indices.Append( v2 );
+						ld.indices.Append( v1 );
 					}
-					ld.indices.Append( v1 );
+					else
+					{
+						ld.indices.Append( v2 );
+					}
 
-					lastV2 = v2;
+					if( ti == numPoints - 1 )
+					{
+						ld.indices.Append( v2 );
+					}
+
+					if( ti == 0 )
+					{
+
+						ld.indices.Append( v0 );
+						ld.indices.Append( v0x );
+						ld.indices.Append( v1 );
+						ld.indices.Append( v2 );
+					}
+
 					lastV1 = v1;
 					last = v2;
 				}
+
+				v0 = v0EndIndex;
+				v1 = v1EndIndex;
+
+				up = ( verts[v0] - verts[v1] );
+				down = ( verts[v1] - verts[v0] );
+				cross = idVec2( down.y, -down.x );
+				crossUp = idVec2( up.y, -up.x );
+
+				offSetA = crossUp * ( ( ( 1.0f / 20 ) / down.Length() ) * ld.style.startWidth ) * 0.5f;
+				offSetB = cross * ( ( ( 1.0f / 20 ) / down.Length() ) * ld.style.startWidth ) * 0.5f;
+
+
+				ld.indices.Append( lastV1 );
+				ld.indices.Append( ld.startVerts.AddUnique( verts[spld.edges[e].end.v1] + offSetA ) );
+				ld.indices.Append( ld.startVerts.AddUnique( verts[spld.edges[e].end.v1] + offSetB ) );
+
+				ld.indices.Append( last );
+				ld.indices.Append( lastV1 );
+				ld.indices.Append( ld.startVerts.AddUnique( verts[spld.edges[e].end.v1] + offSetA ) );
 			}
-			ld.indices.Append( ld.startVerts.AddUnique( verts[spld.edges[e].start.v1] + offSetB ) );
-			ld.indices.Append( ld.startVerts.AddUnique( verts[spld.edges[e].start.v1] + offSetA + offSetB ) );
-			ld.indices.Append( last );
-			ld.indices.Append( ld.startVerts.AddUnique( verts[spld.edges[e].start.v1] + offSetB ) );
+			else
+			{
+				//straight line
+				ld.indices.Append( ld.startVerts.AddUnique( verts[spld.edges[e].end.v1] - offSetB ) );
+
+				ld.indices.Append( ld.startVerts.AddUnique( verts[spld.edges[e].end.v1] - offSetA ) );
+				ld.indices.Append( v0x );
+				ld.indices.Append( ld.startVerts.AddUnique( verts[spld.edges[e].end.v1] - offSetB ) );
+			}
+
 			last = ld.indices.Num() - 1;
 
 			//endcap
-			if( ld.style.endCapStyle == 0 && ld.style.startWidth > 60 )
+			if( ld.style.endCapStyle == 0 )
 			{
-				MakeCap( spld, ld, spld.edges[e], true );
+				MakeCap( spld, ld, spld.edges[e], false );
 			}
 		}
 	}

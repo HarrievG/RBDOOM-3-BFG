@@ -89,7 +89,7 @@ private:
 	void TriangulateSoup( idSWFFontGlyph& shape );
 	int FindEarVert( const swfSPLineLoop_t& loop );
 	void AddUniqueVert( idSWFShapeDrawFill& drawFill, const idVec2& start, const idVec2& end );
-	void MakeCap( swfSPDrawLine_t& spld, idSWFShapeDrawLine& ld , swfSPMorphEdge_t& edge, bool end );
+	void MakeCap( swfSPDrawLine_t& spld, idSWFShapeDrawLine& ld , swfSPMorphEdge_t& edge, bool start );
 };
 
 #endif // !__SWF_SHAPEPARSER_H__
