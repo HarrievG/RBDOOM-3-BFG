@@ -49,3 +49,4 @@ neo/.kdev4
 neo/neo.kdev4
 neo/.idea/
 neo/cmake-build-*/
+/.vs
