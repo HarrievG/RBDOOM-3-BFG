@@ -1130,8 +1130,7 @@ intptr_t idPhysics_Parametric::Invoke(const char *functionName, void *param1) {
 		return (intptr_t)GetAngularEndTime();
 	};
 	if(functionNameHash == 147808) { // TestIfAtRest
-		TestIfAtRest();
-		return 0;
+		return (intptr_t)TestIfAtRest();
 	};
 	if(functionNameHash == 49945) { // Rest
 		Rest();
@@ -4913,8 +4912,7 @@ intptr_t idItem::Invoke(const char *functionName, void *param1) {
 		return 0;
 	};
 	if(functionNameHash == 382066) { // GetPredictPickupMilliseconds
-		GetPredictPickupMilliseconds();
-		return 0;
+		return (intptr_t)GetPredictPickupMilliseconds();
 	};
 	if(functionNameHash == 219076) { // Event_DropToFloor
 		Event_DropToFloor();
@@ -8424,6 +8422,12 @@ intptr_t idAI::Invoke(const char *functionName, void *param1) {
 	if(functionNameHash == 131961) { // FacingIdeal
 		return (intptr_t)FacingIdeal();
 	};
+	if(functionNameHash == 289261) { // FacingIdealOrientation
+		return (intptr_t)FacingIdealOrientation();
+	};
+	if(functionNameHash == 289261) { // FacingIdealOrientation
+		return (intptr_t)FacingIdealOrientation();
+	};
 	if(functionNameHash == 51250) { // Turn
 		Turn();
 		return 0;
@@ -8948,6 +8952,12 @@ bool idAI::HasNativeFunction(const char *functionName) {
 	if(functionNameHash == 131961) { // FacingIdeal
 		return true;
 	};
+	if(functionNameHash == 289261) { // FacingIdealOrientation
+		return true;
+	};
+	if(functionNameHash == 289261) { // FacingIdealOrientation
+		return true;
+	};
 	if(functionNameHash == 51250) { // Turn
 		return true;
 	};
@@ -9309,8 +9319,7 @@ intptr_t iceAI_Follower::Invoke(const char *functionName, void *param1) {
 		return 0;
 	};
 	if(functionNameHash == 130066) { // state_idle
-		state_idle((stateParms_t *)param1);
-		return 0;
+		return (intptr_t)state_idle((stateParms_t *)param1);
 	};
 	if(functionNameHash == 211350) { // state_idle_frame
 		return (intptr_t)state_idle_frame((stateParms_t *)param1);
@@ -9379,8 +9388,7 @@ intptr_t iceMonsterBossVagary::Invoke(const char *functionName, void *param1) {
 		return 0;
 	};
 	if(functionNameHash == 139384) { // state_Begin
-		state_Begin((stateParms_t *)param1);
-		return 0;
+		return (intptr_t)state_Begin((stateParms_t *)param1);
 	};
 	if(functionNameHash == 126066) { // state_Idle
 		return (intptr_t)state_Idle((stateParms_t *)param1);
@@ -9449,8 +9457,7 @@ intptr_t iceMonsterDemonHellknight::Invoke(const char *functionName, void *param
 		return 0;
 	};
 	if(functionNameHash == 139384) { // state_Begin
-		state_Begin((stateParms_t *)param1);
-		return 0;
+		return (intptr_t)state_Begin((stateParms_t *)param1);
 	};
 	if(functionNameHash == 126066) { // state_Idle
 		return (intptr_t)state_Idle((stateParms_t *)param1);
@@ -9507,8 +9514,7 @@ intptr_t iceMonsterDemonImp::Invoke(const char *functionName, void *param1) {
 		return 0;
 	};
 	if(functionNameHash == 139384) { // state_Begin
-		state_Begin((stateParms_t *)param1);
-		return 0;
+		return (intptr_t)state_Begin((stateParms_t *)param1);
 	};
 	if(functionNameHash == 126066) { // state_Idle
 		return (intptr_t)state_Idle((stateParms_t *)param1);
@@ -9583,8 +9589,7 @@ intptr_t iceMonsterLostSoul::Invoke(const char *functionName, void *param1) {
 		return 0;
 	};
 	if(functionNameHash == 139384) { // state_Begin
-		state_Begin((stateParms_t *)param1);
-		return 0;
+		return (intptr_t)state_Begin((stateParms_t *)param1);
 	};
 	if(functionNameHash == 126066) { // state_Idle
 		return (intptr_t)state_Idle((stateParms_t *)param1);
@@ -9647,8 +9652,7 @@ intptr_t iceMonsterFlyingCacodemon::Invoke(const char *functionName, void *param
 		return 0;
 	};
 	if(functionNameHash == 139384) { // state_Begin
-		state_Begin((stateParms_t *)param1);
-		return 0;
+		return (intptr_t)state_Begin((stateParms_t *)param1);
 	};
 	if(functionNameHash == 126066) { // state_Idle
 		return (intptr_t)state_Idle((stateParms_t *)param1);
@@ -9705,8 +9709,7 @@ intptr_t iceMonsterZombie::Invoke(const char *functionName, void *param1) {
 		return 0;
 	};
 	if(functionNameHash == 139384) { // state_Begin
-		state_Begin((stateParms_t *)param1);
-		return 0;
+		return (intptr_t)state_Begin((stateParms_t *)param1);
 	};
 	if(functionNameHash == 126066) { // state_Idle
 		return (intptr_t)state_Idle((stateParms_t *)param1);
@@ -9753,8 +9756,7 @@ intptr_t iceMonsterZombieSawyer::Invoke(const char *functionName, void *param1) 
 		return 0;
 	};
 	if(functionNameHash == 139384) { // state_Begin
-		state_Begin((stateParms_t *)param1);
-		return 0;
+		return (intptr_t)state_Begin((stateParms_t *)param1);
 	};
 	if(functionNameHash == 126066) { // state_Idle
 		return (intptr_t)state_Idle((stateParms_t *)param1);
@@ -9802,8 +9804,7 @@ intptr_t iceMonsterZombieBernie::Invoke(const char *functionName, void *param1) 
 		return 0;
 	};
 	if(functionNameHash == 139384) { // state_Begin
-		state_Begin((stateParms_t *)param1);
-		return 0;
+		return (intptr_t)state_Begin((stateParms_t *)param1);
 	};
 	if(functionNameHash == 126066) { // state_Idle
 		return (intptr_t)state_Idle((stateParms_t *)param1);
@@ -9854,8 +9855,7 @@ intptr_t iceMonsterZombieMorgue::Invoke(const char *functionName, void *param1) 
 		return 0;
 	};
 	if(functionNameHash == 139384) { // state_Begin
-		state_Begin((stateParms_t *)param1);
-		return 0;
+		return (intptr_t)state_Begin((stateParms_t *)param1);
 	};
 	if(functionNameHash == 126066) { // state_Idle
 		return (intptr_t)state_Idle((stateParms_t *)param1);
@@ -9906,8 +9906,7 @@ intptr_t iceMonsterZombieSecurityPistol::Invoke(const char *functionName, void *
 		return 0;
 	};
 	if(functionNameHash == 139384) { // state_Begin
-		state_Begin((stateParms_t *)param1);
-		return 0;
+		return (intptr_t)state_Begin((stateParms_t *)param1);
 	};
 	if(functionNameHash == 126066) { // state_Idle
 		return (intptr_t)state_Idle((stateParms_t *)param1);
@@ -9976,8 +9975,7 @@ intptr_t iceMonsterZombieCommandoTentacle::Invoke(const char *functionName, void
 		return 0;
 	};
 	if(functionNameHash == 139384) { // state_Begin
-		state_Begin((stateParms_t *)param1);
-		return 0;
+		return (intptr_t)state_Begin((stateParms_t *)param1);
 	};
 	if(functionNameHash == 126066) { // state_Idle
 		return (intptr_t)state_Idle((stateParms_t *)param1);
@@ -10048,8 +10046,7 @@ intptr_t iceMonsterZombieCommandoChaingun::Invoke(const char *functionName, void
 		return 0;
 	};
 	if(functionNameHash == 139384) { // state_Begin
-		state_Begin((stateParms_t *)param1);
-		return 0;
+		return (intptr_t)state_Begin((stateParms_t *)param1);
 	};
 	if(functionNameHash == 126066) { // state_Idle
 		return (intptr_t)state_Idle((stateParms_t *)param1);
@@ -10148,8 +10145,7 @@ intptr_t iceMonster_Turret::Invoke(const char *functionName, void *param1) {
 		return (intptr_t)state_Killed((stateParms_t *)param1);
 	};
 	if(functionNameHash == 152836) { // state_WakeUp
-		state_WakeUp((stateParms_t *)param1);
-		return 0;
+		return (intptr_t)state_WakeUp((stateParms_t *)param1);
 	};
 	if(functionNameHash == 139384) { // state_Begin
 		return (intptr_t)state_Begin((stateParms_t *)param1);
@@ -10257,8 +10253,7 @@ intptr_t iceBot::Invoke(const char *functionName, void *param1) {
 		return 0;
 	};
 	if(functionNameHash == 139244) { // state_Chase
-		state_Chase((stateParms_t *)param1);
-		return 0;
+		return (intptr_t)state_Chase((stateParms_t *)param1);
 	};
 	if(functionNameHash == 221136) { // state_BattleFight
 		return (intptr_t)state_BattleFight((stateParms_t *)param1);
@@ -10327,6 +10322,164 @@ bool iceBot::HasNativeFunction(const char *functionName) {
 		return true;
 	};
 	if(functionNameHash == 180698) { // state_Attacked
+		return true;
+	};
+	return __super::HasNativeFunction(functionName);
+
+};
+
+intptr_t rcDrone_Miner::Invoke(const char *functionName, void *param1) {
+	int functionNameHash = idStr::Hash(functionName);
+	if(functionNameHash == 48744) { // Init
+		Init();
+		return 0;
+	};
+	if(functionNameHash == 88222) { // AI_Begin
+		AI_Begin();
+		return 0;
+	};
+	if(functionNameHash == 63102) { // Spawn
+		Spawn();
+		return 0;
+	};
+	if(functionNameHash == 133465) { // GetMaxRange
+		GetMaxRange();
+		return 0;
+	};
+	if(functionNameHash == 95001) { // destory
+		destory();
+		return 0;
+	};
+	if(functionNameHash == 72814) { // canHit
+		return (intptr_t)canHit();
+	};
+	if(functionNameHash == 146777) { // spawn_light
+		spawn_light();
+		return 0;
+	};
+	if(functionNameHash == 116332) { // light_off
+		light_off();
+		return 0;
+	};
+	if(functionNameHash == 104386) { // light_on
+		light_on();
+		return 0;
+	};
+	if(functionNameHash == 138382) { // Torso_Death
+		return (intptr_t)Torso_Death((stateParms_t *)param1);
+	};
+	if(functionNameHash == 124942) { // Torso_Idle
+		return (intptr_t)Torso_Idle((stateParms_t *)param1);
+	};
+	if(functionNameHash == 153143) { // Torso_Attack
+		return (intptr_t)Torso_Attack((stateParms_t *)param1);
+	};
+	if(functionNameHash == 223655) { // Torso_CustomCycle
+		return (intptr_t)Torso_CustomCycle((stateParms_t *)param1);
+	};
+	if(functionNameHash == 153871) { // state_Killed
+		return (intptr_t)state_Killed((stateParms_t *)param1);
+	};
+	if(functionNameHash == 152836) { // state_WakeUp
+		return (intptr_t)state_WakeUp((stateParms_t *)param1);
+	};
+	if(functionNameHash == 278346) { // state_WaitForCommands
+		return (intptr_t)state_WaitForCommands((stateParms_t *)param1);
+	};
+	if(functionNameHash == 155542) { // state_Mining
+		return (intptr_t)state_Mining((stateParms_t *)param1);
+	};
+	if(functionNameHash == 126200) { // state_Cine
+		return (intptr_t)state_Cine((stateParms_t *)param1);
+	};
+	if(functionNameHash == 139384) { // state_Begin
+		return (intptr_t)state_Begin((stateParms_t *)param1);
+	};
+	if(functionNameHash == 126066) { // state_Idle
+		return (intptr_t)state_Idle((stateParms_t *)param1);
+	};
+	if(functionNameHash == 154038) { // state_Combat
+		return (intptr_t)state_Combat((stateParms_t *)param1);
+	};
+	if(functionNameHash == 169638) { // combat_attack
+		return (intptr_t)combat_attack((stateParms_t *)param1);
+	};
+	if(functionNameHash == 179561) { // state_Disabled
+		return (intptr_t)state_Disabled((stateParms_t *)param1);
+	};
+	return __super::Invoke(functionName, param1);
+
+};
+
+bool rcDrone_Miner::HasNativeFunction(const char *functionName) {
+	int functionNameHash = idStr::Hash(functionName);
+	if(functionNameHash == 48744) { // Init
+		return true;
+	};
+	if(functionNameHash == 88222) { // AI_Begin
+		return true;
+	};
+	if(functionNameHash == 63102) { // Spawn
+		return true;
+	};
+	if(functionNameHash == 133465) { // GetMaxRange
+		return true;
+	};
+	if(functionNameHash == 95001) { // destory
+		return true;
+	};
+	if(functionNameHash == 72814) { // canHit
+		return true;
+	};
+	if(functionNameHash == 146777) { // spawn_light
+		return true;
+	};
+	if(functionNameHash == 116332) { // light_off
+		return true;
+	};
+	if(functionNameHash == 104386) { // light_on
+		return true;
+	};
+	if(functionNameHash == 138382) { // Torso_Death
+		return true;
+	};
+	if(functionNameHash == 124942) { // Torso_Idle
+		return true;
+	};
+	if(functionNameHash == 153143) { // Torso_Attack
+		return true;
+	};
+	if(functionNameHash == 223655) { // Torso_CustomCycle
+		return true;
+	};
+	if(functionNameHash == 153871) { // state_Killed
+		return true;
+	};
+	if(functionNameHash == 152836) { // state_WakeUp
+		return true;
+	};
+	if(functionNameHash == 278346) { // state_WaitForCommands
+		return true;
+	};
+	if(functionNameHash == 155542) { // state_Mining
+		return true;
+	};
+	if(functionNameHash == 126200) { // state_Cine
+		return true;
+	};
+	if(functionNameHash == 139384) { // state_Begin
+		return true;
+	};
+	if(functionNameHash == 126066) { // state_Idle
+		return true;
+	};
+	if(functionNameHash == 154038) { // state_Combat
+		return true;
+	};
+	if(functionNameHash == 169638) { // combat_attack
+		return true;
+	};
+	if(functionNameHash == 179561) { // state_Disabled
 		return true;
 	};
 	return __super::HasNativeFunction(functionName);
@@ -11250,6 +11403,14 @@ intptr_t rcPilotable::Invoke(const char *functionName, void *param1) {
 		Think();
 		return 0;
 	};
+	if(functionNameHash == 85412) { // OnEnter
+		OnEnter();
+		return 0;
+	};
+	if(functionNameHash == 72889) { // OnExit
+		OnExit();
+		return 0;
+	};
 	return __super::Invoke(functionName, param1);
 
 };
@@ -11263,6 +11424,169 @@ bool rcPilotable::HasNativeFunction(const char *functionName) {
 		return true;
 	};
 	if(functionNameHash == 61762) { // Think
+		return true;
+	};
+	if(functionNameHash == 85412) { // OnEnter
+		return true;
+	};
+	if(functionNameHash == 72889) { // OnExit
+		return true;
+	};
+	return __super::HasNativeFunction(functionName);
+
+};
+
+intptr_t rcShipPodLarge::Invoke(const char *functionName, void *param1) {
+	int functionNameHash = idStr::Hash(functionName);
+	if(functionNameHash == 63102) { // Spawn
+		Spawn();
+		return 0;
+	};
+	if(functionNameHash == 61762) { // Think
+		Think();
+		return 0;
+	};
+	if(functionNameHash == 85412) { // OnEnter
+		OnEnter();
+		return 0;
+	};
+	if(functionNameHash == 72889) { // OnExit
+		OnExit();
+		return 0;
+	};
+	return __super::Invoke(functionName, param1);
+
+};
+
+bool rcShipPodLarge::HasNativeFunction(const char *functionName) {
+	int functionNameHash = idStr::Hash(functionName);
+	if(functionNameHash == 63102) { // Spawn
+		return true;
+	};
+	if(functionNameHash == 61762) { // Think
+		return true;
+	};
+	if(functionNameHash == 85412) { // OnEnter
+		return true;
+	};
+	if(functionNameHash == 72889) { // OnExit
+		return true;
+	};
+	return __super::HasNativeFunction(functionName);
+
+};
+
+intptr_t rcAsteroid::Invoke(const char *functionName, void *param1) {
+	int functionNameHash = idStr::Hash(functionName);
+	if(functionNameHash == 63102) { // Spawn
+		Spawn();
+		return 0;
+	};
+	if(functionNameHash == 61762) { // Think
+		Think();
+		return 0;
+	};
+	if(functionNameHash == 137088) { // CreateMines
+		CreateMines();
+		return 0;
+	};
+	return __super::Invoke(functionName, param1);
+
+};
+
+bool rcAsteroid::HasNativeFunction(const char *functionName) {
+	int functionNameHash = idStr::Hash(functionName);
+	if(functionNameHash == 63102) { // Spawn
+		return true;
+	};
+	if(functionNameHash == 61762) { // Think
+		return true;
+	};
+	if(functionNameHash == 137088) { // CreateMines
+		return true;
+	};
+	return __super::HasNativeFunction(functionName);
+
+};
+
+intptr_t rcWeaponRifleBlaster::Invoke(const char *functionName, void *param1) {
+	int functionNameHash = idStr::Hash(functionName);
+	if(functionNameHash == 60556) { // Raise
+		return (intptr_t)Raise((stateParms_t *)param1);
+	};
+	if(functionNameHash == 63107) { // Lower
+		return (intptr_t)Lower((stateParms_t *)param1);
+	};
+	if(functionNameHash == 46077) { // Idle
+		return (intptr_t)Idle((stateParms_t *)param1);
+	};
+	if(functionNameHash == 47046) { // Fire
+		return (intptr_t)Fire((stateParms_t *)param1);
+	};
+	if(functionNameHash == 72819) { // Reload
+		return (intptr_t)Reload((stateParms_t *)param1);
+	};
+	return __super::Invoke(functionName, param1);
+
+};
+
+bool rcWeaponRifleBlaster::HasNativeFunction(const char *functionName) {
+	int functionNameHash = idStr::Hash(functionName);
+	if(functionNameHash == 60556) { // Raise
+		return true;
+	};
+	if(functionNameHash == 63107) { // Lower
+		return true;
+	};
+	if(functionNameHash == 46077) { // Idle
+		return true;
+	};
+	if(functionNameHash == 47046) { // Fire
+		return true;
+	};
+	if(functionNameHash == 72819) { // Reload
+		return true;
+	};
+	return __super::HasNativeFunction(functionName);
+
+};
+
+intptr_t rcWeaponNone::Invoke(const char *functionName, void *param1) {
+	int functionNameHash = idStr::Hash(functionName);
+	if(functionNameHash == 60556) { // Raise
+		return (intptr_t)Raise((stateParms_t *)param1);
+	};
+	if(functionNameHash == 63107) { // Lower
+		return (intptr_t)Lower((stateParms_t *)param1);
+	};
+	if(functionNameHash == 46077) { // Idle
+		return (intptr_t)Idle((stateParms_t *)param1);
+	};
+	if(functionNameHash == 47046) { // Fire
+		return (intptr_t)Fire((stateParms_t *)param1);
+	};
+	if(functionNameHash == 72819) { // Reload
+		return (intptr_t)Reload((stateParms_t *)param1);
+	};
+	return __super::Invoke(functionName, param1);
+
+};
+
+bool rcWeaponNone::HasNativeFunction(const char *functionName) {
+	int functionNameHash = idStr::Hash(functionName);
+	if(functionNameHash == 60556) { // Raise
+		return true;
+	};
+	if(functionNameHash == 63107) { // Lower
+		return true;
+	};
+	if(functionNameHash == 46077) { // Idle
+		return true;
+	};
+	if(functionNameHash == 47046) { // Fire
+		return true;
+	};
+	if(functionNameHash == 72819) { // Reload
 		return true;
 	};
 	return __super::HasNativeFunction(functionName);

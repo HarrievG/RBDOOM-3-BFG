@@ -7,9 +7,9 @@
 
 	This file has been generated with the Type Info Generator v1.1 (c) 2004 id Software
 
-	959 constants
-	92 enums
-	478 classes/structs/unions
+	965 constants
+	93 enums
+	484 classes/structs/unions
 	3 templates
 	9 max inheritance level for 'iceMonsterZombieSawyer'
 
@@ -62,9 +62,9 @@ static constantInfo_t constantInfo[] = {
 	{ "int", "SRESULT_DONE_WAIT", "3" },
 	{ "int", "SRESULT_WAIT", "4" },
 	{ "int", "SRESULT_IDLE", "5" },
-	{ "int", "SRESULT_SETSTAGE", "6" },
-	{ "int", "SRESULT_DONE_FRAME", "7" },
-	{ "int", "SRESULT_SETDELAY", "26" },
+	{ "int", "SRESULT_DONE_FRAME", "6" },
+	{ "int", "SRESULT_SETSTAGE", "7" },
+	{ "int", "SRESULT_SETDELAY", "57" },
 	{ "const int", "SFLAG_ONCLEAR", "0(0)" },
 	{ "const int", "SFLAG_ONCLEARONLY", "0(1)" },
 	{ "int", "ev_error", "-1" },
@@ -267,7 +267,7 @@ static constantInfo_t constantInfo[] = {
 	{ "int", "SLOWMO_STATE_RAMPDOWN", "3" },
 	{ "int", "idGameLocal::GCMD_UNKNOWN", "0" },
 	{ "int", "idGameLocal::GCMD_GAMETIME", "1" },
-	{ ": const static int", "idGameLocal::INITIAL_SPAWN_COUNT", "1" },
+	{ "const static int", "idGameLocal::INITIAL_SPAWN_COUNT", "1" },
 	{ "int", "SND_CHANNEL_ANY", "0" },
 	{ "int", "SND_CHANNEL_VOICE", "0" },
 	{ "int", "SND_CHANNEL_VOICE2", "1" },
@@ -341,7 +341,7 @@ static constantInfo_t constantInfo[] = {
 	{ "int", "SIG_MOVER_1TO2", "8" },
 	{ "int", "SIG_MOVER_2TO1", "9" },
 	{ "int", "NUM_SIGNALS", "10" },
-	{ ": static const int", "idEntity::MAX_PVS_AREAS", "4" },
+	{ "static const int", "idEntity::MAX_PVS_AREAS", "4" },
 	{ "static const uint32", "idEntity::INVALID_PREDICTION_KEY", "0xFFFFFFFF" },
 	{ "int", "idEntity::EVENT_STARTSOUNDSHADER", "0" },
 	{ "int", "idEntity::EVENT_STOPSOUNDSHADER", "1" },
@@ -351,8 +351,8 @@ static constantInfo_t constantInfo[] = {
 	{ "int", "idEntity::USE_INTERPOLATION", "2" },
 	{ "int", "idAnimatedEntity::EVENT_ADD_DAMAGE_EFFECT", "2" },
 	{ "int", "idAnimatedEntity::EVENT_MAXEVENTS", "3" },
-	{ ": static const int", "idIK_Walk::MAX_LEGS", "8" },
-	{ ": static const int", "idIK_Reach::MAX_ARMS", "2" },
+	{ "static const int", "idIK_Walk::MAX_LEGS", "8" },
+	{ "static const int", "idIK_Reach::MAX_ARMS", "2" },
 	{ "const int", "GIB_DELAY", "200" },
 	{ "int", "idPlayerStart::EVENT_TELEPORTPLAYER", "2" },
 	{ "int", "idPlayerStart::EVENT_MAXEVENTS", "3" },
@@ -623,6 +623,12 @@ static constantInfo_t constantInfo[] = {
 	{ "int", "MOVE_JUMP", "5" },
 	{ "int", "KILL", "0" },
 	{ "int", "DEATH", "1" },
+	{ "int", "STAGE_FIND_ASTEROID", "0" },
+	{ "int", "STAGE_MOVE_TO_ASTEROID", "1" },
+	{ "int", "STAGE_ALIGN_TO_MINE_ON_ASTEROID", "2" },
+	{ "int", "STAGE_MINE", "3" },
+	{ "int", "STAGE_DEPOSIT", "4" },
+	{ "int", "STAGE_RETURN_TO_ASTEROID", "5" },
 	{ "int", "OPTION_INVALID", "-1" },
 	{ "int", "OPTION_BUTTON_TEXT", "0" },
 	{ "int", "OPTION_SLIDER_BAR", "1" },
@@ -761,7 +767,7 @@ static constantInfo_t constantInfo[] = {
 	{ "int", "LEADERBOARD_FILTER_OVERALL", "0" },
 	{ "int", "LEADERBOARD_FILTER_MYSCORE", "1" },
 	{ "int", "LEADERBOARD_FILTER_FRIENDS", "2" },
-	{ ": static const int", "idLBCache::NUM_ROW_BLOCKS", "5" },
+	{ "static const int", "idLBCache::NUM_ROW_BLOCKS", "5" },
 	{ "static const leaderboardFilterMode_t", "idLBCache::DEFAULT_LEADERBOARD_FILTER", "0" },
 	{ "int", "idMenuScreen_Shell_GameOptions::idMenuDataSource_GameSettings::GAME_FIELD_FOV", "0" },
 	{ "int", "idMenuScreen_Shell_GameOptions::idMenuDataSource_GameSettings::GAME_FIELD_CHECKPOINTS", "1" },
@@ -1016,9 +1022,9 @@ static enumValueInfo_t stateResult_t_typeInfo[] = {
 	{ "SRESULT_DONE_WAIT", 3 },
 	{ "SRESULT_WAIT", 4 },
 	{ "SRESULT_IDLE", 5 },
-	{ "SRESULT_SETSTAGE", 6 },
-	{ "SRESULT_DONE_FRAME", 7 },
-	{ "SRESULT_SETDELAY", 26 },
+	{ "SRESULT_DONE_FRAME", 6 },
+	{ "SRESULT_SETSTAGE", 7 },
+	{ "SRESULT_SETDELAY", 57 },
 	{ NULL, 0 }
 };
 
@@ -1758,6 +1764,16 @@ static enumValueInfo_t botChat_t_typeInfo[] = {
 	{ NULL, 0 }
 };
 
+static enumValueInfo_t state_Mining_t_typeInfo[] = {
+	{ "STAGE_FIND_ASTEROID", 0 },
+	{ "STAGE_MOVE_TO_ASTEROID", 1 },
+	{ "STAGE_ALIGN_TO_MINE_ON_ASTEROID", 2 },
+	{ "STAGE_MINE", 3 },
+	{ "STAGE_DEPOSIT", 4 },
+	{ "STAGE_RETURN_TO_ASTEROID", 5 },
+	{ NULL, 0 }
+};
+
 static enumValueInfo_t menuOption_t_typeInfo[] = {
 	{ "OPTION_INVALID", -1 },
 	{ "OPTION_BUTTON_TEXT", 0 },
@@ -2121,7 +2137,7 @@ static enumValueInfo_t menuSounds_t_typeInfo[] = {
 	{ NULL, 0 }
 };
 
-static enumValueInfo_t enum_91_typeInfo[] = {
+static enumValueInfo_t enum_92_typeInfo[] = {
 	{ "OP_RETURN", 0 },
 	{ "OP_UINC_F", 1 },
 	{ "OP_UINCP_F", 2 },
@@ -2313,6 +2329,7 @@ static enumTypeInfo_t enumTypeInfo[] = {
 	{ "stopEvent_t", stopEvent_t_typeInfo },
 	{ "botMoveFlags_t", botMoveFlags_t_typeInfo },
 	{ "botChat_t", botChat_t_typeInfo },
+	{ "state_Mining_t", state_Mining_t_typeInfo },
 	{ "menuOption_t", menuOption_t_typeInfo },
 	{ "widgetEvent_t", widgetEvent_t_typeInfo },
 	{ "scrollType_t", scrollType_t_typeInfo },
@@ -2341,12 +2358,12 @@ static enumTypeInfo_t enumTypeInfo[] = {
 	{ "pdaHandlerWidgets_t", pdaHandlerWidgets_t_typeInfo },
 	{ "scoreboardHandlerWidgets_t", scoreboardHandlerWidgets_t_typeInfo },
 	{ "menuSounds_t", menuSounds_t_typeInfo },
-	{ "enum_91", enum_91_typeInfo },
+	{ "enum_92", enum_92_typeInfo },
 	{ NULL, NULL }
 };
 
 static classVariableInfo_t idEventDef_typeInfo[] = {
-	{ ": const char *", "name", (intptr_t)(&((idEventDef *)0)->name), sizeof( ((idEventDef *)0)->name ) },
+	{ "const char *", "name", (intptr_t)(&((idEventDef *)0)->name), sizeof( ((idEventDef *)0)->name ) },
 	{ "const char *", "formatspec", (intptr_t)(&((idEventDef *)0)->formatspec), sizeof( ((idEventDef *)0)->formatspec ) },
 	{ "unsigned int", "formatspecIndex", (intptr_t)(&((idEventDef *)0)->formatspecIndex), sizeof( ((idEventDef *)0)->formatspecIndex ) },
 	{ "int", "returnType", (intptr_t)(&((idEventDef *)0)->returnType), sizeof( ((idEventDef *)0)->returnType ) },
@@ -2359,7 +2376,7 @@ static classVariableInfo_t idEventDef_typeInfo[] = {
 };
 
 static classVariableInfo_t idEvent_typeInfo[] = {
-	{ ": const idEventDef *", "eventdef", (intptr_t)(&((idEvent *)0)->eventdef), sizeof( ((idEvent *)0)->eventdef ) },
+	{ "const idEventDef *", "eventdef", (intptr_t)(&((idEvent *)0)->eventdef), sizeof( ((idEvent *)0)->eventdef ) },
 	{ "byte *", "data", (intptr_t)(&((idEvent *)0)->data), sizeof( ((idEvent *)0)->data ) },
 	{ "int", "time", (intptr_t)(&((idEvent *)0)->time), sizeof( ((idEvent *)0)->time ) },
 	{ "idClass *", "object", (intptr_t)(&((idEvent *)0)->object), sizeof( ((idEvent *)0)->object ) },
@@ -2408,7 +2425,7 @@ static classVariableInfo_t rvStateThread_typeInfo[] = {
 };
 
 static classVariableInfo_t idEventArg_typeInfo[] = {
-	{ ": int", "type", (intptr_t)(&((idEventArg *)0)->type), sizeof( ((idEventArg *)0)->type ) },
+	{ "int", "type", (intptr_t)(&((idEventArg *)0)->type), sizeof( ((idEventArg *)0)->type ) },
 	{ "intptr_t", "value", (intptr_t)(&((idEventArg *)0)->value), sizeof( ((idEventArg *)0)->value ) },
 	{ NULL, 0 }
 };
@@ -2422,7 +2439,7 @@ static classVariableInfo_t idClass_typeInfo[] = {
 };
 
 static classVariableInfo_t idTypeInfo_typeInfo[] = {
-	{ ": const char *", "classname", (intptr_t)(&((idTypeInfo *)0)->classname), sizeof( ((idTypeInfo *)0)->classname ) },
+	{ "const char *", "classname", (intptr_t)(&((idTypeInfo *)0)->classname), sizeof( ((idTypeInfo *)0)->classname ) },
 	{ "const char *", "superclass", (intptr_t)(&((idTypeInfo *)0)->superclass), sizeof( ((idTypeInfo *)0)->superclass ) },
 	{ "idEventFunc < idClass > *", "eventCallbacks", (intptr_t)(&((idTypeInfo *)0)->eventCallbacks), sizeof( ((idTypeInfo *)0)->eventCallbacks ) },
 	{ "eventCallback_t *", "eventMap", (intptr_t)(&((idTypeInfo *)0)->eventMap), sizeof( ((idTypeInfo *)0)->eventMap ) },
@@ -2442,7 +2459,7 @@ static classVariableInfo_t idSaveGame_stringTableIndex_s_typeInfo[] = {
 };
 
 static classVariableInfo_t idSaveGame_typeInfo[] = {
-	{ ": idFile *", "file", (intptr_t)(&((idSaveGame *)0)->file), sizeof( ((idSaveGame *)0)->file ) },
+	{ "idFile *", "file", (intptr_t)(&((idSaveGame *)0)->file), sizeof( ((idSaveGame *)0)->file ) },
 	{ "idFile *", "stringFile", (intptr_t)(&((idSaveGame *)0)->stringFile), sizeof( ((idSaveGame *)0)->stringFile ) },
 	{ "idCompressor *", "compressor", (intptr_t)(&((idSaveGame *)0)->compressor), sizeof( ((idSaveGame *)0)->compressor ) },
 	{ "idList < const idClass * >", "objects", (intptr_t)(&((idSaveGame *)0)->objects), sizeof( ((idSaveGame *)0)->objects ) },
@@ -2454,7 +2471,7 @@ static classVariableInfo_t idSaveGame_typeInfo[] = {
 };
 
 static classVariableInfo_t idRestoreGame_typeInfo[] = {
-	{ ": idFile *", "file", (intptr_t)(&((idRestoreGame *)0)->file), sizeof( ((idRestoreGame *)0)->file ) },
+	{ "idFile *", "file", (intptr_t)(&((idRestoreGame *)0)->file), sizeof( ((idRestoreGame *)0)->file ) },
 	{ "idFile *", "stringFile", (intptr_t)(&((idRestoreGame *)0)->stringFile), sizeof( ((idRestoreGame *)0)->stringFile ) },
 	{ "idList < idClass * , TAG_SAVEGAMES >", "objects", (intptr_t)(&((idRestoreGame *)0)->objects), sizeof( ((idRestoreGame *)0)->objects ) },
 	{ "int", "version", (intptr_t)(&((idRestoreGame *)0)->version), sizeof( ((idRestoreGame *)0)->version ) },
@@ -2463,8 +2480,8 @@ static classVariableInfo_t idRestoreGame_typeInfo[] = {
 };
 
 static classVariableInfo_t function_t_typeInfo[] = {
-	{ ": idStr", "name", (intptr_t)(&((function_t *)0)->name), sizeof( ((function_t *)0)->name ) },
-	{ ": const idEventDef *", "eventdef", (intptr_t)(&((function_t *)0)->eventdef), sizeof( ((function_t *)0)->eventdef ) },
+	{ "idStr", "name", (intptr_t)(&((function_t *)0)->name), sizeof( ((function_t *)0)->name ) },
+	{ "const idEventDef *", "eventdef", (intptr_t)(&((function_t *)0)->eventdef), sizeof( ((function_t *)0)->eventdef ) },
 	{ "idVarDef *", "def", (intptr_t)(&((function_t *)0)->def), sizeof( ((function_t *)0)->def ) },
 	{ "const idTypeDef *", "type", (intptr_t)(&((function_t *)0)->type), sizeof( ((function_t *)0)->type ) },
 	{ "int", "firstStatement", (intptr_t)(&((function_t *)0)->firstStatement), sizeof( ((function_t *)0)->firstStatement ) },
@@ -2487,20 +2504,20 @@ static classVariableInfo_t eval_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idTypeDef_typeInfo[] = {
-	{ ": etype_t", "type", (intptr_t)(&((idTypeDef *)0)->type), sizeof( ((idTypeDef *)0)->type ) },
+	{ "etype_t", "type", (intptr_t)(&((idTypeDef *)0)->type), sizeof( ((idTypeDef *)0)->type ) },
 	{ "idStr", "name", (intptr_t)(&((idTypeDef *)0)->name), sizeof( ((idTypeDef *)0)->name ) },
 	{ "int", "size", (intptr_t)(&((idTypeDef *)0)->size), sizeof( ((idTypeDef *)0)->size ) },
 	{ "idTypeDef *", "auxType", (intptr_t)(&((idTypeDef *)0)->auxType), sizeof( ((idTypeDef *)0)->auxType ) },
 	{ "idList < idTypeDef * , TAG_SCRIPT >", "parmTypes", (intptr_t)(&((idTypeDef *)0)->parmTypes), sizeof( ((idTypeDef *)0)->parmTypes ) },
 	{ "idStrList", "parmNames", (intptr_t)(&((idTypeDef *)0)->parmNames), sizeof( ((idTypeDef *)0)->parmNames ) },
 	{ "idList < const function_t * , TAG_SCRIPT >", "functions", (intptr_t)(&((idTypeDef *)0)->functions), sizeof( ((idTypeDef *)0)->functions ) },
-	{ ": idVarDef *", "def", (intptr_t)(&((idTypeDef *)0)->def), sizeof( ((idTypeDef *)0)->def ) },
+	{ "idVarDef *", "def", (intptr_t)(&((idTypeDef *)0)->def), sizeof( ((idTypeDef *)0)->def ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idScriptObject_typeInfo[] = {
-	{ ": idTypeDef *", "type", (intptr_t)(&((idScriptObject *)0)->type), sizeof( ((idScriptObject *)0)->type ) },
-	{ ": byte *", "data", (intptr_t)(&((idScriptObject *)0)->data), sizeof( ((idScriptObject *)0)->data ) },
+	{ "idTypeDef *", "type", (intptr_t)(&((idScriptObject *)0)->type), sizeof( ((idScriptObject *)0)->type ) },
+	{ "byte *", "data", (intptr_t)(&((idScriptObject *)0)->data), sizeof( ((idScriptObject *)0)->data ) },
 	{ NULL, 0 }
 };
 
@@ -2527,19 +2544,19 @@ static classVariableInfo_t varEval_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idVarDef_typeInfo[] = {
-	{ ": int", "num", (intptr_t)(&((idVarDef *)0)->num), sizeof( ((idVarDef *)0)->num ) },
+	{ "int", "num", (intptr_t)(&((idVarDef *)0)->num), sizeof( ((idVarDef *)0)->num ) },
 	{ "varEval_t", "value", (intptr_t)(&((idVarDef *)0)->value), sizeof( ((idVarDef *)0)->value ) },
 	{ "idVarDef *", "scope", (intptr_t)(&((idVarDef *)0)->scope), sizeof( ((idVarDef *)0)->scope ) },
 	{ "int", "numUsers", (intptr_t)(&((idVarDef *)0)->numUsers), sizeof( ((idVarDef *)0)->numUsers ) },
 	{ "initialized_t", "initialized", (intptr_t)(&((idVarDef *)0)->initialized), sizeof( ((idVarDef *)0)->initialized ) },
-	{ ": idTypeDef *", "typeDef", (intptr_t)(&((idVarDef *)0)->typeDef), sizeof( ((idVarDef *)0)->typeDef ) },
+	{ "idTypeDef *", "typeDef", (intptr_t)(&((idVarDef *)0)->typeDef), sizeof( ((idVarDef *)0)->typeDef ) },
 	{ "idVarDefName *", "name", (intptr_t)(&((idVarDef *)0)->name), sizeof( ((idVarDef *)0)->name ) },
 	{ "idVarDef *", "next", (intptr_t)(&((idVarDef *)0)->next), sizeof( ((idVarDef *)0)->next ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idVarDefName_typeInfo[] = {
-	{ ": idStr", "name", (intptr_t)(&((idVarDefName *)0)->name), sizeof( ((idVarDefName *)0)->name ) },
+	{ "idStr", "name", (intptr_t)(&((idVarDefName *)0)->name), sizeof( ((idVarDefName *)0)->name ) },
 	{ "idVarDef *", "defs", (intptr_t)(&((idVarDefName *)0)->defs), sizeof( ((idVarDefName *)0)->defs ) },
 	{ NULL, 0 }
 };
@@ -2555,7 +2572,7 @@ static classVariableInfo_t statement_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idProgram_typeInfo[] = {
-	{ ": idStrList", "fileList", (intptr_t)(&((idProgram *)0)->fileList), sizeof( ((idProgram *)0)->fileList ) },
+	{ "idStrList", "fileList", (intptr_t)(&((idProgram *)0)->fileList), sizeof( ((idProgram *)0)->fileList ) },
 	{ "idStr", "filename", (intptr_t)(&((idProgram *)0)->filename), sizeof( ((idProgram *)0)->filename ) },
 	{ "int", "filenum", (intptr_t)(&((idProgram *)0)->filenum), sizeof( ((idProgram *)0)->filenum ) },
 	{ "int", "numVariables", (intptr_t)(&((idProgram *)0)->numVariables), sizeof( ((idProgram *)0)->numVariables ) },
@@ -2574,7 +2591,7 @@ static classVariableInfo_t idProgram_typeInfo[] = {
 	{ "int", "top_types", (intptr_t)(&((idProgram *)0)->top_types), sizeof( ((idProgram *)0)->top_types ) },
 	{ "int", "top_defs", (intptr_t)(&((idProgram *)0)->top_defs), sizeof( ((idProgram *)0)->top_defs ) },
 	{ "int", "top_files", (intptr_t)(&((idProgram *)0)->top_files), sizeof( ((idProgram *)0)->top_files ) },
-	{ ": idVarDef *", "returnDef", (intptr_t)(&((idProgram *)0)->returnDef), sizeof( ((idProgram *)0)->returnDef ) },
+	{ "idVarDef *", "returnDef", (intptr_t)(&((idProgram *)0)->returnDef), sizeof( ((idProgram *)0)->returnDef ) },
 	{ "idVarDef *", "returnStringDef", (intptr_t)(&((idProgram *)0)->returnStringDef), sizeof( ((idProgram *)0)->returnStringDef ) },
 	{ NULL, 0 }
 };
@@ -2641,7 +2658,7 @@ static classVariableInfo_t animFlags_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idMD5Anim_typeInfo[] = {
-	{ ": int", "numFrames", (intptr_t)(&((idMD5Anim *)0)->numFrames), sizeof( ((idMD5Anim *)0)->numFrames ) },
+	{ "int", "numFrames", (intptr_t)(&((idMD5Anim *)0)->numFrames), sizeof( ((idMD5Anim *)0)->numFrames ) },
 	{ "int", "frameRate", (intptr_t)(&((idMD5Anim *)0)->frameRate), sizeof( ((idMD5Anim *)0)->frameRate ) },
 	{ "int", "animLength", (intptr_t)(&((idMD5Anim *)0)->animLength), sizeof( ((idMD5Anim *)0)->animLength ) },
 	{ "int", "numJoints", (intptr_t)(&((idMD5Anim *)0)->numJoints), sizeof( ((idMD5Anim *)0)->numJoints ) },
@@ -2658,7 +2675,7 @@ static classVariableInfo_t idMD5Anim_typeInfo[] = {
 };
 
 static classVariableInfo_t idAnim_typeInfo[] = {
-	{ ": const idDeclModelDef *", "modelDef", (intptr_t)(&((idAnim *)0)->modelDef), sizeof( ((idAnim *)0)->modelDef ) },
+	{ "const idDeclModelDef *", "modelDef", (intptr_t)(&((idAnim *)0)->modelDef), sizeof( ((idAnim *)0)->modelDef ) },
 	{ "const idMD5Anim *[3]", "anims", (intptr_t)(&((idAnim *)0)->anims), sizeof( ((idAnim *)0)->anims ) },
 	{ "int", "numAnims", (intptr_t)(&((idAnim *)0)->numAnims), sizeof( ((idAnim *)0)->numAnims ) },
 	{ "idStr", "name", (intptr_t)(&((idAnim *)0)->name), sizeof( ((idAnim *)0)->name ) },
@@ -2670,7 +2687,7 @@ static classVariableInfo_t idAnim_typeInfo[] = {
 };
 
 static classVariableInfo_t idDeclModelDef_typeInfo[] = {
-	{ ": idVec3", "offset", (intptr_t)(&((idDeclModelDef *)0)->offset), sizeof( ((idDeclModelDef *)0)->offset ) },
+	{ "idVec3", "offset", (intptr_t)(&((idDeclModelDef *)0)->offset), sizeof( ((idDeclModelDef *)0)->offset ) },
 	{ "idList < jointInfo_t , TAG_ANIM >", "joints", (intptr_t)(&((idDeclModelDef *)0)->joints), sizeof( ((idDeclModelDef *)0)->joints ) },
 	{ "idList < int , TAG_ANIM >", "jointParents", (intptr_t)(&((idDeclModelDef *)0)->jointParents), sizeof( ((idDeclModelDef *)0)->jointParents ) },
 	{ "idList < int , TAG_ANIM >[5]", "channelJoints", (intptr_t)(&((idDeclModelDef *)0)->channelJoints), sizeof( ((idDeclModelDef *)0)->channelJoints ) },
@@ -2683,7 +2700,7 @@ static classVariableInfo_t idDeclModelDef_typeInfo[] = {
 };
 
 static classVariableInfo_t idAnimBlend_typeInfo[] = {
-	{ ": const idDeclModelDef *", "modelDef", (intptr_t)(&((idAnimBlend *)0)->modelDef), sizeof( ((idAnimBlend *)0)->modelDef ) },
+	{ "const idDeclModelDef *", "modelDef", (intptr_t)(&((idAnimBlend *)0)->modelDef), sizeof( ((idAnimBlend *)0)->modelDef ) },
 	{ "int", "starttime", (intptr_t)(&((idAnimBlend *)0)->starttime), sizeof( ((idAnimBlend *)0)->starttime ) },
 	{ "int", "endtime", (intptr_t)(&((idAnimBlend *)0)->endtime), sizeof( ((idAnimBlend *)0)->endtime ) },
 	{ "int", "timeOffset", (intptr_t)(&((idAnimBlend *)0)->timeOffset), sizeof( ((idAnimBlend *)0)->timeOffset ) },
@@ -2709,7 +2726,7 @@ static classVariableInfo_t idAFPoseJointMod_typeInfo[] = {
 };
 
 static classVariableInfo_t idAnimator_typeInfo[] = {
-	{ ": const idDeclModelDef *", "modelDef", (intptr_t)(&((idAnimator *)0)->modelDef), sizeof( ((idAnimator *)0)->modelDef ) },
+	{ "const idDeclModelDef *", "modelDef", (intptr_t)(&((idAnimator *)0)->modelDef), sizeof( ((idAnimator *)0)->modelDef ) },
 	{ "idEntity *", "entity", (intptr_t)(&((idAnimator *)0)->entity), sizeof( ((idAnimator *)0)->entity ) },
 	{ "idAnimBlend[15]", "channels", (intptr_t)(&((idAnimator *)0)->channels), sizeof( ((idAnimator *)0)->channels ) },
 	{ "idList < jointMod_t * , TAG_ANIM >", "jointMods", (intptr_t)(&((idAnimator *)0)->jointMods), sizeof( ((idAnimator *)0)->jointMods ) },
@@ -2730,7 +2747,7 @@ static classVariableInfo_t idAnimator_typeInfo[] = {
 };
 
 static classVariableInfo_t idAnimManager_typeInfo[] = {
-	{ ": idHashTable < idMD5Anim * >", "animations", (intptr_t)(&((idAnimManager *)0)->animations), sizeof( ((idAnimManager *)0)->animations ) },
+	{ "idHashTable < idMD5Anim * >", "animations", (intptr_t)(&((idAnimManager *)0)->animations), sizeof( ((idAnimManager *)0)->animations ) },
 	{ "idStrList", "jointnames", (intptr_t)(&((idAnimManager *)0)->jointnames), sizeof( ((idAnimManager *)0)->jointnames ) },
 	{ "idHashIndex", "jointnamesHash", (intptr_t)(&((idAnimManager *)0)->jointnamesHash), sizeof( ((idAnimManager *)0)->jointnamesHash ) },
 	{ NULL, 0 }
@@ -2766,7 +2783,7 @@ static classVariableInfo_t idAAS_typeInfo[] = {
 };
 
 static classVariableInfo_t idClipModel_typeInfo[] = {
-	{ ": bool", "enabled", (intptr_t)(&((idClipModel *)0)->enabled), sizeof( ((idClipModel *)0)->enabled ) },
+	{ "bool", "enabled", (intptr_t)(&((idClipModel *)0)->enabled), sizeof( ((idClipModel *)0)->enabled ) },
 	{ "idEntity *", "entity", (intptr_t)(&((idClipModel *)0)->entity), sizeof( ((idClipModel *)0)->entity ) },
 	{ "int", "id", (intptr_t)(&((idClipModel *)0)->id), sizeof( ((idClipModel *)0)->id ) },
 	{ "idEntity *", "owner", (intptr_t)(&((idClipModel *)0)->owner), sizeof( ((idClipModel *)0)->owner ) },
@@ -2785,7 +2802,7 @@ static classVariableInfo_t idClipModel_typeInfo[] = {
 };
 
 static classVariableInfo_t idClip_typeInfo[] = {
-	{ ": int", "numClipSectors", (intptr_t)(&((idClip *)0)->numClipSectors), sizeof( ((idClip *)0)->numClipSectors ) },
+	{ "int", "numClipSectors", (intptr_t)(&((idClip *)0)->numClipSectors), sizeof( ((idClip *)0)->numClipSectors ) },
 	{ "clipSector_s *", "clipSectors", (intptr_t)(&((idClip *)0)->clipSectors), sizeof( ((idClip *)0)->clipSectors ) },
 	{ "idBounds", "worldBounds", (intptr_t)(&((idClip *)0)->worldBounds), sizeof( ((idClip *)0)->worldBounds ) },
 	{ "idClipModel", "temporaryClipModel", (intptr_t)(&((idClip *)0)->temporaryClipModel), sizeof( ((idClip *)0)->temporaryClipModel ) },
@@ -2836,7 +2853,7 @@ static classVariableInfo_t pvsCurrent_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idPVS_typeInfo[] = {
-	{ ": int", "numAreas", (intptr_t)(&((idPVS *)0)->numAreas), sizeof( ((idPVS *)0)->numAreas ) },
+	{ "int", "numAreas", (intptr_t)(&((idPVS *)0)->numAreas), sizeof( ((idPVS *)0)->numAreas ) },
 	{ "int", "numPortals", (intptr_t)(&((idPVS *)0)->numPortals), sizeof( ((idPVS *)0)->numPortals ) },
 	{ "bool *", "connectedAreas", (intptr_t)(&((idPVS *)0)->connectedAreas), sizeof( ((idPVS *)0)->connectedAreas ) },
 	{ "int *", "areaQueue", (intptr_t)(&((idPVS *)0)->areaQueue), sizeof( ((idPVS *)0)->areaQueue ) },
@@ -2940,7 +2957,7 @@ static classVariableInfo_t spawnSpot_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idEventQueue_typeInfo[] = {
-	{ ": entityNetEvent_t *", "start", (intptr_t)(&((idEventQueue *)0)->start), sizeof( ((idEventQueue *)0)->start ) },
+	{ "entityNetEvent_t *", "start", (intptr_t)(&((idEventQueue *)0)->start), sizeof( ((idEventQueue *)0)->start ) },
 	{ "entityNetEvent_t *", "end", (intptr_t)(&((idEventQueue *)0)->end), sizeof( ((idEventQueue *)0)->end ) },
 	{ "idBlockAlloc < entityNetEvent_t , 32 >", "eventAllocator", (intptr_t)(&((idEventQueue *)0)->eventAllocator), sizeof( ((idEventQueue *)0)->eventAllocator ) },
 	{ NULL, 0 }
@@ -2969,7 +2986,7 @@ static classVariableInfo_t idGameLocal_netInterpolationInfo_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idGameLocal_typeInfo[] = {
-	{ ": int", "previousServerTime", (intptr_t)(&((idGameLocal *)0)->previousServerTime), sizeof( ((idGameLocal *)0)->previousServerTime ) },
+	{ "int", "previousServerTime", (intptr_t)(&((idGameLocal *)0)->previousServerTime), sizeof( ((idGameLocal *)0)->previousServerTime ) },
 	{ "int", "serverTime", (intptr_t)(&((idGameLocal *)0)->serverTime), sizeof( ((idGameLocal *)0)->serverTime ) },
 	{ "idDict", "serverInfo", (intptr_t)(&((idGameLocal *)0)->serverInfo), sizeof( ((idGameLocal *)0)->serverInfo ) },
 	{ "int", "numClients", (intptr_t)(&((idGameLocal *)0)->numClients), sizeof( ((idGameLocal *)0)->numClients ) },
@@ -3076,7 +3093,7 @@ static classVariableInfo_t idForce_typeInfo[] = {
 };
 
 static classVariableInfo_t idForce_Constant_typeInfo[] = {
-	{ ": idVec3", "force", (intptr_t)(&((idForce_Constant *)0)->force), sizeof( ((idForce_Constant *)0)->force ) },
+	{ "idVec3", "force", (intptr_t)(&((idForce_Constant *)0)->force), sizeof( ((idForce_Constant *)0)->force ) },
 	{ "idPhysics *", "physics", (intptr_t)(&((idForce_Constant *)0)->physics), sizeof( ((idForce_Constant *)0)->physics ) },
 	{ "int", "id", (intptr_t)(&((idForce_Constant *)0)->id), sizeof( ((idForce_Constant *)0)->id ) },
 	{ "idVec3", "point", (intptr_t)(&((idForce_Constant *)0)->point), sizeof( ((idForce_Constant *)0)->point ) },
@@ -3084,7 +3101,7 @@ static classVariableInfo_t idForce_Constant_typeInfo[] = {
 };
 
 static classVariableInfo_t idForce_Drag_typeInfo[] = {
-	{ ": float", "damping", (intptr_t)(&((idForce_Drag *)0)->damping), sizeof( ((idForce_Drag *)0)->damping ) },
+	{ "float", "damping", (intptr_t)(&((idForce_Drag *)0)->damping), sizeof( ((idForce_Drag *)0)->damping ) },
 	{ "idPhysics *", "physics", (intptr_t)(&((idForce_Drag *)0)->physics), sizeof( ((idForce_Drag *)0)->physics ) },
 	{ "int", "id", (intptr_t)(&((idForce_Drag *)0)->id), sizeof( ((idForce_Drag *)0)->id ) },
 	{ "idVec3", "p", (intptr_t)(&((idForce_Drag *)0)->p), sizeof( ((idForce_Drag *)0)->p ) },
@@ -3093,7 +3110,7 @@ static classVariableInfo_t idForce_Drag_typeInfo[] = {
 };
 
 static classVariableInfo_t idForce_Grab_typeInfo[] = {
-	{ ": float", "damping", (intptr_t)(&((idForce_Grab *)0)->damping), sizeof( ((idForce_Grab *)0)->damping ) },
+	{ "float", "damping", (intptr_t)(&((idForce_Grab *)0)->damping), sizeof( ((idForce_Grab *)0)->damping ) },
 	{ "idVec3", "goalPosition", (intptr_t)(&((idForce_Grab *)0)->goalPosition), sizeof( ((idForce_Grab *)0)->goalPosition ) },
 	{ "float", "distanceToGoal", (intptr_t)(&((idForce_Grab *)0)->distanceToGoal), sizeof( ((idForce_Grab *)0)->distanceToGoal ) },
 	{ "idPhysics *", "physics", (intptr_t)(&((idForce_Grab *)0)->physics), sizeof( ((idForce_Grab *)0)->physics ) },
@@ -3102,7 +3119,7 @@ static classVariableInfo_t idForce_Grab_typeInfo[] = {
 };
 
 static classVariableInfo_t idForce_Field_typeInfo[] = {
-	{ ": forceFieldType", "type", (intptr_t)(&((idForce_Field *)0)->type), sizeof( ((idForce_Field *)0)->type ) },
+	{ "forceFieldType", "type", (intptr_t)(&((idForce_Field *)0)->type), sizeof( ((idForce_Field *)0)->type ) },
 	{ "forceFieldApplyType", "applyType", (intptr_t)(&((idForce_Field *)0)->applyType), sizeof( ((idForce_Field *)0)->applyType ) },
 	{ "float", "magnitude", (intptr_t)(&((idForce_Field *)0)->magnitude), sizeof( ((idForce_Field *)0)->magnitude ) },
 	{ "idVec3", "dir", (intptr_t)(&((idForce_Field *)0)->dir), sizeof( ((idForce_Field *)0)->dir ) },
@@ -3114,7 +3131,7 @@ static classVariableInfo_t idForce_Field_typeInfo[] = {
 };
 
 static classVariableInfo_t idForce_Spring_typeInfo[] = {
-	{ ": float", "Kstretch", (intptr_t)(&((idForce_Spring *)0)->Kstretch), sizeof( ((idForce_Spring *)0)->Kstretch ) },
+	{ "float", "Kstretch", (intptr_t)(&((idForce_Spring *)0)->Kstretch), sizeof( ((idForce_Spring *)0)->Kstretch ) },
 	{ "float", "Kcompress", (intptr_t)(&((idForce_Spring *)0)->Kcompress), sizeof( ((idForce_Spring *)0)->Kcompress ) },
 	{ "float", "damping", (intptr_t)(&((idForce_Spring *)0)->damping), sizeof( ((idForce_Spring *)0)->damping ) },
 	{ "float", "restLength", (intptr_t)(&((idForce_Spring *)0)->restLength), sizeof( ((idForce_Spring *)0)->restLength ) },
@@ -3156,7 +3173,7 @@ static classVariableInfo_t staticInterpolatePState_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idPhysics_Static_typeInfo[] = {
-	{ ": idEntity *", "self", (intptr_t)(&((idPhysics_Static *)0)->self), sizeof( ((idPhysics_Static *)0)->self ) },
+	{ "idEntity *", "self", (intptr_t)(&((idPhysics_Static *)0)->self), sizeof( ((idPhysics_Static *)0)->self ) },
 	{ "staticPState_t", "current", (intptr_t)(&((idPhysics_Static *)0)->current), sizeof( ((idPhysics_Static *)0)->current ) },
 	{ "idClipModel *", "clipModel", (intptr_t)(&((idPhysics_Static *)0)->clipModel), sizeof( ((idPhysics_Static *)0)->clipModel ) },
 	{ "staticInterpolatePState_t", "previous", (intptr_t)(&((idPhysics_Static *)0)->previous), sizeof( ((idPhysics_Static *)0)->previous ) },
@@ -3167,7 +3184,7 @@ static classVariableInfo_t idPhysics_Static_typeInfo[] = {
 };
 
 static classVariableInfo_t idPhysics_StaticMulti_typeInfo[] = {
-	{ ": idEntity *", "self", (intptr_t)(&((idPhysics_StaticMulti *)0)->self), sizeof( ((idPhysics_StaticMulti *)0)->self ) },
+	{ "idEntity *", "self", (intptr_t)(&((idPhysics_StaticMulti *)0)->self), sizeof( ((idPhysics_StaticMulti *)0)->self ) },
 	{ "idList < staticPState_t , TAG_IDLIB_LIST_PHYSICS >", "current", (intptr_t)(&((idPhysics_StaticMulti *)0)->current), sizeof( ((idPhysics_StaticMulti *)0)->current ) },
 	{ "idList < idClipModel * , TAG_IDLIB_LIST_PHYSICS >", "clipModels", (intptr_t)(&((idPhysics_StaticMulti *)0)->clipModels), sizeof( ((idPhysics_StaticMulti *)0)->clipModels ) },
 	{ "idList < staticInterpolatePState_t , TAG_IDLIB_LIST_PHYSICS >", "previous", (intptr_t)(&((idPhysics_StaticMulti *)0)->previous), sizeof( ((idPhysics_StaticMulti *)0)->previous ) },
@@ -3178,7 +3195,7 @@ static classVariableInfo_t idPhysics_StaticMulti_typeInfo[] = {
 };
 
 static classVariableInfo_t idPhysics_Base_typeInfo[] = {
-	{ ": idEntity *", "self", (intptr_t)(&((idPhysics_Base *)0)->self), sizeof( ((idPhysics_Base *)0)->self ) },
+	{ "idEntity *", "self", (intptr_t)(&((idPhysics_Base *)0)->self), sizeof( ((idPhysics_Base *)0)->self ) },
 	{ "int", "clipMask", (intptr_t)(&((idPhysics_Base *)0)->clipMask), sizeof( ((idPhysics_Base *)0)->clipMask ) },
 	{ "idVec3", "gravityVector", (intptr_t)(&((idPhysics_Base *)0)->gravityVector), sizeof( ((idPhysics_Base *)0)->gravityVector ) },
 	{ "idVec3", "gravityNormal", (intptr_t)(&((idPhysics_Base *)0)->gravityNormal), sizeof( ((idPhysics_Base *)0)->gravityNormal ) },
@@ -3194,7 +3211,7 @@ static classVariableInfo_t physicsInterpolationState_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idPhysics_Actor_typeInfo[] = {
-	{ ": idClipModel *", "clipModel", (intptr_t)(&((idPhysics_Actor *)0)->clipModel), sizeof( ((idPhysics_Actor *)0)->clipModel ) },
+	{ "idClipModel *", "clipModel", (intptr_t)(&((idPhysics_Actor *)0)->clipModel), sizeof( ((idPhysics_Actor *)0)->clipModel ) },
 	{ "idMat3", "clipModelAxis", (intptr_t)(&((idPhysics_Actor *)0)->clipModelAxis), sizeof( ((idPhysics_Actor *)0)->clipModelAxis ) },
 	{ "float", "mass", (intptr_t)(&((idPhysics_Actor *)0)->mass), sizeof( ((idPhysics_Actor *)0)->mass ) },
 	{ "float", "invMass", (intptr_t)(&((idPhysics_Actor *)0)->invMass), sizeof( ((idPhysics_Actor *)0)->invMass ) },
@@ -3216,7 +3233,7 @@ static classVariableInfo_t monsterPState_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idPhysics_Monster_typeInfo[] = {
-	{ ": monsterPState_t", "current", (intptr_t)(&((idPhysics_Monster *)0)->current), sizeof( ((idPhysics_Monster *)0)->current ) },
+	{ "monsterPState_t", "current", (intptr_t)(&((idPhysics_Monster *)0)->current), sizeof( ((idPhysics_Monster *)0)->current ) },
 	{ "monsterPState_t", "saved", (intptr_t)(&((idPhysics_Monster *)0)->saved), sizeof( ((idPhysics_Monster *)0)->saved ) },
 	{ "monsterPState_t", "previous", (intptr_t)(&((idPhysics_Monster *)0)->previous), sizeof( ((idPhysics_Monster *)0)->previous ) },
 	{ "monsterPState_t", "next", (intptr_t)(&((idPhysics_Monster *)0)->next), sizeof( ((idPhysics_Monster *)0)->next ) },
@@ -3245,7 +3262,7 @@ static classVariableInfo_t playerPState_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idPhysics_Player_typeInfo[] = {
-	{ ": playerPState_t", "current", (intptr_t)(&((idPhysics_Player *)0)->current), sizeof( ((idPhysics_Player *)0)->current ) },
+	{ "playerPState_t", "current", (intptr_t)(&((idPhysics_Player *)0)->current), sizeof( ((idPhysics_Player *)0)->current ) },
 	{ "playerPState_t", "saved", (intptr_t)(&((idPhysics_Player *)0)->saved), sizeof( ((idPhysics_Player *)0)->saved ) },
 	{ "playerPState_t", "previous", (intptr_t)(&((idPhysics_Player *)0)->previous), sizeof( ((idPhysics_Player *)0)->previous ) },
 	{ "playerPState_t", "next", (intptr_t)(&((idPhysics_Player *)0)->next), sizeof( ((idPhysics_Player *)0)->next ) },
@@ -3292,7 +3309,7 @@ static classVariableInfo_t parametricPState_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idPhysics_Parametric_typeInfo[] = {
-	{ ": parametricPState_t", "current", (intptr_t)(&((idPhysics_Parametric *)0)->current), sizeof( ((idPhysics_Parametric *)0)->current ) },
+	{ "parametricPState_t", "current", (intptr_t)(&((idPhysics_Parametric *)0)->current), sizeof( ((idPhysics_Parametric *)0)->current ) },
 	{ "parametricPState_t", "saved", (intptr_t)(&((idPhysics_Parametric *)0)->saved), sizeof( ((idPhysics_Parametric *)0)->saved ) },
 	{ "physicsInterpolationState_t", "previous", (intptr_t)(&((idPhysics_Parametric *)0)->previous), sizeof( ((idPhysics_Parametric *)0)->previous ) },
 	{ "physicsInterpolationState_t", "next", (intptr_t)(&((idPhysics_Parametric *)0)->next), sizeof( ((idPhysics_Parametric *)0)->next ) },
@@ -3327,7 +3344,7 @@ static classVariableInfo_t rigidBodyPState_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idPhysics_RigidBody_typeInfo[] = {
-	{ ": rigidBodyPState_t", "current", (intptr_t)(&((idPhysics_RigidBody *)0)->current), sizeof( ((idPhysics_RigidBody *)0)->current ) },
+	{ "rigidBodyPState_t", "current", (intptr_t)(&((idPhysics_RigidBody *)0)->current), sizeof( ((idPhysics_RigidBody *)0)->current ) },
 	{ "rigidBodyPState_t", "saved", (intptr_t)(&((idPhysics_RigidBody *)0)->saved), sizeof( ((idPhysics_RigidBody *)0)->saved ) },
 	{ "rigidBodyPState_t", "previous", (intptr_t)(&((idPhysics_RigidBody *)0)->previous), sizeof( ((idPhysics_RigidBody *)0)->previous ) },
 	{ "rigidBodyPState_t", "next", (intptr_t)(&((idPhysics_RigidBody *)0)->next), sizeof( ((idPhysics_RigidBody *)0)->next ) },
@@ -3361,7 +3378,7 @@ static classVariableInfo_t idAFConstraint_constraintFlags_s_typeInfo[] = {
 };
 
 static classVariableInfo_t idAFConstraint_typeInfo[] = {
-	{ ": constraintType_t", "type", (intptr_t)(&((idAFConstraint *)0)->type), sizeof( ((idAFConstraint *)0)->type ) },
+	{ "constraintType_t", "type", (intptr_t)(&((idAFConstraint *)0)->type), sizeof( ((idAFConstraint *)0)->type ) },
 	{ "idStr", "name", (intptr_t)(&((idAFConstraint *)0)->name), sizeof( ((idAFConstraint *)0)->name ) },
 	{ "idAFBody *", "body1", (intptr_t)(&((idAFConstraint *)0)->body1), sizeof( ((idAFConstraint *)0)->body1 ) },
 	{ "idAFBody *", "body2", (intptr_t)(&((idAFConstraint *)0)->body2), sizeof( ((idAFConstraint *)0)->body2 ) },
@@ -3385,13 +3402,13 @@ static classVariableInfo_t idAFConstraint_typeInfo[] = {
 };
 
 static classVariableInfo_t idAFConstraint_Fixed_typeInfo[] = {
-	{ ": idVec3", "offset", (intptr_t)(&((idAFConstraint_Fixed *)0)->offset), sizeof( ((idAFConstraint_Fixed *)0)->offset ) },
+	{ "idVec3", "offset", (intptr_t)(&((idAFConstraint_Fixed *)0)->offset), sizeof( ((idAFConstraint_Fixed *)0)->offset ) },
 	{ "idMat3", "relAxis", (intptr_t)(&((idAFConstraint_Fixed *)0)->relAxis), sizeof( ((idAFConstraint_Fixed *)0)->relAxis ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idAFConstraint_BallAndSocketJoint_typeInfo[] = {
-	{ ": idVec3", "anchor1", (intptr_t)(&((idAFConstraint_BallAndSocketJoint *)0)->anchor1), sizeof( ((idAFConstraint_BallAndSocketJoint *)0)->anchor1 ) },
+	{ "idVec3", "anchor1", (intptr_t)(&((idAFConstraint_BallAndSocketJoint *)0)->anchor1), sizeof( ((idAFConstraint_BallAndSocketJoint *)0)->anchor1 ) },
 	{ "idVec3", "anchor2", (intptr_t)(&((idAFConstraint_BallAndSocketJoint *)0)->anchor2), sizeof( ((idAFConstraint_BallAndSocketJoint *)0)->anchor2 ) },
 	{ "float", "friction", (intptr_t)(&((idAFConstraint_BallAndSocketJoint *)0)->friction), sizeof( ((idAFConstraint_BallAndSocketJoint *)0)->friction ) },
 	{ "idAFConstraint_ConeLimit *", "coneLimit", (intptr_t)(&((idAFConstraint_BallAndSocketJoint *)0)->coneLimit), sizeof( ((idAFConstraint_BallAndSocketJoint *)0)->coneLimit ) },
@@ -3401,12 +3418,12 @@ static classVariableInfo_t idAFConstraint_BallAndSocketJoint_typeInfo[] = {
 };
 
 static classVariableInfo_t idAFConstraint_BallAndSocketJointFriction_typeInfo[] = {
-	{ ": idAFConstraint_BallAndSocketJoint *", "joint", (intptr_t)(&((idAFConstraint_BallAndSocketJointFriction *)0)->joint), sizeof( ((idAFConstraint_BallAndSocketJointFriction *)0)->joint ) },
+	{ "idAFConstraint_BallAndSocketJoint *", "joint", (intptr_t)(&((idAFConstraint_BallAndSocketJointFriction *)0)->joint), sizeof( ((idAFConstraint_BallAndSocketJointFriction *)0)->joint ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idAFConstraint_UniversalJoint_typeInfo[] = {
-	{ ": idVec3", "anchor1", (intptr_t)(&((idAFConstraint_UniversalJoint *)0)->anchor1), sizeof( ((idAFConstraint_UniversalJoint *)0)->anchor1 ) },
+	{ "idVec3", "anchor1", (intptr_t)(&((idAFConstraint_UniversalJoint *)0)->anchor1), sizeof( ((idAFConstraint_UniversalJoint *)0)->anchor1 ) },
 	{ "idVec3", "anchor2", (intptr_t)(&((idAFConstraint_UniversalJoint *)0)->anchor2), sizeof( ((idAFConstraint_UniversalJoint *)0)->anchor2 ) },
 	{ "idVec3", "shaft1", (intptr_t)(&((idAFConstraint_UniversalJoint *)0)->shaft1), sizeof( ((idAFConstraint_UniversalJoint *)0)->shaft1 ) },
 	{ "idVec3", "shaft2", (intptr_t)(&((idAFConstraint_UniversalJoint *)0)->shaft2), sizeof( ((idAFConstraint_UniversalJoint *)0)->shaft2 ) },
@@ -3420,7 +3437,7 @@ static classVariableInfo_t idAFConstraint_UniversalJoint_typeInfo[] = {
 };
 
 static classVariableInfo_t idAFConstraint_UniversalJointFriction_typeInfo[] = {
-	{ ": idAFConstraint_UniversalJoint *", "joint", (intptr_t)(&((idAFConstraint_UniversalJointFriction *)0)->joint), sizeof( ((idAFConstraint_UniversalJointFriction *)0)->joint ) },
+	{ "idAFConstraint_UniversalJoint *", "joint", (intptr_t)(&((idAFConstraint_UniversalJointFriction *)0)->joint), sizeof( ((idAFConstraint_UniversalJointFriction *)0)->joint ) },
 	{ NULL, 0 }
 };
 
@@ -3429,7 +3446,7 @@ static classVariableInfo_t idAFConstraint_CylindricalJoint_typeInfo[] = {
 };
 
 static classVariableInfo_t idAFConstraint_Hinge_typeInfo[] = {
-	{ ": idVec3", "anchor1", (intptr_t)(&((idAFConstraint_Hinge *)0)->anchor1), sizeof( ((idAFConstraint_Hinge *)0)->anchor1 ) },
+	{ "idVec3", "anchor1", (intptr_t)(&((idAFConstraint_Hinge *)0)->anchor1), sizeof( ((idAFConstraint_Hinge *)0)->anchor1 ) },
 	{ "idVec3", "anchor2", (intptr_t)(&((idAFConstraint_Hinge *)0)->anchor2), sizeof( ((idAFConstraint_Hinge *)0)->anchor2 ) },
 	{ "idVec3", "axis1", (intptr_t)(&((idAFConstraint_Hinge *)0)->axis1), sizeof( ((idAFConstraint_Hinge *)0)->axis1 ) },
 	{ "idVec3", "axis2", (intptr_t)(&((idAFConstraint_Hinge *)0)->axis2), sizeof( ((idAFConstraint_Hinge *)0)->axis2 ) },
@@ -3442,12 +3459,12 @@ static classVariableInfo_t idAFConstraint_Hinge_typeInfo[] = {
 };
 
 static classVariableInfo_t idAFConstraint_HingeFriction_typeInfo[] = {
-	{ ": idAFConstraint_Hinge *", "hinge", (intptr_t)(&((idAFConstraint_HingeFriction *)0)->hinge), sizeof( ((idAFConstraint_HingeFriction *)0)->hinge ) },
+	{ "idAFConstraint_Hinge *", "hinge", (intptr_t)(&((idAFConstraint_HingeFriction *)0)->hinge), sizeof( ((idAFConstraint_HingeFriction *)0)->hinge ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idAFConstraint_HingeSteering_typeInfo[] = {
-	{ ": idAFConstraint_Hinge *", "hinge", (intptr_t)(&((idAFConstraint_HingeSteering *)0)->hinge), sizeof( ((idAFConstraint_HingeSteering *)0)->hinge ) },
+	{ "idAFConstraint_Hinge *", "hinge", (intptr_t)(&((idAFConstraint_HingeSteering *)0)->hinge), sizeof( ((idAFConstraint_HingeSteering *)0)->hinge ) },
 	{ "float", "steerAngle", (intptr_t)(&((idAFConstraint_HingeSteering *)0)->steerAngle), sizeof( ((idAFConstraint_HingeSteering *)0)->steerAngle ) },
 	{ "float", "steerSpeed", (intptr_t)(&((idAFConstraint_HingeSteering *)0)->steerSpeed), sizeof( ((idAFConstraint_HingeSteering *)0)->steerSpeed ) },
 	{ "float", "epsilon", (intptr_t)(&((idAFConstraint_HingeSteering *)0)->epsilon), sizeof( ((idAFConstraint_HingeSteering *)0)->epsilon ) },
@@ -3455,7 +3472,7 @@ static classVariableInfo_t idAFConstraint_HingeSteering_typeInfo[] = {
 };
 
 static classVariableInfo_t idAFConstraint_Slider_typeInfo[] = {
-	{ ": idVec3", "axis", (intptr_t)(&((idAFConstraint_Slider *)0)->axis), sizeof( ((idAFConstraint_Slider *)0)->axis ) },
+	{ "idVec3", "axis", (intptr_t)(&((idAFConstraint_Slider *)0)->axis), sizeof( ((idAFConstraint_Slider *)0)->axis ) },
 	{ "idVec3", "offset", (intptr_t)(&((idAFConstraint_Slider *)0)->offset), sizeof( ((idAFConstraint_Slider *)0)->offset ) },
 	{ "idMat3", "relAxis", (intptr_t)(&((idAFConstraint_Slider *)0)->relAxis), sizeof( ((idAFConstraint_Slider *)0)->relAxis ) },
 	{ NULL, 0 }
@@ -3466,14 +3483,14 @@ static classVariableInfo_t idAFConstraint_Line_typeInfo[] = {
 };
 
 static classVariableInfo_t idAFConstraint_Plane_typeInfo[] = {
-	{ ": idVec3", "anchor1", (intptr_t)(&((idAFConstraint_Plane *)0)->anchor1), sizeof( ((idAFConstraint_Plane *)0)->anchor1 ) },
+	{ "idVec3", "anchor1", (intptr_t)(&((idAFConstraint_Plane *)0)->anchor1), sizeof( ((idAFConstraint_Plane *)0)->anchor1 ) },
 	{ "idVec3", "anchor2", (intptr_t)(&((idAFConstraint_Plane *)0)->anchor2), sizeof( ((idAFConstraint_Plane *)0)->anchor2 ) },
 	{ "idVec3", "planeNormal", (intptr_t)(&((idAFConstraint_Plane *)0)->planeNormal), sizeof( ((idAFConstraint_Plane *)0)->planeNormal ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idAFConstraint_Spring_typeInfo[] = {
-	{ ": idVec3", "anchor1", (intptr_t)(&((idAFConstraint_Spring *)0)->anchor1), sizeof( ((idAFConstraint_Spring *)0)->anchor1 ) },
+	{ "idVec3", "anchor1", (intptr_t)(&((idAFConstraint_Spring *)0)->anchor1), sizeof( ((idAFConstraint_Spring *)0)->anchor1 ) },
 	{ "idVec3", "anchor2", (intptr_t)(&((idAFConstraint_Spring *)0)->anchor2), sizeof( ((idAFConstraint_Spring *)0)->anchor2 ) },
 	{ "float", "kstretch", (intptr_t)(&((idAFConstraint_Spring *)0)->kstretch), sizeof( ((idAFConstraint_Spring *)0)->kstretch ) },
 	{ "float", "kcompress", (intptr_t)(&((idAFConstraint_Spring *)0)->kcompress), sizeof( ((idAFConstraint_Spring *)0)->kcompress ) },
@@ -3485,18 +3502,18 @@ static classVariableInfo_t idAFConstraint_Spring_typeInfo[] = {
 };
 
 static classVariableInfo_t idAFConstraint_Contact_typeInfo[] = {
-	{ ": contactInfo_t", "contact", (intptr_t)(&((idAFConstraint_Contact *)0)->contact), sizeof( ((idAFConstraint_Contact *)0)->contact ) },
+	{ "contactInfo_t", "contact", (intptr_t)(&((idAFConstraint_Contact *)0)->contact), sizeof( ((idAFConstraint_Contact *)0)->contact ) },
 	{ "idAFConstraint_ContactFriction *", "fc", (intptr_t)(&((idAFConstraint_Contact *)0)->fc), sizeof( ((idAFConstraint_Contact *)0)->fc ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idAFConstraint_ContactFriction_typeInfo[] = {
-	{ ": idAFConstraint_Contact *", "cc", (intptr_t)(&((idAFConstraint_ContactFriction *)0)->cc), sizeof( ((idAFConstraint_ContactFriction *)0)->cc ) },
+	{ "idAFConstraint_Contact *", "cc", (intptr_t)(&((idAFConstraint_ContactFriction *)0)->cc), sizeof( ((idAFConstraint_ContactFriction *)0)->cc ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idAFConstraint_ConeLimit_typeInfo[] = {
-	{ ": idVec3", "coneAnchor", (intptr_t)(&((idAFConstraint_ConeLimit *)0)->coneAnchor), sizeof( ((idAFConstraint_ConeLimit *)0)->coneAnchor ) },
+	{ "idVec3", "coneAnchor", (intptr_t)(&((idAFConstraint_ConeLimit *)0)->coneAnchor), sizeof( ((idAFConstraint_ConeLimit *)0)->coneAnchor ) },
 	{ "idVec3", "coneAxis", (intptr_t)(&((idAFConstraint_ConeLimit *)0)->coneAxis), sizeof( ((idAFConstraint_ConeLimit *)0)->coneAxis ) },
 	{ "idVec3", "body1Axis", (intptr_t)(&((idAFConstraint_ConeLimit *)0)->body1Axis), sizeof( ((idAFConstraint_ConeLimit *)0)->body1Axis ) },
 	{ "float", "cosAngle", (intptr_t)(&((idAFConstraint_ConeLimit *)0)->cosAngle), sizeof( ((idAFConstraint_ConeLimit *)0)->cosAngle ) },
@@ -3507,7 +3524,7 @@ static classVariableInfo_t idAFConstraint_ConeLimit_typeInfo[] = {
 };
 
 static classVariableInfo_t idAFConstraint_PyramidLimit_typeInfo[] = {
-	{ ": idVec3", "pyramidAnchor", (intptr_t)(&((idAFConstraint_PyramidLimit *)0)->pyramidAnchor), sizeof( ((idAFConstraint_PyramidLimit *)0)->pyramidAnchor ) },
+	{ "idVec3", "pyramidAnchor", (intptr_t)(&((idAFConstraint_PyramidLimit *)0)->pyramidAnchor), sizeof( ((idAFConstraint_PyramidLimit *)0)->pyramidAnchor ) },
 	{ "idMat3", "pyramidBasis", (intptr_t)(&((idAFConstraint_PyramidLimit *)0)->pyramidBasis), sizeof( ((idAFConstraint_PyramidLimit *)0)->pyramidBasis ) },
 	{ "idVec3", "body1Axis", (intptr_t)(&((idAFConstraint_PyramidLimit *)0)->body1Axis), sizeof( ((idAFConstraint_PyramidLimit *)0)->body1Axis ) },
 	{ "float[2]", "cosAngle", (intptr_t)(&((idAFConstraint_PyramidLimit *)0)->cosAngle), sizeof( ((idAFConstraint_PyramidLimit *)0)->cosAngle ) },
@@ -3518,7 +3535,7 @@ static classVariableInfo_t idAFConstraint_PyramidLimit_typeInfo[] = {
 };
 
 static classVariableInfo_t idAFConstraint_Suspension_typeInfo[] = {
-	{ ": idVec3", "localOrigin", (intptr_t)(&((idAFConstraint_Suspension *)0)->localOrigin), sizeof( ((idAFConstraint_Suspension *)0)->localOrigin ) },
+	{ "idVec3", "localOrigin", (intptr_t)(&((idAFConstraint_Suspension *)0)->localOrigin), sizeof( ((idAFConstraint_Suspension *)0)->localOrigin ) },
 	{ "idMat3", "localAxis", (intptr_t)(&((idAFConstraint_Suspension *)0)->localAxis), sizeof( ((idAFConstraint_Suspension *)0)->localAxis ) },
 	{ "float", "suspensionUp", (intptr_t)(&((idAFConstraint_Suspension *)0)->suspensionUp), sizeof( ((idAFConstraint_Suspension *)0)->suspensionUp ) },
 	{ "float", "suspensionDown", (intptr_t)(&((idAFConstraint_Suspension *)0)->suspensionDown), sizeof( ((idAFConstraint_Suspension *)0)->suspensionDown ) },
@@ -3555,7 +3572,7 @@ static classVariableInfo_t idAFBody_bodyFlags_s_typeInfo[] = {
 };
 
 static classVariableInfo_t idAFBody_typeInfo[] = {
-	{ ": idStr", "name", (intptr_t)(&((idAFBody *)0)->name), sizeof( ((idAFBody *)0)->name ) },
+	{ "idStr", "name", (intptr_t)(&((idAFBody *)0)->name), sizeof( ((idAFBody *)0)->name ) },
 	{ "idAFBody *", "parent", (intptr_t)(&((idAFBody *)0)->parent), sizeof( ((idAFBody *)0)->parent ) },
 	{ "idList < idAFBody * , TAG_IDLIB_LIST_PHYSICS >", "children", (intptr_t)(&((idAFBody *)0)->children), sizeof( ((idAFBody *)0)->children ) },
 	{ "idClipModel *", "clipModel", (intptr_t)(&((idAFBody *)0)->clipModel), sizeof( ((idAFBody *)0)->clipModel ) },
@@ -3600,7 +3617,7 @@ static classVariableInfo_t idAFBody_typeInfo[] = {
 };
 
 static classVariableInfo_t idAFTree_typeInfo[] = {
-	{ ": idList < idAFBody * , TAG_IDLIB_LIST_PHYSICS >", "sortedBodies", (intptr_t)(&((idAFTree *)0)->sortedBodies), sizeof( ((idAFTree *)0)->sortedBodies ) },
+	{ "idList < idAFBody * , TAG_IDLIB_LIST_PHYSICS >", "sortedBodies", (intptr_t)(&((idAFTree *)0)->sortedBodies), sizeof( ((idAFTree *)0)->sortedBodies ) },
 	{ NULL, 0 }
 };
 
@@ -3620,7 +3637,7 @@ static classVariableInfo_t AFCollision_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idPhysics_AF_typeInfo[] = {
-	{ ": idList < idAFTree * , TAG_IDLIB_LIST_PHYSICS >", "trees", (intptr_t)(&((idPhysics_AF *)0)->trees), sizeof( ((idPhysics_AF *)0)->trees ) },
+	{ "idList < idAFTree * , TAG_IDLIB_LIST_PHYSICS >", "trees", (intptr_t)(&((idPhysics_AF *)0)->trees), sizeof( ((idPhysics_AF *)0)->trees ) },
 	{ "idList < idAFBody * , TAG_IDLIB_LIST_PHYSICS >", "bodies", (intptr_t)(&((idPhysics_AF *)0)->bodies), sizeof( ((idPhysics_AF *)0)->bodies ) },
 	{ "idList < idAFConstraint * , TAG_IDLIB_LIST_PHYSICS >", "constraints", (intptr_t)(&((idPhysics_AF *)0)->constraints), sizeof( ((idPhysics_AF *)0)->constraints ) },
 	{ "idList < idAFConstraint * , TAG_IDLIB_LIST_PHYSICS >", "primaryConstraints", (intptr_t)(&((idPhysics_AF *)0)->primaryConstraints), sizeof( ((idPhysics_AF *)0)->primaryConstraints ) },
@@ -3689,7 +3706,7 @@ static classVariableInfo_t activeSmokeStage_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idSmokeParticles_typeInfo[] = {
-	{ ": bool", "initialized", (intptr_t)(&((idSmokeParticles *)0)->initialized), sizeof( ((idSmokeParticles *)0)->initialized ) },
+	{ "bool", "initialized", (intptr_t)(&((idSmokeParticles *)0)->initialized), sizeof( ((idSmokeParticles *)0)->initialized ) },
 	{ "renderEntity_t", "renderEntity", (intptr_t)(&((idSmokeParticles *)0)->renderEntity), sizeof( ((idSmokeParticles *)0)->renderEntity ) },
 	{ "int", "renderEntityHandle", (intptr_t)(&((idSmokeParticles *)0)->renderEntityHandle), sizeof( ((idSmokeParticles *)0)->renderEntityHandle ) },
 	{ "singleSmoke_t[10000]", "smokes", (intptr_t)(&((idSmokeParticles *)0)->smokes), sizeof( ((idSmokeParticles *)0)->smokes ) },
@@ -3707,7 +3724,7 @@ static classVariableInfo_t signal_t_typeInfo[] = {
 };
 
 static classVariableInfo_t signalList_t_typeInfo[] = {
-	{ ": idList < signal_t , TAG_ENTITY >[10]", "signal", (intptr_t)(&((signalList_t *)0)->signal), sizeof( ((signalList_t *)0)->signal ) },
+	{ "idList < signal_t , TAG_ENTITY >[10]", "signal", (intptr_t)(&((signalList_t *)0)->signal), sizeof( ((signalList_t *)0)->signal ) },
 	{ NULL, 0 }
 };
 
@@ -3755,10 +3772,10 @@ static classVariableInfo_t idEntity_typeInfo[] = {
 	{ "renderEntity_t", "xrayEntity", (intptr_t)(&((idEntity *)0)->xrayEntity), sizeof( ((idEntity *)0)->xrayEntity ) },
 	{ "qhandle_t", "xrayEntityHandle", (intptr_t)(&((idEntity *)0)->xrayEntityHandle), sizeof( ((idEntity *)0)->xrayEntityHandle ) },
 	{ "const idDeclSkin *", "xraySkin", (intptr_t)(&((idEntity *)0)->xraySkin), sizeof( ((idEntity *)0)->xraySkin ) },
-	{ ": renderEntity_t", "renderEntity", (intptr_t)(&((idEntity *)0)->renderEntity), sizeof( ((idEntity *)0)->renderEntity ) },
+	{ "renderEntity_t", "renderEntity", (intptr_t)(&((idEntity *)0)->renderEntity), sizeof( ((idEntity *)0)->renderEntity ) },
 	{ "int", "modelDefHandle", (intptr_t)(&((idEntity *)0)->modelDefHandle), sizeof( ((idEntity *)0)->modelDefHandle ) },
 	{ "refSound_t", "refSound", (intptr_t)(&((idEntity *)0)->refSound), sizeof( ((idEntity *)0)->refSound ) },
-	{ ": idPhysics_Static", "defaultPhysicsObj", (intptr_t)(&((idEntity *)0)->defaultPhysicsObj), sizeof( ((idEntity *)0)->defaultPhysicsObj ) },
+	{ "idPhysics_Static", "defaultPhysicsObj", (intptr_t)(&((idEntity *)0)->defaultPhysicsObj), sizeof( ((idEntity *)0)->defaultPhysicsObj ) },
 	{ "idPhysics *", "physics", (intptr_t)(&((idEntity *)0)->physics), sizeof( ((idEntity *)0)->physics ) },
 	{ "idEntity *", "bindMaster", (intptr_t)(&((idEntity *)0)->bindMaster), sizeof( ((idEntity *)0)->bindMaster ) },
 	{ "jointHandle_t", "bindJoint", (intptr_t)(&((idEntity *)0)->bindJoint), sizeof( ((idEntity *)0)->bindJoint ) },
@@ -3789,13 +3806,13 @@ static classVariableInfo_t damageEffect_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idAnimatedEntity_typeInfo[] = {
-	{ ": idAnimator", "animator", (intptr_t)(&((idAnimatedEntity *)0)->animator), sizeof( ((idAnimatedEntity *)0)->animator ) },
+	{ "idAnimator", "animator", (intptr_t)(&((idAnimatedEntity *)0)->animator), sizeof( ((idAnimatedEntity *)0)->animator ) },
 	{ "damageEffect_t *", "damageEffects", (intptr_t)(&((idAnimatedEntity *)0)->damageEffects), sizeof( ((idAnimatedEntity *)0)->damageEffects ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idInteractable_typeInfo[] = {
-	{ ": idPlayer *", "currentInteractor", (intptr_t)(&((idInteractable *)0)->currentInteractor), sizeof( ((idInteractable *)0)->currentInteractor ) },
+	{ "idPlayer *", "currentInteractor", (intptr_t)(&((idInteractable *)0)->currentInteractor), sizeof( ((idInteractable *)0)->currentInteractor ) },
 	{ NULL, 0 }
 };
 
@@ -3807,7 +3824,7 @@ static classVariableInfo_t interactResult_t_typeInfo[] = {
 };
 
 static classVariableInfo_t SetTimeState_typeInfo[] = {
-	{ ": bool", "activated", (intptr_t)(&((SetTimeState *)0)->activated), sizeof( ((SetTimeState *)0)->activated ) },
+	{ "bool", "activated", (intptr_t)(&((SetTimeState *)0)->activated), sizeof( ((SetTimeState *)0)->activated ) },
 	{ "bool", "previousFast", (intptr_t)(&((SetTimeState *)0)->previousFast), sizeof( ((SetTimeState *)0)->previousFast ) },
 	{ "bool", "fast", (intptr_t)(&((SetTimeState *)0)->fast), sizeof( ((SetTimeState *)0)->fast ) },
 	{ NULL, 0 }
@@ -3820,7 +3837,7 @@ static classVariableInfo_t idCursor3D_typeInfo[] = {
 };
 
 static classVariableInfo_t idDragEntity_typeInfo[] = {
-	{ ": idEntityPtr < idEntity >", "dragEnt", (intptr_t)(&((idDragEntity *)0)->dragEnt), sizeof( ((idDragEntity *)0)->dragEnt ) },
+	{ "idEntityPtr < idEntity >", "dragEnt", (intptr_t)(&((idDragEntity *)0)->dragEnt), sizeof( ((idDragEntity *)0)->dragEnt ) },
 	{ "jointHandle_t", "joint", (intptr_t)(&((idDragEntity *)0)->joint), sizeof( ((idDragEntity *)0)->joint ) },
 	{ "int", "id", (intptr_t)(&((idDragEntity *)0)->id), sizeof( ((idDragEntity *)0)->id ) },
 	{ "idVec3", "localEntityPoint", (intptr_t)(&((idDragEntity *)0)->localEntityPoint), sizeof( ((idDragEntity *)0)->localEntityPoint ) },
@@ -3838,14 +3855,14 @@ static classVariableInfo_t selectedTypeInfo_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idEditEntities_typeInfo[] = {
-	{ ": int", "nextSelectTime", (intptr_t)(&((idEditEntities *)0)->nextSelectTime), sizeof( ((idEditEntities *)0)->nextSelectTime ) },
+	{ "int", "nextSelectTime", (intptr_t)(&((idEditEntities *)0)->nextSelectTime), sizeof( ((idEditEntities *)0)->nextSelectTime ) },
 	{ "idList < selectedTypeInfo_t >", "selectableEntityClasses", (intptr_t)(&((idEditEntities *)0)->selectableEntityClasses), sizeof( ((idEditEntities *)0)->selectableEntityClasses ) },
 	{ "idList < idEntity * >", "selectedEntities", (intptr_t)(&((idEditEntities *)0)->selectedEntities), sizeof( ((idEditEntities *)0)->selectedEntities ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idGrabber_typeInfo[] = {
-	{ ": idEntityPtr < idEntity >", "dragEnt", (intptr_t)(&((idGrabber *)0)->dragEnt), sizeof( ((idGrabber *)0)->dragEnt ) },
+	{ "idEntityPtr < idEntity >", "dragEnt", (intptr_t)(&((idGrabber *)0)->dragEnt), sizeof( ((idGrabber *)0)->dragEnt ) },
 	{ "idForce_Grab", "drag", (intptr_t)(&((idGrabber *)0)->drag), sizeof( ((idGrabber *)0)->drag ) },
 	{ "idVec3", "saveGravity", (intptr_t)(&((idGrabber *)0)->saveGravity), sizeof( ((idGrabber *)0)->saveGravity ) },
 	{ "int", "id", (intptr_t)(&((idGrabber *)0)->id), sizeof( ((idGrabber *)0)->id ) },
@@ -3884,7 +3901,7 @@ static classVariableInfo_t afTouch_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idAF_typeInfo[] = {
-	{ ": idStr", "name", (intptr_t)(&((idAF *)0)->name), sizeof( ((idAF *)0)->name ) },
+	{ "idStr", "name", (intptr_t)(&((idAF *)0)->name), sizeof( ((idAF *)0)->name ) },
 	{ "idPhysics_AF", "physicsObj", (intptr_t)(&((idAF *)0)->physicsObj), sizeof( ((idAF *)0)->physicsObj ) },
 	{ "idEntity *", "self", (intptr_t)(&((idAF *)0)->self), sizeof( ((idAF *)0)->self ) },
 	{ "idAnimator *", "animator", (intptr_t)(&((idAF *)0)->animator), sizeof( ((idAF *)0)->animator ) },
@@ -3902,7 +3919,7 @@ static classVariableInfo_t idAF_typeInfo[] = {
 };
 
 static classVariableInfo_t idIK_typeInfo[] = {
-	{ ": bool", "initialized", (intptr_t)(&((idIK *)0)->initialized), sizeof( ((idIK *)0)->initialized ) },
+	{ "bool", "initialized", (intptr_t)(&((idIK *)0)->initialized), sizeof( ((idIK *)0)->initialized ) },
 	{ "bool", "ik_activate", (intptr_t)(&((idIK *)0)->ik_activate), sizeof( ((idIK *)0)->ik_activate ) },
 	{ "idEntity *", "self", (intptr_t)(&((idIK *)0)->self), sizeof( ((idIK *)0)->self ) },
 	{ "idAnimator *", "animator", (intptr_t)(&((idIK *)0)->animator), sizeof( ((idIK *)0)->animator ) },
@@ -3964,8 +3981,8 @@ static classVariableInfo_t idIK_Reach_typeInfo[] = {
 };
 
 static classVariableInfo_t idMultiModelAF_typeInfo[] = {
-	{ ": idPhysics_AF", "physicsObj", (intptr_t)(&((idMultiModelAF *)0)->physicsObj), sizeof( ((idMultiModelAF *)0)->physicsObj ) },
-	{ ": idList < idRenderModel * , TAG_AF >", "modelHandles", (intptr_t)(&((idMultiModelAF *)0)->modelHandles), sizeof( ((idMultiModelAF *)0)->modelHandles ) },
+	{ "idPhysics_AF", "physicsObj", (intptr_t)(&((idMultiModelAF *)0)->physicsObj), sizeof( ((idMultiModelAF *)0)->physicsObj ) },
+	{ "idList < idRenderModel * , TAG_AF >", "modelHandles", (intptr_t)(&((idMultiModelAF *)0)->modelHandles), sizeof( ((idMultiModelAF *)0)->modelHandles ) },
 	{ "idList < int , TAG_AF >", "modelDefHandles", (intptr_t)(&((idMultiModelAF *)0)->modelDefHandles), sizeof( ((idMultiModelAF *)0)->modelDefHandles ) },
 	{ NULL, 0 }
 };
@@ -3975,7 +3992,7 @@ static classVariableInfo_t idChain_typeInfo[] = {
 };
 
 static classVariableInfo_t idAFAttachment_typeInfo[] = {
-	{ ": idEntity *", "body", (intptr_t)(&((idAFAttachment *)0)->body), sizeof( ((idAFAttachment *)0)->body ) },
+	{ "idEntity *", "body", (intptr_t)(&((idAFAttachment *)0)->body), sizeof( ((idAFAttachment *)0)->body ) },
 	{ "idClipModel *", "combatModel", (intptr_t)(&((idAFAttachment *)0)->combatModel), sizeof( ((idAFAttachment *)0)->combatModel ) },
 	{ "int", "idleAnim", (intptr_t)(&((idAFAttachment *)0)->idleAnim), sizeof( ((idAFAttachment *)0)->idleAnim ) },
 	{ "jointHandle_t", "attachJoint", (intptr_t)(&((idAFAttachment *)0)->attachJoint), sizeof( ((idAFAttachment *)0)->attachJoint ) },
@@ -3983,7 +4000,7 @@ static classVariableInfo_t idAFAttachment_typeInfo[] = {
 };
 
 static classVariableInfo_t idAFEntity_Base_typeInfo[] = {
-	{ ": idAF", "af", (intptr_t)(&((idAFEntity_Base *)0)->af), sizeof( ((idAFEntity_Base *)0)->af ) },
+	{ "idAF", "af", (intptr_t)(&((idAFEntity_Base *)0)->af), sizeof( ((idAFEntity_Base *)0)->af ) },
 	{ "idClipModel *", "combatModel", (intptr_t)(&((idAFEntity_Base *)0)->combatModel), sizeof( ((idAFEntity_Base *)0)->combatModel ) },
 	{ "int", "combatModelContents", (intptr_t)(&((idAFEntity_Base *)0)->combatModelContents), sizeof( ((idAFEntity_Base *)0)->combatModelContents ) },
 	{ "idVec3", "spawnOrigin", (intptr_t)(&((idAFEntity_Base *)0)->spawnOrigin), sizeof( ((idAFEntity_Base *)0)->spawnOrigin ) },
@@ -3993,7 +4010,7 @@ static classVariableInfo_t idAFEntity_Base_typeInfo[] = {
 };
 
 static classVariableInfo_t idAFEntity_Gibbable_typeInfo[] = {
-	{ ": idRenderModel *", "skeletonModel", (intptr_t)(&((idAFEntity_Gibbable *)0)->skeletonModel), sizeof( ((idAFEntity_Gibbable *)0)->skeletonModel ) },
+	{ "idRenderModel *", "skeletonModel", (intptr_t)(&((idAFEntity_Gibbable *)0)->skeletonModel), sizeof( ((idAFEntity_Gibbable *)0)->skeletonModel ) },
 	{ "int", "skeletonModelDefHandle", (intptr_t)(&((idAFEntity_Gibbable *)0)->skeletonModelDefHandle), sizeof( ((idAFEntity_Gibbable *)0)->skeletonModelDefHandle ) },
 	{ "bool", "gibbed", (intptr_t)(&((idAFEntity_Gibbable *)0)->gibbed), sizeof( ((idAFEntity_Gibbable *)0)->gibbed ) },
 	{ "bool", "wasThrown", (intptr_t)(&((idAFEntity_Gibbable *)0)->wasThrown), sizeof( ((idAFEntity_Gibbable *)0)->wasThrown ) },
@@ -4006,12 +4023,12 @@ static classVariableInfo_t idAFEntity_Generic_typeInfo[] = {
 };
 
 static classVariableInfo_t idAFEntity_WithAttachedHead_typeInfo[] = {
-	{ ": idEntityPtr < idAFAttachment >", "head", (intptr_t)(&((idAFEntity_WithAttachedHead *)0)->head), sizeof( ((idAFEntity_WithAttachedHead *)0)->head ) },
+	{ "idEntityPtr < idAFAttachment >", "head", (intptr_t)(&((idAFEntity_WithAttachedHead *)0)->head), sizeof( ((idAFEntity_WithAttachedHead *)0)->head ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idAFEntity_Vehicle_typeInfo[] = {
-	{ ": jointHandle_t", "eyesJoint", (intptr_t)(&((idAFEntity_Vehicle *)0)->eyesJoint), sizeof( ((idAFEntity_Vehicle *)0)->eyesJoint ) },
+	{ "jointHandle_t", "eyesJoint", (intptr_t)(&((idAFEntity_Vehicle *)0)->eyesJoint), sizeof( ((idAFEntity_Vehicle *)0)->eyesJoint ) },
 	{ "jointHandle_t", "steeringWheelJoint", (intptr_t)(&((idAFEntity_Vehicle *)0)->steeringWheelJoint), sizeof( ((idAFEntity_Vehicle *)0)->steeringWheelJoint ) },
 	{ "float", "wheelRadius", (intptr_t)(&((idAFEntity_Vehicle *)0)->wheelRadius), sizeof( ((idAFEntity_Vehicle *)0)->wheelRadius ) },
 	{ "float", "steerAngle", (intptr_t)(&((idAFEntity_Vehicle *)0)->steerAngle), sizeof( ((idAFEntity_Vehicle *)0)->steerAngle ) },
@@ -4021,7 +4038,7 @@ static classVariableInfo_t idAFEntity_Vehicle_typeInfo[] = {
 };
 
 static classVariableInfo_t idAFEntity_VehicleSimple_typeInfo[] = {
-	{ ": idClipModel *", "wheelModel", (intptr_t)(&((idAFEntity_VehicleSimple *)0)->wheelModel), sizeof( ((idAFEntity_VehicleSimple *)0)->wheelModel ) },
+	{ "idClipModel *", "wheelModel", (intptr_t)(&((idAFEntity_VehicleSimple *)0)->wheelModel), sizeof( ((idAFEntity_VehicleSimple *)0)->wheelModel ) },
 	{ "idAFConstraint_Suspension *[4]", "suspension", (intptr_t)(&((idAFEntity_VehicleSimple *)0)->suspension), sizeof( ((idAFEntity_VehicleSimple *)0)->suspension ) },
 	{ "jointHandle_t[4]", "wheelJoints", (intptr_t)(&((idAFEntity_VehicleSimple *)0)->wheelJoints), sizeof( ((idAFEntity_VehicleSimple *)0)->wheelJoints ) },
 	{ "float[4]", "wheelAngles", (intptr_t)(&((idAFEntity_VehicleSimple *)0)->wheelAngles), sizeof( ((idAFEntity_VehicleSimple *)0)->wheelAngles ) },
@@ -4029,7 +4046,7 @@ static classVariableInfo_t idAFEntity_VehicleSimple_typeInfo[] = {
 };
 
 static classVariableInfo_t idAFEntity_VehicleFourWheels_typeInfo[] = {
-	{ ": idAFBody *[4]", "wheels", (intptr_t)(&((idAFEntity_VehicleFourWheels *)0)->wheels), sizeof( ((idAFEntity_VehicleFourWheels *)0)->wheels ) },
+	{ "idAFBody *[4]", "wheels", (intptr_t)(&((idAFEntity_VehicleFourWheels *)0)->wheels), sizeof( ((idAFEntity_VehicleFourWheels *)0)->wheels ) },
 	{ "idAFConstraint_Hinge *[2]", "steering", (intptr_t)(&((idAFEntity_VehicleFourWheels *)0)->steering), sizeof( ((idAFEntity_VehicleFourWheels *)0)->steering ) },
 	{ "jointHandle_t[4]", "wheelJoints", (intptr_t)(&((idAFEntity_VehicleFourWheels *)0)->wheelJoints), sizeof( ((idAFEntity_VehicleFourWheels *)0)->wheelJoints ) },
 	{ "float[4]", "wheelAngles", (intptr_t)(&((idAFEntity_VehicleFourWheels *)0)->wheelAngles), sizeof( ((idAFEntity_VehicleFourWheels *)0)->wheelAngles ) },
@@ -4040,7 +4057,7 @@ static classVariableInfo_t idAFEntity_VehicleSixWheels_typeInfo[] = {
 	{ "float", "force", (intptr_t)(&((idAFEntity_VehicleSixWheels *)0)->force), sizeof( ((idAFEntity_VehicleSixWheels *)0)->force ) },
 	{ "float", "velocity", (intptr_t)(&((idAFEntity_VehicleSixWheels *)0)->velocity), sizeof( ((idAFEntity_VehicleSixWheels *)0)->velocity ) },
 	{ "float", "steerAngle", (intptr_t)(&((idAFEntity_VehicleSixWheels *)0)->steerAngle), sizeof( ((idAFEntity_VehicleSixWheels *)0)->steerAngle ) },
-	{ ": idAFBody *[6]", "wheels", (intptr_t)(&((idAFEntity_VehicleSixWheels *)0)->wheels), sizeof( ((idAFEntity_VehicleSixWheels *)0)->wheels ) },
+	{ "idAFBody *[6]", "wheels", (intptr_t)(&((idAFEntity_VehicleSixWheels *)0)->wheels), sizeof( ((idAFEntity_VehicleSixWheels *)0)->wheels ) },
 	{ "idAFConstraint_Hinge *[4]", "steering", (intptr_t)(&((idAFEntity_VehicleSixWheels *)0)->steering), sizeof( ((idAFEntity_VehicleSixWheels *)0)->steering ) },
 	{ "jointHandle_t[6]", "wheelJoints", (intptr_t)(&((idAFEntity_VehicleSixWheels *)0)->wheelJoints), sizeof( ((idAFEntity_VehicleSixWheels *)0)->wheelJoints ) },
 	{ "float[6]", "wheelAngles", (intptr_t)(&((idAFEntity_VehicleSixWheels *)0)->wheelAngles), sizeof( ((idAFEntity_VehicleSixWheels *)0)->wheelAngles ) },
@@ -4048,7 +4065,7 @@ static classVariableInfo_t idAFEntity_VehicleSixWheels_typeInfo[] = {
 };
 
 static classVariableInfo_t idAFEntity_VehicleAutomated_typeInfo[] = {
-	{ ": idEntity *", "waypoint", (intptr_t)(&((idAFEntity_VehicleAutomated *)0)->waypoint), sizeof( ((idAFEntity_VehicleAutomated *)0)->waypoint ) },
+	{ "idEntity *", "waypoint", (intptr_t)(&((idAFEntity_VehicleAutomated *)0)->waypoint), sizeof( ((idAFEntity_VehicleAutomated *)0)->waypoint ) },
 	{ "float", "steeringSpeed", (intptr_t)(&((idAFEntity_VehicleAutomated *)0)->steeringSpeed), sizeof( ((idAFEntity_VehicleAutomated *)0)->steeringSpeed ) },
 	{ "float", "currentSteering", (intptr_t)(&((idAFEntity_VehicleAutomated *)0)->currentSteering), sizeof( ((idAFEntity_VehicleAutomated *)0)->currentSteering ) },
 	{ "float", "idealSteering", (intptr_t)(&((idAFEntity_VehicleAutomated *)0)->idealSteering), sizeof( ((idAFEntity_VehicleAutomated *)0)->idealSteering ) },
@@ -4057,7 +4074,7 @@ static classVariableInfo_t idAFEntity_VehicleAutomated_typeInfo[] = {
 };
 
 static classVariableInfo_t idAFEntity_SteamPipe_typeInfo[] = {
-	{ ": int", "steamBody", (intptr_t)(&((idAFEntity_SteamPipe *)0)->steamBody), sizeof( ((idAFEntity_SteamPipe *)0)->steamBody ) },
+	{ "int", "steamBody", (intptr_t)(&((idAFEntity_SteamPipe *)0)->steamBody), sizeof( ((idAFEntity_SteamPipe *)0)->steamBody ) },
 	{ "float", "steamForce", (intptr_t)(&((idAFEntity_SteamPipe *)0)->steamForce), sizeof( ((idAFEntity_SteamPipe *)0)->steamForce ) },
 	{ "float", "steamUpForce", (intptr_t)(&((idAFEntity_SteamPipe *)0)->steamUpForce), sizeof( ((idAFEntity_SteamPipe *)0)->steamUpForce ) },
 	{ "idForce_Constant", "force", (intptr_t)(&((idAFEntity_SteamPipe *)0)->force), sizeof( ((idAFEntity_SteamPipe *)0)->force ) },
@@ -4067,12 +4084,12 @@ static classVariableInfo_t idAFEntity_SteamPipe_typeInfo[] = {
 };
 
 static classVariableInfo_t idAFEntity_ClawFourFingers_typeInfo[] = {
-	{ ": idAFConstraint_Hinge *[4]", "fingers", (intptr_t)(&((idAFEntity_ClawFourFingers *)0)->fingers), sizeof( ((idAFEntity_ClawFourFingers *)0)->fingers ) },
+	{ "idAFConstraint_Hinge *[4]", "fingers", (intptr_t)(&((idAFEntity_ClawFourFingers *)0)->fingers), sizeof( ((idAFEntity_ClawFourFingers *)0)->fingers ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idHarvestable_typeInfo[] = {
-	{ ": idEntityPtr < idEntity >", "parentEnt", (intptr_t)(&((idHarvestable *)0)->parentEnt), sizeof( ((idHarvestable *)0)->parentEnt ) },
+	{ "idEntityPtr < idEntity >", "parentEnt", (intptr_t)(&((idHarvestable *)0)->parentEnt), sizeof( ((idHarvestable *)0)->parentEnt ) },
 	{ "float", "triggersize", (intptr_t)(&((idHarvestable *)0)->triggersize), sizeof( ((idHarvestable *)0)->triggersize ) },
 	{ "idClipModel *", "trigger", (intptr_t)(&((idHarvestable *)0)->trigger), sizeof( ((idHarvestable *)0)->trigger ) },
 	{ "float", "giveDelay", (intptr_t)(&((idHarvestable *)0)->giveDelay), sizeof( ((idHarvestable *)0)->giveDelay ) },
@@ -4087,7 +4104,7 @@ static classVariableInfo_t idHarvestable_typeInfo[] = {
 };
 
 static classVariableInfo_t idAFEntity_Harvest_typeInfo[] = {
-	{ ": idEntityPtr < idHarvestable >", "harvestEnt", (intptr_t)(&((idAFEntity_Harvest *)0)->harvestEnt), sizeof( ((idAFEntity_Harvest *)0)->harvestEnt ) },
+	{ "idEntityPtr < idHarvestable >", "harvestEnt", (intptr_t)(&((idAFEntity_Harvest *)0)->harvestEnt), sizeof( ((idAFEntity_Harvest *)0)->harvestEnt ) },
 	{ NULL, 0 }
 };
 
@@ -4096,12 +4113,12 @@ static classVariableInfo_t idSpawnableEntity_typeInfo[] = {
 };
 
 static classVariableInfo_t idPlayerStart_typeInfo[] = {
-	{ ": int", "teleportStage", (intptr_t)(&((idPlayerStart *)0)->teleportStage), sizeof( ((idPlayerStart *)0)->teleportStage ) },
+	{ "int", "teleportStage", (intptr_t)(&((idPlayerStart *)0)->teleportStage), sizeof( ((idPlayerStart *)0)->teleportStage ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idActivator_typeInfo[] = {
-	{ ": bool", "stay_on", (intptr_t)(&((idActivator *)0)->stay_on), sizeof( ((idActivator *)0)->stay_on ) },
+	{ "bool", "stay_on", (intptr_t)(&((idActivator *)0)->stay_on), sizeof( ((idActivator *)0)->stay_on ) },
 	{ NULL, 0 }
 };
 
@@ -4110,7 +4127,7 @@ static classVariableInfo_t idPathCorner_typeInfo[] = {
 };
 
 static classVariableInfo_t idDamagable_typeInfo[] = {
-	{ ": int", "count", (intptr_t)(&((idDamagable *)0)->count), sizeof( ((idDamagable *)0)->count ) },
+	{ "int", "count", (intptr_t)(&((idDamagable *)0)->count), sizeof( ((idDamagable *)0)->count ) },
 	{ "int", "nextTriggerTime", (intptr_t)(&((idDamagable *)0)->nextTriggerTime), sizeof( ((idDamagable *)0)->nextTriggerTime ) },
 	{ NULL, 0 }
 };
@@ -4120,7 +4137,7 @@ static classVariableInfo_t idExplodable_typeInfo[] = {
 };
 
 static classVariableInfo_t idSpring_typeInfo[] = {
-	{ ": idEntity *", "ent1", (intptr_t)(&((idSpring *)0)->ent1), sizeof( ((idSpring *)0)->ent1 ) },
+	{ "idEntity *", "ent1", (intptr_t)(&((idSpring *)0)->ent1), sizeof( ((idSpring *)0)->ent1 ) },
 	{ "idEntity *", "ent2", (intptr_t)(&((idSpring *)0)->ent2), sizeof( ((idSpring *)0)->ent2 ) },
 	{ "int", "id1", (intptr_t)(&((idSpring *)0)->id1), sizeof( ((idSpring *)0)->id1 ) },
 	{ "int", "id2", (intptr_t)(&((idSpring *)0)->id2), sizeof( ((idSpring *)0)->id2 ) },
@@ -4131,12 +4148,12 @@ static classVariableInfo_t idSpring_typeInfo[] = {
 };
 
 static classVariableInfo_t idForceField_typeInfo[] = {
-	{ ": idForce_Field", "forceField", (intptr_t)(&((idForceField *)0)->forceField), sizeof( ((idForceField *)0)->forceField ) },
+	{ "idForce_Field", "forceField", (intptr_t)(&((idForceField *)0)->forceField), sizeof( ((idForceField *)0)->forceField ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idAnimated_typeInfo[] = {
-	{ ": int", "num_anims", (intptr_t)(&((idAnimated *)0)->num_anims), sizeof( ((idAnimated *)0)->num_anims ) },
+	{ "int", "num_anims", (intptr_t)(&((idAnimated *)0)->num_anims), sizeof( ((idAnimated *)0)->num_anims ) },
 	{ "int", "current_anim_index", (intptr_t)(&((idAnimated *)0)->current_anim_index), sizeof( ((idAnimated *)0)->current_anim_index ) },
 	{ "int", "anim", (intptr_t)(&((idAnimated *)0)->anim), sizeof( ((idAnimated *)0)->anim ) },
 	{ "int", "blendFrames", (intptr_t)(&((idAnimated *)0)->blendFrames), sizeof( ((idAnimated *)0)->blendFrames ) },
@@ -4159,12 +4176,12 @@ static classVariableInfo_t idStaticEntity_typeInfo[] = {
 };
 
 static classVariableInfo_t idFuncEmitter_typeInfo[] = {
-	{ ": bool", "hidden", (intptr_t)(&((idFuncEmitter *)0)->hidden), sizeof( ((idFuncEmitter *)0)->hidden ) },
+	{ "bool", "hidden", (intptr_t)(&((idFuncEmitter *)0)->hidden), sizeof( ((idFuncEmitter *)0)->hidden ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idFuncShootProjectile_typeInfo[] = {
-	{ ": int", "mRespawnDelay", (intptr_t)(&((idFuncShootProjectile *)0)->mRespawnDelay), sizeof( ((idFuncShootProjectile *)0)->mRespawnDelay ) },
+	{ "int", "mRespawnDelay", (intptr_t)(&((idFuncShootProjectile *)0)->mRespawnDelay), sizeof( ((idFuncShootProjectile *)0)->mRespawnDelay ) },
 	{ "int", "mRespawnTime", (intptr_t)(&((idFuncShootProjectile *)0)->mRespawnTime), sizeof( ((idFuncShootProjectile *)0)->mRespawnTime ) },
 	{ "float", "mShootSpeed", (intptr_t)(&((idFuncShootProjectile *)0)->mShootSpeed), sizeof( ((idFuncShootProjectile *)0)->mShootSpeed ) },
 	{ "idVec3", "mShootDir", (intptr_t)(&((idFuncShootProjectile *)0)->mShootDir), sizeof( ((idFuncShootProjectile *)0)->mShootDir ) },
@@ -4174,7 +4191,7 @@ static classVariableInfo_t idFuncShootProjectile_typeInfo[] = {
 };
 
 static classVariableInfo_t idFuncSmoke_typeInfo[] = {
-	{ ": int", "smokeTime", (intptr_t)(&((idFuncSmoke *)0)->smokeTime), sizeof( ((idFuncSmoke *)0)->smokeTime ) },
+	{ "int", "smokeTime", (intptr_t)(&((idFuncSmoke *)0)->smokeTime), sizeof( ((idFuncSmoke *)0)->smokeTime ) },
 	{ "const idDeclParticle *", "smoke", (intptr_t)(&((idFuncSmoke *)0)->smoke), sizeof( ((idFuncSmoke *)0)->smoke ) },
 	{ "bool", "restart", (intptr_t)(&((idFuncSmoke *)0)->restart), sizeof( ((idFuncSmoke *)0)->restart ) },
 	{ NULL, 0 }
@@ -4185,7 +4202,7 @@ static classVariableInfo_t idFuncSplat_typeInfo[] = {
 };
 
 static classVariableInfo_t idTextEntity_typeInfo[] = {
-	{ ": idStr", "text", (intptr_t)(&((idTextEntity *)0)->text), sizeof( ((idTextEntity *)0)->text ) },
+	{ "idStr", "text", (intptr_t)(&((idTextEntity *)0)->text), sizeof( ((idTextEntity *)0)->text ) },
 	{ "bool", "playerOriented", (intptr_t)(&((idTextEntity *)0)->playerOriented), sizeof( ((idTextEntity *)0)->playerOriented ) },
 	{ NULL, 0 }
 };
@@ -4199,7 +4216,7 @@ static classVariableInfo_t idLocationSeparatorEntity_typeInfo[] = {
 };
 
 static classVariableInfo_t idVacuumSeparatorEntity_typeInfo[] = {
-	{ ": qhandle_t", "portal", (intptr_t)(&((idVacuumSeparatorEntity *)0)->portal), sizeof( ((idVacuumSeparatorEntity *)0)->portal ) },
+	{ "qhandle_t", "portal", (intptr_t)(&((idVacuumSeparatorEntity *)0)->portal), sizeof( ((idVacuumSeparatorEntity *)0)->portal ) },
 	{ NULL, 0 }
 };
 
@@ -4219,13 +4236,13 @@ static classVariableInfo_t idLiquid_typeInfo[] = {
 };
 
 static classVariableInfo_t idShaking_typeInfo[] = {
-	{ ": idPhysics_Parametric", "physicsObj", (intptr_t)(&((idShaking *)0)->physicsObj), sizeof( ((idShaking *)0)->physicsObj ) },
+	{ "idPhysics_Parametric", "physicsObj", (intptr_t)(&((idShaking *)0)->physicsObj), sizeof( ((idShaking *)0)->physicsObj ) },
 	{ "bool", "active", (intptr_t)(&((idShaking *)0)->active), sizeof( ((idShaking *)0)->active ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idEarthQuake_typeInfo[] = {
-	{ ": int", "nextTriggerTime", (intptr_t)(&((idEarthQuake *)0)->nextTriggerTime), sizeof( ((idEarthQuake *)0)->nextTriggerTime ) },
+	{ "int", "nextTriggerTime", (intptr_t)(&((idEarthQuake *)0)->nextTriggerTime), sizeof( ((idEarthQuake *)0)->nextTriggerTime ) },
 	{ "int", "shakeStopTime", (intptr_t)(&((idEarthQuake *)0)->shakeStopTime), sizeof( ((idEarthQuake *)0)->shakeStopTime ) },
 	{ "float", "wait", (intptr_t)(&((idEarthQuake *)0)->wait), sizeof( ((idEarthQuake *)0)->wait ) },
 	{ "float", "random", (intptr_t)(&((idEarthQuake *)0)->random), sizeof( ((idEarthQuake *)0)->random ) },
@@ -4237,23 +4254,23 @@ static classVariableInfo_t idEarthQuake_typeInfo[] = {
 };
 
 static classVariableInfo_t idFuncPortal_typeInfo[] = {
-	{ ": qhandle_t", "portal", (intptr_t)(&((idFuncPortal *)0)->portal), sizeof( ((idFuncPortal *)0)->portal ) },
+	{ "qhandle_t", "portal", (intptr_t)(&((idFuncPortal *)0)->portal), sizeof( ((idFuncPortal *)0)->portal ) },
 	{ "bool", "state", (intptr_t)(&((idFuncPortal *)0)->state), sizeof( ((idFuncPortal *)0)->state ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idFuncAASPortal_typeInfo[] = {
-	{ ": bool", "state", (intptr_t)(&((idFuncAASPortal *)0)->state), sizeof( ((idFuncAASPortal *)0)->state ) },
+	{ "bool", "state", (intptr_t)(&((idFuncAASPortal *)0)->state), sizeof( ((idFuncAASPortal *)0)->state ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idFuncAASObstacle_typeInfo[] = {
-	{ ": bool", "state", (intptr_t)(&((idFuncAASObstacle *)0)->state), sizeof( ((idFuncAASObstacle *)0)->state ) },
+	{ "bool", "state", (intptr_t)(&((idFuncAASObstacle *)0)->state), sizeof( ((idFuncAASObstacle *)0)->state ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idFuncRadioChatter_typeInfo[] = {
-	{ ": float", "time", (intptr_t)(&((idFuncRadioChatter *)0)->time), sizeof( ((idFuncRadioChatter *)0)->time ) },
+	{ "float", "time", (intptr_t)(&((idFuncRadioChatter *)0)->time), sizeof( ((idFuncRadioChatter *)0)->time ) },
 	{ NULL, 0 }
 };
 
@@ -4286,16 +4303,16 @@ static classVariableInfo_t idShockwave_typeInfo[] = {
 };
 
 static classVariableInfo_t idFuncMountedObject_typeInfo[] = {
-	{ ": int", "harc", (intptr_t)(&((idFuncMountedObject *)0)->harc), sizeof( ((idFuncMountedObject *)0)->harc ) },
+	{ "int", "harc", (intptr_t)(&((idFuncMountedObject *)0)->harc), sizeof( ((idFuncMountedObject *)0)->harc ) },
 	{ "int", "varc", (intptr_t)(&((idFuncMountedObject *)0)->varc), sizeof( ((idFuncMountedObject *)0)->varc ) },
-	{ ": bool", "isMounted", (intptr_t)(&((idFuncMountedObject *)0)->isMounted), sizeof( ((idFuncMountedObject *)0)->isMounted ) },
+	{ "bool", "isMounted", (intptr_t)(&((idFuncMountedObject *)0)->isMounted), sizeof( ((idFuncMountedObject *)0)->isMounted ) },
 	{ "function_t *", "scriptFunction", (intptr_t)(&((idFuncMountedObject *)0)->scriptFunction), sizeof( ((idFuncMountedObject *)0)->scriptFunction ) },
 	{ "idPlayer *", "mountedPlayer", (intptr_t)(&((idFuncMountedObject *)0)->mountedPlayer), sizeof( ((idFuncMountedObject *)0)->mountedPlayer ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idFuncMountedWeapon_typeInfo[] = {
-	{ ": idEntity *", "turret", (intptr_t)(&((idFuncMountedWeapon *)0)->turret), sizeof( ((idFuncMountedWeapon *)0)->turret ) },
+	{ "idEntity *", "turret", (intptr_t)(&((idFuncMountedWeapon *)0)->turret), sizeof( ((idFuncMountedWeapon *)0)->turret ) },
 	{ "idVec3", "muzzleOrigin", (intptr_t)(&((idFuncMountedWeapon *)0)->muzzleOrigin), sizeof( ((idFuncMountedWeapon *)0)->muzzleOrigin ) },
 	{ "idMat3", "muzzleAxis", (intptr_t)(&((idFuncMountedWeapon *)0)->muzzleAxis), sizeof( ((idFuncMountedWeapon *)0)->muzzleAxis ) },
 	{ "float", "weaponLastFireTime", (intptr_t)(&((idFuncMountedWeapon *)0)->weaponLastFireTime), sizeof( ((idFuncMountedWeapon *)0)->weaponLastFireTime ) },
@@ -4310,11 +4327,11 @@ static classVariableInfo_t idPortalSky_typeInfo[] = {
 };
 
 static classVariableInfo_t idAnimState_typeInfo[] = {
-	{ ": bool", "idleAnim", (intptr_t)(&((idAnimState *)0)->idleAnim), sizeof( ((idAnimState *)0)->idleAnim ) },
+	{ "bool", "idleAnim", (intptr_t)(&((idAnimState *)0)->idleAnim), sizeof( ((idAnimState *)0)->idleAnim ) },
 	{ "idStr", "state", (intptr_t)(&((idAnimState *)0)->state), sizeof( ((idAnimState *)0)->state ) },
 	{ "int", "animBlendFrames", (intptr_t)(&((idAnimState *)0)->animBlendFrames), sizeof( ((idAnimState *)0)->animBlendFrames ) },
 	{ "int", "lastAnimBlendFrames", (intptr_t)(&((idAnimState *)0)->lastAnimBlendFrames), sizeof( ((idAnimState *)0)->lastAnimBlendFrames ) },
-	{ ": idActor *", "self", (intptr_t)(&((idAnimState *)0)->self), sizeof( ((idAnimState *)0)->self ) },
+	{ "idActor *", "self", (intptr_t)(&((idAnimState *)0)->self), sizeof( ((idAnimState *)0)->self ) },
 	{ "idAnimator *", "animator", (intptr_t)(&((idAnimState *)0)->animator), sizeof( ((idAnimState *)0)->animator ) },
 	{ "idThread *", "thread", (intptr_t)(&((idAnimState *)0)->thread), sizeof( ((idAnimState *)0)->thread ) },
 	{ "rvStateThread", "stateThread", (intptr_t)(&((idAnimState *)0)->stateThread), sizeof( ((idAnimState *)0)->stateThread ) },
@@ -4324,7 +4341,7 @@ static classVariableInfo_t idAnimState_typeInfo[] = {
 };
 
 static classVariableInfo_t idAttachInfo_typeInfo[] = {
-	{ ": idEntityPtr < idEntity >", "ent", (intptr_t)(&((idAttachInfo *)0)->ent), sizeof( ((idAttachInfo *)0)->ent ) },
+	{ "idEntityPtr < idEntity >", "ent", (intptr_t)(&((idAttachInfo *)0)->ent), sizeof( ((idAttachInfo *)0)->ent ) },
 	{ "int", "channel", (intptr_t)(&((idAttachInfo *)0)->channel), sizeof( ((idAttachInfo *)0)->channel ) },
 	{ NULL, 0 }
 };
@@ -4398,7 +4415,7 @@ static classVariableInfo_t idProjectile_projectileFlags_s_typeInfo[] = {
 };
 
 static classVariableInfo_t idProjectile_typeInfo[] = {
-	{ ": idEntityPtr < idEntity >", "owner", (intptr_t)(&((idProjectile *)0)->owner), sizeof( ((idProjectile *)0)->owner ) },
+	{ "idEntityPtr < idEntity >", "owner", (intptr_t)(&((idProjectile *)0)->owner), sizeof( ((idProjectile *)0)->owner ) },
 	{ "idProjectile::projectileFlags_s", "projectileFlags", (intptr_t)(&((idProjectile *)0)->projectileFlags), sizeof( ((idProjectile *)0)->projectileFlags ) },
 	{ "bool", "launchedFromGrabber", (intptr_t)(&((idProjectile *)0)->launchedFromGrabber), sizeof( ((idProjectile *)0)->launchedFromGrabber ) },
 	{ "float", "thrust", (intptr_t)(&((idProjectile *)0)->thrust), sizeof( ((idProjectile *)0)->thrust ) },
@@ -4418,15 +4435,15 @@ static classVariableInfo_t idProjectile_typeInfo[] = {
 	{ "bool", "mTouchTriggers", (intptr_t)(&((idProjectile *)0)->mTouchTriggers), sizeof( ((idProjectile *)0)->mTouchTriggers ) },
 	{ "int", "originalTimeGroup", (intptr_t)(&((idProjectile *)0)->originalTimeGroup), sizeof( ((idProjectile *)0)->originalTimeGroup ) },
 	{ "projectileState_t", "state", (intptr_t)(&((idProjectile *)0)->state), sizeof( ((idProjectile *)0)->state ) },
-	{ ": idVec3", "launchOrigin", (intptr_t)(&((idProjectile *)0)->launchOrigin), sizeof( ((idProjectile *)0)->launchOrigin ) },
+	{ "idVec3", "launchOrigin", (intptr_t)(&((idProjectile *)0)->launchOrigin), sizeof( ((idProjectile *)0)->launchOrigin ) },
 	{ "idMat3", "launchAxis", (intptr_t)(&((idProjectile *)0)->launchAxis), sizeof( ((idProjectile *)0)->launchAxis ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idGuidedProjectile_typeInfo[] = {
-	{ ": float", "speed", (intptr_t)(&((idGuidedProjectile *)0)->speed), sizeof( ((idGuidedProjectile *)0)->speed ) },
+	{ "float", "speed", (intptr_t)(&((idGuidedProjectile *)0)->speed), sizeof( ((idGuidedProjectile *)0)->speed ) },
 	{ "idEntityPtr < idEntity >", "enemy", (intptr_t)(&((idGuidedProjectile *)0)->enemy), sizeof( ((idGuidedProjectile *)0)->enemy ) },
-	{ ": idAngles", "rndScale", (intptr_t)(&((idGuidedProjectile *)0)->rndScale), sizeof( ((idGuidedProjectile *)0)->rndScale ) },
+	{ "idAngles", "rndScale", (intptr_t)(&((idGuidedProjectile *)0)->rndScale), sizeof( ((idGuidedProjectile *)0)->rndScale ) },
 	{ "idAngles", "rndAng", (intptr_t)(&((idGuidedProjectile *)0)->rndAng), sizeof( ((idGuidedProjectile *)0)->rndAng ) },
 	{ "idAngles", "angles", (intptr_t)(&((idGuidedProjectile *)0)->angles), sizeof( ((idGuidedProjectile *)0)->angles ) },
 	{ "int", "rndUpdateTime", (intptr_t)(&((idGuidedProjectile *)0)->rndUpdateTime), sizeof( ((idGuidedProjectile *)0)->rndUpdateTime ) },
@@ -4440,7 +4457,7 @@ static classVariableInfo_t idGuidedProjectile_typeInfo[] = {
 };
 
 static classVariableInfo_t idSoulCubeMissile_typeInfo[] = {
-	{ ": idVec3", "startingVelocity", (intptr_t)(&((idSoulCubeMissile *)0)->startingVelocity), sizeof( ((idSoulCubeMissile *)0)->startingVelocity ) },
+	{ "idVec3", "startingVelocity", (intptr_t)(&((idSoulCubeMissile *)0)->startingVelocity), sizeof( ((idSoulCubeMissile *)0)->startingVelocity ) },
 	{ "idVec3", "endingVelocity", (intptr_t)(&((idSoulCubeMissile *)0)->endingVelocity), sizeof( ((idSoulCubeMissile *)0)->endingVelocity ) },
 	{ "float", "accelTime", (intptr_t)(&((idSoulCubeMissile *)0)->accelTime), sizeof( ((idSoulCubeMissile *)0)->accelTime ) },
 	{ "int", "launchTime", (intptr_t)(&((idSoulCubeMissile *)0)->launchTime), sizeof( ((idSoulCubeMissile *)0)->launchTime ) },
@@ -4462,7 +4479,7 @@ static classVariableInfo_t beamTarget_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idBFGProjectile_typeInfo[] = {
-	{ ": idList < beamTarget_t , TAG_PROJECTILE >", "beamTargets", (intptr_t)(&((idBFGProjectile *)0)->beamTargets), sizeof( ((idBFGProjectile *)0)->beamTargets ) },
+	{ "idList < beamTarget_t , TAG_PROJECTILE >", "beamTargets", (intptr_t)(&((idBFGProjectile *)0)->beamTargets), sizeof( ((idBFGProjectile *)0)->beamTargets ) },
 	{ "renderEntity_t", "secondModel", (intptr_t)(&((idBFGProjectile *)0)->secondModel), sizeof( ((idBFGProjectile *)0)->secondModel ) },
 	{ "qhandle_t", "secondModelDefHandle", (intptr_t)(&((idBFGProjectile *)0)->secondModelDefHandle), sizeof( ((idBFGProjectile *)0)->secondModelDefHandle ) },
 	{ "int", "nextDamageTime", (intptr_t)(&((idBFGProjectile *)0)->nextDamageTime), sizeof( ((idBFGProjectile *)0)->nextDamageTime ) },
@@ -4471,10 +4488,10 @@ static classVariableInfo_t idBFGProjectile_typeInfo[] = {
 };
 
 static classVariableInfo_t idHomingProjectile_typeInfo[] = {
-	{ ": float", "speed", (intptr_t)(&((idHomingProjectile *)0)->speed), sizeof( ((idHomingProjectile *)0)->speed ) },
+	{ "float", "speed", (intptr_t)(&((idHomingProjectile *)0)->speed), sizeof( ((idHomingProjectile *)0)->speed ) },
 	{ "idEntityPtr < idEntity >", "enemy", (intptr_t)(&((idHomingProjectile *)0)->enemy), sizeof( ((idHomingProjectile *)0)->enemy ) },
 	{ "idVec3", "seekPos", (intptr_t)(&((idHomingProjectile *)0)->seekPos), sizeof( ((idHomingProjectile *)0)->seekPos ) },
-	{ ": idAngles", "rndScale", (intptr_t)(&((idHomingProjectile *)0)->rndScale), sizeof( ((idHomingProjectile *)0)->rndScale ) },
+	{ "idAngles", "rndScale", (intptr_t)(&((idHomingProjectile *)0)->rndScale), sizeof( ((idHomingProjectile *)0)->rndScale ) },
 	{ "idAngles", "rndAng", (intptr_t)(&((idHomingProjectile *)0)->rndAng), sizeof( ((idHomingProjectile *)0)->rndAng ) },
 	{ "idAngles", "angles", (intptr_t)(&((idHomingProjectile *)0)->angles), sizeof( ((idHomingProjectile *)0)->angles ) },
 	{ "float", "turn_max", (intptr_t)(&((idHomingProjectile *)0)->turn_max), sizeof( ((idHomingProjectile *)0)->turn_max ) },
@@ -4487,7 +4504,7 @@ static classVariableInfo_t idHomingProjectile_typeInfo[] = {
 };
 
 static classVariableInfo_t idDebris_typeInfo[] = {
-	{ ": idEntityPtr < idEntity >", "owner", (intptr_t)(&((idDebris *)0)->owner), sizeof( ((idDebris *)0)->owner ) },
+	{ "idEntityPtr < idEntity >", "owner", (intptr_t)(&((idDebris *)0)->owner), sizeof( ((idDebris *)0)->owner ) },
 	{ "idPhysics_RigidBody", "physicsObj", (intptr_t)(&((idDebris *)0)->physicsObj), sizeof( ((idDebris *)0)->physicsObj ) },
 	{ "const idDeclParticle *", "smokeFly", (intptr_t)(&((idDebris *)0)->smokeFly), sizeof( ((idDebris *)0)->smokeFly ) },
 	{ "int", "smokeFlyTime", (intptr_t)(&((idDebris *)0)->smokeFlyTime), sizeof( ((idDebris *)0)->smokeFlyTime ) },
@@ -4518,14 +4535,14 @@ static classVariableInfo_t WeaponLight_t_typeInfo[] = {
 };
 
 static classVariableInfo_t iceWeaponObject_typeInfo[] = {
-	{ ": idWeapon *", "owner", (intptr_t)(&((iceWeaponObject *)0)->owner), sizeof( ((iceWeaponObject *)0)->owner ) },
-	{ ": rvStateThread", "stateThread", (intptr_t)(&((iceWeaponObject *)0)->stateThread), sizeof( ((iceWeaponObject *)0)->stateThread ) },
+	{ "idWeapon *", "owner", (intptr_t)(&((iceWeaponObject *)0)->owner), sizeof( ((iceWeaponObject *)0)->owner ) },
+	{ "rvStateThread", "stateThread", (intptr_t)(&((iceWeaponObject *)0)->stateThread), sizeof( ((iceWeaponObject *)0)->stateThread ) },
 	{ "float", "next_attack", (intptr_t)(&((iceWeaponObject *)0)->next_attack), sizeof( ((iceWeaponObject *)0)->next_attack ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idWeapon_typeInfo[] = {
-	{ ": int", "animBlendFrames", (intptr_t)(&((idWeapon *)0)->animBlendFrames), sizeof( ((idWeapon *)0)->animBlendFrames ) },
+	{ "int", "animBlendFrames", (intptr_t)(&((idWeapon *)0)->animBlendFrames), sizeof( ((idWeapon *)0)->animBlendFrames ) },
 	{ "int", "animDoneTime", (intptr_t)(&((idWeapon *)0)->animDoneTime), sizeof( ((idWeapon *)0)->animDoneTime ) },
 	{ "bool", "isLinked", (intptr_t)(&((idWeapon *)0)->isLinked), sizeof( ((idWeapon *)0)->isLinked ) },
 	{ "bool", "isPlayerFlashlight", (intptr_t)(&((idWeapon *)0)->isPlayerFlashlight), sizeof( ((idWeapon *)0)->isPlayerFlashlight ) },
@@ -4621,9 +4638,9 @@ static classVariableInfo_t idWeapon_typeInfo[] = {
 	{ "float", "weaponAngleOffsetMax", (intptr_t)(&((idWeapon *)0)->weaponAngleOffsetMax), sizeof( ((idWeapon *)0)->weaponAngleOffsetMax ) },
 	{ "float", "weaponOffsetTime", (intptr_t)(&((idWeapon *)0)->weaponOffsetTime), sizeof( ((idWeapon *)0)->weaponOffsetTime ) },
 	{ "float", "weaponOffsetScale", (intptr_t)(&((idWeapon *)0)->weaponOffsetScale), sizeof( ((idWeapon *)0)->weaponOffsetScale ) },
-	{ ": idGrabber", "grabber", (intptr_t)(&((idWeapon *)0)->grabber), sizeof( ((idWeapon *)0)->grabber ) },
+	{ "idGrabber", "grabber", (intptr_t)(&((idWeapon *)0)->grabber), sizeof( ((idWeapon *)0)->grabber ) },
 	{ "int", "grabberState", (intptr_t)(&((idWeapon *)0)->grabberState), sizeof( ((idWeapon *)0)->grabberState ) },
-	{ ": iceWeaponObject *", "currentWeaponObject", (intptr_t)(&((idWeapon *)0)->currentWeaponObject), sizeof( ((idWeapon *)0)->currentWeaponObject ) },
+	{ "iceWeaponObject *", "currentWeaponObject", (intptr_t)(&((idWeapon *)0)->currentWeaponObject), sizeof( ((idWeapon *)0)->currentWeaponObject ) },
 	{ "bool", "OutOfAmmo", (intptr_t)(&((idWeapon *)0)->OutOfAmmo), sizeof( ((idWeapon *)0)->OutOfAmmo ) },
 	{ NULL, 0 }
 };
@@ -4638,7 +4655,7 @@ static classVariableInfo_t rvmLightStyleState_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idLight_typeInfo[] = {
-	{ ": renderLight_t", "renderLight", (intptr_t)(&((idLight *)0)->renderLight), sizeof( ((idLight *)0)->renderLight ) },
+	{ "renderLight_t", "renderLight", (intptr_t)(&((idLight *)0)->renderLight), sizeof( ((idLight *)0)->renderLight ) },
 	{ "idVec3", "localLightOrigin", (intptr_t)(&((idLight *)0)->localLightOrigin), sizeof( ((idLight *)0)->localLightOrigin ) },
 	{ "idMat3", "localLightAxis", (intptr_t)(&((idLight *)0)->localLightAxis), sizeof( ((idLight *)0)->localLightAxis ) },
 	{ "qhandle_t", "lightDefHandle", (intptr_t)(&((idLight *)0)->lightDefHandle), sizeof( ((idLight *)0)->lightDefHandle ) },
@@ -4666,7 +4683,7 @@ static classVariableInfo_t idLight_typeInfo[] = {
 };
 
 static classVariableInfo_t EnvironmentProbe_typeInfo[] = {
-	{ ": renderEnvironmentProbe_t", "renderEnvprobe", (intptr_t)(&((EnvironmentProbe *)0)->renderEnvprobe), sizeof( ((EnvironmentProbe *)0)->renderEnvprobe ) },
+	{ "renderEnvironmentProbe_t", "renderEnvprobe", (intptr_t)(&((EnvironmentProbe *)0)->renderEnvprobe), sizeof( ((EnvironmentProbe *)0)->renderEnvprobe ) },
 	{ "idVec3", "localEnvprobeOrigin", (intptr_t)(&((EnvironmentProbe *)0)->localEnvprobeOrigin), sizeof( ((EnvironmentProbe *)0)->localEnvprobeOrigin ) },
 	{ "idMat3", "localEnvprobeAxis", (intptr_t)(&((EnvironmentProbe *)0)->localEnvprobeAxis), sizeof( ((EnvironmentProbe *)0)->localEnvprobeAxis ) },
 	{ "qhandle_t", "envprobeDefHandle", (intptr_t)(&((EnvironmentProbe *)0)->envprobeDefHandle), sizeof( ((EnvironmentProbe *)0)->envprobeDefHandle ) },
@@ -4691,7 +4708,7 @@ static classVariableInfo_t idWorldspawn_typeInfo[] = {
 };
 
 static classVariableInfo_t idItem_typeInfo[] = {
-	{ ": idVec3", "orgOrigin", (intptr_t)(&((idItem *)0)->orgOrigin), sizeof( ((idItem *)0)->orgOrigin ) },
+	{ "idVec3", "orgOrigin", (intptr_t)(&((idItem *)0)->orgOrigin), sizeof( ((idItem *)0)->orgOrigin ) },
 	{ "bool", "spin", (intptr_t)(&((idItem *)0)->spin), sizeof( ((idItem *)0)->spin ) },
 	{ "bool", "pulse", (intptr_t)(&((idItem *)0)->pulse), sizeof( ((idItem *)0)->pulse ) },
 	{ "bool", "canPickUp", (intptr_t)(&((idItem *)0)->canPickUp), sizeof( ((idItem *)0)->canPickUp ) },
@@ -4707,13 +4724,13 @@ static classVariableInfo_t idItem_typeInfo[] = {
 };
 
 static classVariableInfo_t idItemPowerup_typeInfo[] = {
-	{ ": int", "time", (intptr_t)(&((idItemPowerup *)0)->time), sizeof( ((idItemPowerup *)0)->time ) },
+	{ "int", "time", (intptr_t)(&((idItemPowerup *)0)->time), sizeof( ((idItemPowerup *)0)->time ) },
 	{ "int", "type", (intptr_t)(&((idItemPowerup *)0)->type), sizeof( ((idItemPowerup *)0)->type ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idObjective_typeInfo[] = {
-	{ ": idVec3", "playerPos", (intptr_t)(&((idObjective *)0)->playerPos), sizeof( ((idObjective *)0)->playerPos ) },
+	{ "idVec3", "playerPos", (intptr_t)(&((idObjective *)0)->playerPos), sizeof( ((idObjective *)0)->playerPos ) },
 	{ "const idMaterial *", "screenshot", (intptr_t)(&((idObjective *)0)->screenshot), sizeof( ((idObjective *)0)->screenshot ) },
 	{ NULL, 0 }
 };
@@ -4727,7 +4744,7 @@ static classVariableInfo_t idPDAItem_typeInfo[] = {
 };
 
 static classVariableInfo_t idMoveableItem_typeInfo[] = {
-	{ ": idPhysics_RigidBody", "physicsObj", (intptr_t)(&((idMoveableItem *)0)->physicsObj), sizeof( ((idMoveableItem *)0)->physicsObj ) },
+	{ "idPhysics_RigidBody", "physicsObj", (intptr_t)(&((idMoveableItem *)0)->physicsObj), sizeof( ((idMoveableItem *)0)->physicsObj ) },
 	{ "idClipModel *", "trigger", (intptr_t)(&((idMoveableItem *)0)->trigger), sizeof( ((idMoveableItem *)0)->trigger ) },
 	{ "const idDeclParticle *", "smoke", (intptr_t)(&((idMoveableItem *)0)->smoke), sizeof( ((idMoveableItem *)0)->smoke ) },
 	{ "int", "smokeTime", (intptr_t)(&((idMoveableItem *)0)->smokeTime), sizeof( ((idMoveableItem *)0)->smokeTime ) },
@@ -4737,10 +4754,10 @@ static classVariableInfo_t idMoveableItem_typeInfo[] = {
 };
 
 static classVariableInfo_t idItemTeam_typeInfo[] = {
-	{ ": int", "team", (intptr_t)(&((idItemTeam *)0)->team), sizeof( ((idItemTeam *)0)->team ) },
+	{ "int", "team", (intptr_t)(&((idItemTeam *)0)->team), sizeof( ((idItemTeam *)0)->team ) },
 	{ "bool", "carried", (intptr_t)(&((idItemTeam *)0)->carried), sizeof( ((idItemTeam *)0)->carried ) },
 	{ "bool", "dropped", (intptr_t)(&((idItemTeam *)0)->dropped), sizeof( ((idItemTeam *)0)->dropped ) },
-	{ ": idVec3", "returnOrigin", (intptr_t)(&((idItemTeam *)0)->returnOrigin), sizeof( ((idItemTeam *)0)->returnOrigin ) },
+	{ "idVec3", "returnOrigin", (intptr_t)(&((idItemTeam *)0)->returnOrigin), sizeof( ((idItemTeam *)0)->returnOrigin ) },
 	{ "idMat3", "returnAxis", (intptr_t)(&((idItemTeam *)0)->returnAxis), sizeof( ((idItemTeam *)0)->returnAxis ) },
 	{ "int", "lastDrop", (intptr_t)(&((idItemTeam *)0)->lastDrop), sizeof( ((idItemTeam *)0)->lastDrop ) },
 	{ "const idDeclSkin *", "skinDefault", (intptr_t)(&((idItemTeam *)0)->skinDefault), sizeof( ((idItemTeam *)0)->skinDefault ) },
@@ -4765,7 +4782,7 @@ static classVariableInfo_t idItemRemover_typeInfo[] = {
 };
 
 static classVariableInfo_t idObjectiveComplete_typeInfo[] = {
-	{ ": idVec3", "playerPos", (intptr_t)(&((idObjectiveComplete *)0)->playerPos), sizeof( ((idObjectiveComplete *)0)->playerPos ) },
+	{ "idVec3", "playerPos", (intptr_t)(&((idObjectiveComplete *)0)->playerPos), sizeof( ((idObjectiveComplete *)0)->playerPos ) },
 	{ NULL, 0 }
 };
 
@@ -4786,14 +4803,14 @@ static classVariableInfo_t screenBlob_t_typeInfo[] = {
 };
 
 static classVariableInfo_t WarpPolygon_t_typeInfo[] = {
-	{ ": idVec4", "outer1", (intptr_t)(&((WarpPolygon_t *)0)->outer1), sizeof( ((WarpPolygon_t *)0)->outer1 ) },
+	{ "idVec4", "outer1", (intptr_t)(&((WarpPolygon_t *)0)->outer1), sizeof( ((WarpPolygon_t *)0)->outer1 ) },
 	{ "idVec4", "outer2", (intptr_t)(&((WarpPolygon_t *)0)->outer2), sizeof( ((WarpPolygon_t *)0)->outer2 ) },
 	{ "idVec4", "center", (intptr_t)(&((WarpPolygon_t *)0)->center), sizeof( ((WarpPolygon_t *)0)->center ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t Warp_t_typeInfo[] = {
-	{ ": int", "id", (intptr_t)(&((Warp_t *)0)->id), sizeof( ((Warp_t *)0)->id ) },
+	{ "int", "id", (intptr_t)(&((Warp_t *)0)->id), sizeof( ((Warp_t *)0)->id ) },
 	{ "bool", "active", (intptr_t)(&((Warp_t *)0)->active), sizeof( ((Warp_t *)0)->active ) },
 	{ "int", "startTime", (intptr_t)(&((Warp_t *)0)->startTime), sizeof( ((Warp_t *)0)->startTime ) },
 	{ "float", "initialRadius", (intptr_t)(&((Warp_t *)0)->initialRadius), sizeof( ((Warp_t *)0)->initialRadius ) },
@@ -4813,14 +4830,14 @@ static classVariableInfo_t FxFader_typeInfo[] = {
 };
 
 static classVariableInfo_t FullscreenFX_typeInfo[] = {
-	{ ": idStr", "name", (intptr_t)(&((FullscreenFX *)0)->name), sizeof( ((FullscreenFX *)0)->name ) },
+	{ "idStr", "name", (intptr_t)(&((FullscreenFX *)0)->name), sizeof( ((FullscreenFX *)0)->name ) },
 	{ "FxFader", "fader", (intptr_t)(&((FullscreenFX *)0)->fader), sizeof( ((FullscreenFX *)0)->fader ) },
 	{ "FullscreenFXManager *", "fxman", (intptr_t)(&((FullscreenFX *)0)->fxman), sizeof( ((FullscreenFX *)0)->fxman ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t FullscreenFX_Helltime_typeInfo[] = {
-	{ ": const idMaterial *", "initMaterial", (intptr_t)(&((FullscreenFX_Helltime *)0)->initMaterial), sizeof( ((FullscreenFX_Helltime *)0)->initMaterial ) },
+	{ "const idMaterial *", "initMaterial", (intptr_t)(&((FullscreenFX_Helltime *)0)->initMaterial), sizeof( ((FullscreenFX_Helltime *)0)->initMaterial ) },
 	{ "const idMaterial *[3]", "captureMaterials", (intptr_t)(&((FullscreenFX_Helltime *)0)->captureMaterials), sizeof( ((FullscreenFX_Helltime *)0)->captureMaterials ) },
 	{ "const idMaterial *", "drawMaterial", (intptr_t)(&((FullscreenFX_Helltime *)0)->drawMaterial), sizeof( ((FullscreenFX_Helltime *)0)->drawMaterial ) },
 	{ "bool", "clearAccumBuffer", (intptr_t)(&((FullscreenFX_Helltime *)0)->clearAccumBuffer), sizeof( ((FullscreenFX_Helltime *)0)->clearAccumBuffer ) },
@@ -4828,7 +4845,7 @@ static classVariableInfo_t FullscreenFX_Helltime_typeInfo[] = {
 };
 
 static classVariableInfo_t FullscreenFX_Multiplayer_typeInfo[] = {
-	{ ": const idMaterial *", "initMaterial", (intptr_t)(&((FullscreenFX_Multiplayer *)0)->initMaterial), sizeof( ((FullscreenFX_Multiplayer *)0)->initMaterial ) },
+	{ "const idMaterial *", "initMaterial", (intptr_t)(&((FullscreenFX_Multiplayer *)0)->initMaterial), sizeof( ((FullscreenFX_Multiplayer *)0)->initMaterial ) },
 	{ "const idMaterial *", "captureMaterial", (intptr_t)(&((FullscreenFX_Multiplayer *)0)->captureMaterial), sizeof( ((FullscreenFX_Multiplayer *)0)->captureMaterial ) },
 	{ "const idMaterial *", "drawMaterial", (intptr_t)(&((FullscreenFX_Multiplayer *)0)->drawMaterial), sizeof( ((FullscreenFX_Multiplayer *)0)->drawMaterial ) },
 	{ "bool", "clearAccumBuffer", (intptr_t)(&((FullscreenFX_Multiplayer *)0)->clearAccumBuffer), sizeof( ((FullscreenFX_Multiplayer *)0)->clearAccumBuffer ) },
@@ -4836,19 +4853,19 @@ static classVariableInfo_t FullscreenFX_Multiplayer_typeInfo[] = {
 };
 
 static classVariableInfo_t FullscreenFX_Warp_typeInfo[] = {
-	{ ": const idMaterial *", "material", (intptr_t)(&((FullscreenFX_Warp *)0)->material), sizeof( ((FullscreenFX_Warp *)0)->material ) },
+	{ "const idMaterial *", "material", (intptr_t)(&((FullscreenFX_Warp *)0)->material), sizeof( ((FullscreenFX_Warp *)0)->material ) },
 	{ "bool", "grabberEnabled", (intptr_t)(&((FullscreenFX_Warp *)0)->grabberEnabled), sizeof( ((FullscreenFX_Warp *)0)->grabberEnabled ) },
 	{ "int", "startWarpTime", (intptr_t)(&((FullscreenFX_Warp *)0)->startWarpTime), sizeof( ((FullscreenFX_Warp *)0)->startWarpTime ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t FullscreenFX_EnviroSuit_typeInfo[] = {
-	{ ": const idMaterial *", "material", (intptr_t)(&((FullscreenFX_EnviroSuit *)0)->material), sizeof( ((FullscreenFX_EnviroSuit *)0)->material ) },
+	{ "const idMaterial *", "material", (intptr_t)(&((FullscreenFX_EnviroSuit *)0)->material), sizeof( ((FullscreenFX_EnviroSuit *)0)->material ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t FullscreenFX_DoubleVision_typeInfo[] = {
-	{ ": const idMaterial *", "material", (intptr_t)(&((FullscreenFX_DoubleVision *)0)->material), sizeof( ((FullscreenFX_DoubleVision *)0)->material ) },
+	{ "const idMaterial *", "material", (intptr_t)(&((FullscreenFX_DoubleVision *)0)->material), sizeof( ((FullscreenFX_DoubleVision *)0)->material ) },
 	{ NULL, 0 }
 };
 
@@ -4857,7 +4874,7 @@ static classVariableInfo_t FullscreenFX_InfluenceVision_typeInfo[] = {
 };
 
 static classVariableInfo_t FullscreenFX_Bloom_typeInfo[] = {
-	{ ": const idMaterial *", "drawMaterial", (intptr_t)(&((FullscreenFX_Bloom *)0)->drawMaterial), sizeof( ((FullscreenFX_Bloom *)0)->drawMaterial ) },
+	{ "const idMaterial *", "drawMaterial", (intptr_t)(&((FullscreenFX_Bloom *)0)->drawMaterial), sizeof( ((FullscreenFX_Bloom *)0)->drawMaterial ) },
 	{ "const idMaterial *", "initMaterial", (intptr_t)(&((FullscreenFX_Bloom *)0)->initMaterial), sizeof( ((FullscreenFX_Bloom *)0)->initMaterial ) },
 	{ "float", "currentIntensity", (intptr_t)(&((FullscreenFX_Bloom *)0)->currentIntensity), sizeof( ((FullscreenFX_Bloom *)0)->currentIntensity ) },
 	{ "float", "targetIntensity", (intptr_t)(&((FullscreenFX_Bloom *)0)->targetIntensity), sizeof( ((FullscreenFX_Bloom *)0)->targetIntensity ) },
@@ -4865,7 +4882,7 @@ static classVariableInfo_t FullscreenFX_Bloom_typeInfo[] = {
 };
 
 static classVariableInfo_t FullscreenFXManager_typeInfo[] = {
-	{ ": idList < FullscreenFX * , TAG_FX >", "fx", (intptr_t)(&((FullscreenFXManager *)0)->fx), sizeof( ((FullscreenFXManager *)0)->fx ) },
+	{ "idList < FullscreenFX * , TAG_FX >", "fx", (intptr_t)(&((FullscreenFXManager *)0)->fx), sizeof( ((FullscreenFXManager *)0)->fx ) },
 	{ "idPlayerView *", "playerView", (intptr_t)(&((FullscreenFXManager *)0)->playerView), sizeof( ((FullscreenFXManager *)0)->playerView ) },
 	{ "const idMaterial *", "blendBackMaterial", (intptr_t)(&((FullscreenFXManager *)0)->blendBackMaterial), sizeof( ((FullscreenFXManager *)0)->blendBackMaterial ) },
 	{ NULL, 0 }
@@ -4873,7 +4890,7 @@ static classVariableInfo_t FullscreenFXManager_typeInfo[] = {
 
 static classVariableInfo_t idPlayerView_typeInfo[] = {
 	{ "screenBlob_t[8]", "screenBlobs", (intptr_t)(&((idPlayerView *)0)->screenBlobs), sizeof( ((idPlayerView *)0)->screenBlobs ) },
-	{ ": int", "dvFinishTime", (intptr_t)(&((idPlayerView *)0)->dvFinishTime), sizeof( ((idPlayerView *)0)->dvFinishTime ) },
+	{ "int", "dvFinishTime", (intptr_t)(&((idPlayerView *)0)->dvFinishTime), sizeof( ((idPlayerView *)0)->dvFinishTime ) },
 	{ "int", "kickFinishTime", (intptr_t)(&((idPlayerView *)0)->kickFinishTime), sizeof( ((idPlayerView *)0)->kickFinishTime ) },
 	{ "idAngles", "kickAngles", (intptr_t)(&((idPlayerView *)0)->kickAngles), sizeof( ((idPlayerView *)0)->kickAngles ) },
 	{ "bool", "bfgVision", (intptr_t)(&((idPlayerView *)0)->bfgVision), sizeof( ((idPlayerView *)0)->bfgVision ) },
@@ -4897,14 +4914,14 @@ static classVariableInfo_t idPlayerView_typeInfo[] = {
 };
 
 static classVariableInfo_t idPlayerIcon_typeInfo[] = {
-	{ ": playerIconType_t", "iconType", (intptr_t)(&((idPlayerIcon *)0)->iconType), sizeof( ((idPlayerIcon *)0)->iconType ) },
+	{ "playerIconType_t", "iconType", (intptr_t)(&((idPlayerIcon *)0)->iconType), sizeof( ((idPlayerIcon *)0)->iconType ) },
 	{ "renderEntity_t", "renderEnt", (intptr_t)(&((idPlayerIcon *)0)->renderEnt), sizeof( ((idPlayerIcon *)0)->renderEnt ) },
 	{ "qhandle_t", "iconHandle", (intptr_t)(&((idPlayerIcon *)0)->iconHandle), sizeof( ((idPlayerIcon *)0)->iconHandle ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idAchievementManager_typeInfo[] = {
-	{ ": idEntityPtr < idPlayer >", "owner", (intptr_t)(&((idAchievementManager *)0)->owner), sizeof( ((idAchievementManager *)0)->owner ) },
+	{ "idEntityPtr < idPlayer >", "owner", (intptr_t)(&((idAchievementManager *)0)->owner), sizeof( ((idAchievementManager *)0)->owner ) },
 	{ "idArray < int , ACHIEVEMENTS_NUM >", "counts", (intptr_t)(&((idAchievementManager *)0)->counts), sizeof( ((idAchievementManager *)0)->counts ) },
 	{ "int", "lastPlayerKilledTime", (intptr_t)(&((idAchievementManager *)0)->lastPlayerKilledTime), sizeof( ((idAchievementManager *)0)->lastPlayerKilledTime ) },
 	{ "int", "lastImpKilledTime", (intptr_t)(&((idAchievementManager *)0)->lastImpKilledTime), sizeof( ((idAchievementManager *)0)->lastImpKilledTime ) },
@@ -4950,7 +4967,7 @@ static classVariableInfo_t WeaponToggle_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idInventory_typeInfo[] = {
-	{ ": int", "maxHealth", (intptr_t)(&((idInventory *)0)->maxHealth), sizeof( ((idInventory *)0)->maxHealth ) },
+	{ "int", "maxHealth", (intptr_t)(&((idInventory *)0)->maxHealth), sizeof( ((idInventory *)0)->maxHealth ) },
 	{ "int", "weapons", (intptr_t)(&((idInventory *)0)->weapons), sizeof( ((idInventory *)0)->weapons ) },
 	{ "int", "powerups", (intptr_t)(&((idInventory *)0)->powerups), sizeof( ((idInventory *)0)->powerups ) },
 	{ "int", "armor", (intptr_t)(&((idInventory *)0)->armor), sizeof( ((idInventory *)0)->armor ) },
@@ -4983,7 +5000,7 @@ static classVariableInfo_t idInventory_typeInfo[] = {
 	{ "int", "onePickupTime", (intptr_t)(&((idInventory *)0)->onePickupTime), sizeof( ((idInventory *)0)->onePickupTime ) },
 	{ "idList < idStr >", "pickupItemNames", (intptr_t)(&((idInventory *)0)->pickupItemNames), sizeof( ((idInventory *)0)->pickupItemNames ) },
 	{ "idList < idObjectiveInfo >", "objectiveNames", (intptr_t)(&((idInventory *)0)->objectiveNames), sizeof( ((idInventory *)0)->objectiveNames ) },
-	{ ": idArray < idPredictedValue < int > , AMMO_NUMTYPES >", "ammo", (intptr_t)(&((idInventory *)0)->ammo), sizeof( ((idInventory *)0)->ammo ) },
+	{ "idArray < idPredictedValue < int > , AMMO_NUMTYPES >", "ammo", (intptr_t)(&((idInventory *)0)->ammo), sizeof( ((idInventory *)0)->ammo ) },
 	{ "idArray < idPredictedValue < int > , MAX_WEAPONS >", "clip", (intptr_t)(&((idInventory *)0)->clip), sizeof( ((idInventory *)0)->clip ) },
 	{ NULL, 0 }
 };
@@ -5121,7 +5138,7 @@ static classVariableInfo_t idPlayer_typeInfo[] = {
 	{ "bool", "bloomEnabled", (intptr_t)(&((idPlayer *)0)->bloomEnabled), sizeof( ((idPlayer *)0)->bloomEnabled ) },
 	{ "float", "bloomSpeed", (intptr_t)(&((idPlayer *)0)->bloomSpeed), sizeof( ((idPlayer *)0)->bloomSpeed ) },
 	{ "float", "bloomIntensity", (intptr_t)(&((idPlayer *)0)->bloomIntensity), sizeof( ((idPlayer *)0)->bloomIntensity ) },
-	{ ": idAchievementManager", "achievementManager", (intptr_t)(&((idPlayer *)0)->achievementManager), sizeof( ((idPlayer *)0)->achievementManager ) },
+	{ "idAchievementManager", "achievementManager", (intptr_t)(&((idPlayer *)0)->achievementManager), sizeof( ((idPlayer *)0)->achievementManager ) },
 	{ "int", "playedTimeSecs", (intptr_t)(&((idPlayer *)0)->playedTimeSecs), sizeof( ((idPlayer *)0)->playedTimeSecs ) },
 	{ "int", "playedTimeResidual", (intptr_t)(&((idPlayer *)0)->playedTimeResidual), sizeof( ((idPlayer *)0)->playedTimeResidual ) },
 	{ "jointHandle_t", "hipJoint", (intptr_t)(&((idPlayer *)0)->hipJoint), sizeof( ((idPlayer *)0)->hipJoint ) },
@@ -5239,7 +5256,7 @@ static classVariableInfo_t idMover_rotationState_t_typeInfo[] = {
 static classVariableInfo_t idMover_typeInfo[] = {
 	{ "idPhysics_Parametric", "physicsObj", (intptr_t)(&((idMover *)0)->physicsObj), sizeof( ((idMover *)0)->physicsObj ) },
 	{ "moveState_t", "move", (intptr_t)(&((idMover *)0)->move), sizeof( ((idMover *)0)->move ) },
-	{ ": rotationState_t", "rot", (intptr_t)(&((idMover *)0)->rot), sizeof( ((idMover *)0)->rot ) },
+	{ "rotationState_t", "rot", (intptr_t)(&((idMover *)0)->rot), sizeof( ((idMover *)0)->rot ) },
 	{ "int", "move_thread", (intptr_t)(&((idMover *)0)->move_thread), sizeof( ((idMover *)0)->move_thread ) },
 	{ "int", "rotate_thread", (intptr_t)(&((idMover *)0)->rotate_thread), sizeof( ((idMover *)0)->rotate_thread ) },
 	{ "idAngles", "dest_angles", (intptr_t)(&((idMover *)0)->dest_angles), sizeof( ((idMover *)0)->dest_angles ) },
@@ -5285,7 +5302,7 @@ static classVariableInfo_t idElevator_typeInfo[] = {
 };
 
 static classVariableInfo_t idMover_Binary_typeInfo[] = {
-	{ ": idVec3", "pos1", (intptr_t)(&((idMover_Binary *)0)->pos1), sizeof( ((idMover_Binary *)0)->pos1 ) },
+	{ "idVec3", "pos1", (intptr_t)(&((idMover_Binary *)0)->pos1), sizeof( ((idMover_Binary *)0)->pos1 ) },
 	{ "idVec3", "pos2", (intptr_t)(&((idMover_Binary *)0)->pos2), sizeof( ((idMover_Binary *)0)->pos2 ) },
 	{ "moverState_t", "moverState", (intptr_t)(&((idMover_Binary *)0)->moverState), sizeof( ((idMover_Binary *)0)->moverState ) },
 	{ "idMover_Binary *", "moveMaster", (intptr_t)(&((idMover_Binary *)0)->moveMaster), sizeof( ((idMover_Binary *)0)->moveMaster ) },
@@ -5316,7 +5333,7 @@ static classVariableInfo_t idMover_Binary_typeInfo[] = {
 };
 
 static classVariableInfo_t idDoor_typeInfo[] = {
-	{ ": float", "triggersize", (intptr_t)(&((idDoor *)0)->triggersize), sizeof( ((idDoor *)0)->triggersize ) },
+	{ "float", "triggersize", (intptr_t)(&((idDoor *)0)->triggersize), sizeof( ((idDoor *)0)->triggersize ) },
 	{ "bool", "crusher", (intptr_t)(&((idDoor *)0)->crusher), sizeof( ((idDoor *)0)->crusher ) },
 	{ "bool", "noTouch", (intptr_t)(&((idDoor *)0)->noTouch), sizeof( ((idDoor *)0)->noTouch ) },
 	{ "bool", "aas_area_closed", (intptr_t)(&((idDoor *)0)->aas_area_closed), sizeof( ((idDoor *)0)->aas_area_closed ) },
@@ -5335,20 +5352,20 @@ static classVariableInfo_t idDoor_typeInfo[] = {
 };
 
 static classVariableInfo_t idPlat_typeInfo[] = {
-	{ ": idClipModel *", "trigger", (intptr_t)(&((idPlat *)0)->trigger), sizeof( ((idPlat *)0)->trigger ) },
+	{ "idClipModel *", "trigger", (intptr_t)(&((idPlat *)0)->trigger), sizeof( ((idPlat *)0)->trigger ) },
 	{ "idVec3", "localTriggerOrigin", (intptr_t)(&((idPlat *)0)->localTriggerOrigin), sizeof( ((idPlat *)0)->localTriggerOrigin ) },
 	{ "idMat3", "localTriggerAxis", (intptr_t)(&((idPlat *)0)->localTriggerAxis), sizeof( ((idPlat *)0)->localTriggerAxis ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMover_Periodic_typeInfo[] = {
-	{ ": idPhysics_Parametric", "physicsObj", (intptr_t)(&((idMover_Periodic *)0)->physicsObj), sizeof( ((idMover_Periodic *)0)->physicsObj ) },
+	{ "idPhysics_Parametric", "physicsObj", (intptr_t)(&((idMover_Periodic *)0)->physicsObj), sizeof( ((idMover_Periodic *)0)->physicsObj ) },
 	{ "float", "damage", (intptr_t)(&((idMover_Periodic *)0)->damage), sizeof( ((idMover_Periodic *)0)->damage ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idRotater_typeInfo[] = {
-	{ ": idEntityPtr < idEntity >", "activatedBy", (intptr_t)(&((idRotater *)0)->activatedBy), sizeof( ((idRotater *)0)->activatedBy ) },
+	{ "idEntityPtr < idEntity >", "activatedBy", (intptr_t)(&((idRotater *)0)->activatedBy), sizeof( ((idRotater *)0)->activatedBy ) },
 	{ NULL, 0 }
 };
 
@@ -5383,7 +5400,7 @@ static classVariableInfo_t cameraFrame_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idCameraAnim_typeInfo[] = {
-	{ ": int", "threadNum", (intptr_t)(&((idCameraAnim *)0)->threadNum), sizeof( ((idCameraAnim *)0)->threadNum ) },
+	{ "int", "threadNum", (intptr_t)(&((idCameraAnim *)0)->threadNum), sizeof( ((idCameraAnim *)0)->threadNum ) },
 	{ "idVec3", "offset", (intptr_t)(&((idCameraAnim *)0)->offset), sizeof( ((idCameraAnim *)0)->offset ) },
 	{ "int", "frameRate", (intptr_t)(&((idCameraAnim *)0)->frameRate), sizeof( ((idCameraAnim *)0)->frameRate ) },
 	{ "int", "starttime", (intptr_t)(&((idCameraAnim *)0)->starttime), sizeof( ((idCameraAnim *)0)->starttime ) },
@@ -5395,7 +5412,7 @@ static classVariableInfo_t idCameraAnim_typeInfo[] = {
 };
 
 static classVariableInfo_t idMoveable_typeInfo[] = {
-	{ ": idPhysics_RigidBody", "physicsObj", (intptr_t)(&((idMoveable *)0)->physicsObj), sizeof( ((idMoveable *)0)->physicsObj ) },
+	{ "idPhysics_RigidBody", "physicsObj", (intptr_t)(&((idMoveable *)0)->physicsObj), sizeof( ((idMoveable *)0)->physicsObj ) },
 	{ "idStr", "brokenModel", (intptr_t)(&((idMoveable *)0)->brokenModel), sizeof( ((idMoveable *)0)->brokenModel ) },
 	{ "idStr", "damage", (intptr_t)(&((idMoveable *)0)->damage), sizeof( ((idMoveable *)0)->damage ) },
 	{ "idStr", "monsterDamage", (intptr_t)(&((idMoveable *)0)->monsterDamage), sizeof( ((idMoveable *)0)->monsterDamage ) },
@@ -5416,7 +5433,7 @@ static classVariableInfo_t idMoveable_typeInfo[] = {
 };
 
 static classVariableInfo_t idBarrel_typeInfo[] = {
-	{ ": float", "radius", (intptr_t)(&((idBarrel *)0)->radius), sizeof( ((idBarrel *)0)->radius ) },
+	{ "float", "radius", (intptr_t)(&((idBarrel *)0)->radius), sizeof( ((idBarrel *)0)->radius ) },
 	{ "int", "barrelAxis", (intptr_t)(&((idBarrel *)0)->barrelAxis), sizeof( ((idBarrel *)0)->barrelAxis ) },
 	{ "idVec3", "lastOrigin", (intptr_t)(&((idBarrel *)0)->lastOrigin), sizeof( ((idBarrel *)0)->lastOrigin ) },
 	{ "idMat3", "lastAxis", (intptr_t)(&((idBarrel *)0)->lastAxis), sizeof( ((idBarrel *)0)->lastAxis ) },
@@ -5481,7 +5498,7 @@ static classVariableInfo_t idTarget_SetShaderTime_typeInfo[] = {
 };
 
 static classVariableInfo_t idTarget_FadeEntity_typeInfo[] = {
-	{ ": idVec4", "fadeFrom", (intptr_t)(&((idTarget_FadeEntity *)0)->fadeFrom), sizeof( ((idTarget_FadeEntity *)0)->fadeFrom ) },
+	{ "idVec4", "fadeFrom", (intptr_t)(&((idTarget_FadeEntity *)0)->fadeFrom), sizeof( ((idTarget_FadeEntity *)0)->fadeFrom ) },
 	{ "int", "fadeStart", (intptr_t)(&((idTarget_FadeEntity *)0)->fadeStart), sizeof( ((idTarget_FadeEntity *)0)->fadeStart ) },
 	{ "int", "fadeEnd", (intptr_t)(&((idTarget_FadeEntity *)0)->fadeEnd), sizeof( ((idTarget_FadeEntity *)0)->fadeEnd ) },
 	{ NULL, 0 }
@@ -5535,7 +5552,7 @@ static classVariableInfo_t idTarget_SetKeyVal_typeInfo[] = {
 };
 
 static classVariableInfo_t idTarget_SetFov_typeInfo[] = {
-	{ ": idInterpolate < float >", "fovSetting", (intptr_t)(&((idTarget_SetFov *)0)->fovSetting), sizeof( ((idTarget_SetFov *)0)->fovSetting ) },
+	{ "idInterpolate < float >", "fovSetting", (intptr_t)(&((idTarget_SetFov *)0)->fovSetting), sizeof( ((idTarget_SetFov *)0)->fovSetting ) },
 	{ NULL, 0 }
 };
 
@@ -5556,7 +5573,7 @@ static classVariableInfo_t idTarget_EnableLevelWeapons_typeInfo[] = {
 };
 
 static classVariableInfo_t idTarget_Tip_typeInfo[] = {
-	{ ": idVec3", "playerPos", (intptr_t)(&((idTarget_Tip *)0)->playerPos), sizeof( ((idTarget_Tip *)0)->playerPos ) },
+	{ "idVec3", "playerPos", (intptr_t)(&((idTarget_Tip *)0)->playerPos), sizeof( ((idTarget_Tip *)0)->playerPos ) },
 	{ NULL, 0 }
 };
 
@@ -5598,7 +5615,7 @@ static classVariableInfo_t idTrigger_typeInfo[] = {
 };
 
 static classVariableInfo_t idTrigger_Multi_typeInfo[] = {
-	{ ": float", "wait", (intptr_t)(&((idTrigger_Multi *)0)->wait), sizeof( ((idTrigger_Multi *)0)->wait ) },
+	{ "float", "wait", (intptr_t)(&((idTrigger_Multi *)0)->wait), sizeof( ((idTrigger_Multi *)0)->wait ) },
 	{ "float", "random", (intptr_t)(&((idTrigger_Multi *)0)->random), sizeof( ((idTrigger_Multi *)0)->random ) },
 	{ "float", "delay", (intptr_t)(&((idTrigger_Multi *)0)->delay), sizeof( ((idTrigger_Multi *)0)->delay ) },
 	{ "float", "random_delay", (intptr_t)(&((idTrigger_Multi *)0)->random_delay), sizeof( ((idTrigger_Multi *)0)->random_delay ) },
@@ -5613,7 +5630,7 @@ static classVariableInfo_t idTrigger_Multi_typeInfo[] = {
 };
 
 static classVariableInfo_t idTrigger_EntityName_typeInfo[] = {
-	{ ": float", "wait", (intptr_t)(&((idTrigger_EntityName *)0)->wait), sizeof( ((idTrigger_EntityName *)0)->wait ) },
+	{ "float", "wait", (intptr_t)(&((idTrigger_EntityName *)0)->wait), sizeof( ((idTrigger_EntityName *)0)->wait ) },
 	{ "float", "random", (intptr_t)(&((idTrigger_EntityName *)0)->random), sizeof( ((idTrigger_EntityName *)0)->random ) },
 	{ "float", "delay", (intptr_t)(&((idTrigger_EntityName *)0)->delay), sizeof( ((idTrigger_EntityName *)0)->delay ) },
 	{ "float", "random_delay", (intptr_t)(&((idTrigger_EntityName *)0)->random_delay), sizeof( ((idTrigger_EntityName *)0)->random_delay ) },
@@ -5625,7 +5642,7 @@ static classVariableInfo_t idTrigger_EntityName_typeInfo[] = {
 };
 
 static classVariableInfo_t idTrigger_Timer_typeInfo[] = {
-	{ ": float", "random", (intptr_t)(&((idTrigger_Timer *)0)->random), sizeof( ((idTrigger_Timer *)0)->random ) },
+	{ "float", "random", (intptr_t)(&((idTrigger_Timer *)0)->random), sizeof( ((idTrigger_Timer *)0)->random ) },
 	{ "float", "wait", (intptr_t)(&((idTrigger_Timer *)0)->wait), sizeof( ((idTrigger_Timer *)0)->wait ) },
 	{ "bool", "on", (intptr_t)(&((idTrigger_Timer *)0)->on), sizeof( ((idTrigger_Timer *)0)->on ) },
 	{ "float", "delay", (intptr_t)(&((idTrigger_Timer *)0)->delay), sizeof( ((idTrigger_Timer *)0)->delay ) },
@@ -5635,14 +5652,14 @@ static classVariableInfo_t idTrigger_Timer_typeInfo[] = {
 };
 
 static classVariableInfo_t idTrigger_Count_typeInfo[] = {
-	{ ": int", "goal", (intptr_t)(&((idTrigger_Count *)0)->goal), sizeof( ((idTrigger_Count *)0)->goal ) },
+	{ "int", "goal", (intptr_t)(&((idTrigger_Count *)0)->goal), sizeof( ((idTrigger_Count *)0)->goal ) },
 	{ "int", "count", (intptr_t)(&((idTrigger_Count *)0)->count), sizeof( ((idTrigger_Count *)0)->count ) },
 	{ "float", "delay", (intptr_t)(&((idTrigger_Count *)0)->delay), sizeof( ((idTrigger_Count *)0)->delay ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idTrigger_Hurt_typeInfo[] = {
-	{ ": bool", "on", (intptr_t)(&((idTrigger_Hurt *)0)->on), sizeof( ((idTrigger_Hurt *)0)->on ) },
+	{ "bool", "on", (intptr_t)(&((idTrigger_Hurt *)0)->on), sizeof( ((idTrigger_Hurt *)0)->on ) },
 	{ "float", "delay", (intptr_t)(&((idTrigger_Hurt *)0)->delay), sizeof( ((idTrigger_Hurt *)0)->delay ) },
 	{ "int", "nextTime", (intptr_t)(&((idTrigger_Hurt *)0)->nextTime), sizeof( ((idTrigger_Hurt *)0)->nextTime ) },
 	{ NULL, 0 }
@@ -5653,19 +5670,19 @@ static classVariableInfo_t idTrigger_Fade_typeInfo[] = {
 };
 
 static classVariableInfo_t idTrigger_Touch_typeInfo[] = {
-	{ ": idClipModel *", "clipModel", (intptr_t)(&((idTrigger_Touch *)0)->clipModel), sizeof( ((idTrigger_Touch *)0)->clipModel ) },
+	{ "idClipModel *", "clipModel", (intptr_t)(&((idTrigger_Touch *)0)->clipModel), sizeof( ((idTrigger_Touch *)0)->clipModel ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idTrigger_Flag_typeInfo[] = {
-	{ ": int", "team", (intptr_t)(&((idTrigger_Flag *)0)->team), sizeof( ((idTrigger_Flag *)0)->team ) },
+	{ "int", "team", (intptr_t)(&((idTrigger_Flag *)0)->team), sizeof( ((idTrigger_Flag *)0)->team ) },
 	{ "bool", "player", (intptr_t)(&((idTrigger_Flag *)0)->player), sizeof( ((idTrigger_Flag *)0)->player ) },
 	{ "const idEventDef *", "eventFlag", (intptr_t)(&((idTrigger_Flag *)0)->eventFlag), sizeof( ((idTrigger_Flag *)0)->eventFlag ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idSound_typeInfo[] = {
-	{ ": float", "lastSoundVol", (intptr_t)(&((idSound *)0)->lastSoundVol), sizeof( ((idSound *)0)->lastSoundVol ) },
+	{ "float", "lastSoundVol", (intptr_t)(&((idSound *)0)->lastSoundVol), sizeof( ((idSound *)0)->lastSoundVol ) },
 	{ "float", "soundVol", (intptr_t)(&((idSound *)0)->soundVol), sizeof( ((idSound *)0)->soundVol ) },
 	{ "float", "random", (intptr_t)(&((idSound *)0)->random), sizeof( ((idSound *)0)->random ) },
 	{ "float", "wait", (intptr_t)(&((idSound *)0)->wait), sizeof( ((idSound *)0)->wait ) },
@@ -5746,7 +5763,7 @@ static classVariableInfo_t idBrittleFracture_fractureEvent_s_typeInfo[] = {
 };
 
 static classVariableInfo_t idBrittleFracture_typeInfo[] = {
-	{ ": const idMaterial *", "material", (intptr_t)(&((idBrittleFracture *)0)->material), sizeof( ((idBrittleFracture *)0)->material ) },
+	{ "const idMaterial *", "material", (intptr_t)(&((idBrittleFracture *)0)->material), sizeof( ((idBrittleFracture *)0)->material ) },
 	{ "const idMaterial *", "decalMaterial", (intptr_t)(&((idBrittleFracture *)0)->decalMaterial), sizeof( ((idBrittleFracture *)0)->decalMaterial ) },
 	{ "float", "decalSize", (intptr_t)(&((idBrittleFracture *)0)->decalSize), sizeof( ((idBrittleFracture *)0)->decalSize ) },
 	{ "float", "maxShardArea", (intptr_t)(&((idBrittleFracture *)0)->maxShardArea), sizeof( ((idBrittleFracture *)0)->maxShardArea ) },
@@ -5817,6 +5834,7 @@ static classVariableInfo_t idMoveState_typeInfo[] = {
 	{ "moveCommand_t", "moveCommand", (intptr_t)(&((idMoveState *)0)->moveCommand), sizeof( ((idMoveState *)0)->moveCommand ) },
 	{ "moveStatus_t", "moveStatus", (intptr_t)(&((idMoveState *)0)->moveStatus), sizeof( ((idMoveState *)0)->moveStatus ) },
 	{ "idVec3", "moveDest", (intptr_t)(&((idMoveState *)0)->moveDest), sizeof( ((idMoveState *)0)->moveDest ) },
+	{ "idMat3", "moveDestAxis", (intptr_t)(&((idMoveState *)0)->moveDestAxis), sizeof( ((idMoveState *)0)->moveDestAxis ) },
 	{ "idVec3", "moveDir", (intptr_t)(&((idMoveState *)0)->moveDir), sizeof( ((idMoveState *)0)->moveDir ) },
 	{ "idEntityPtr < idEntity >", "goalEntity", (intptr_t)(&((idMoveState *)0)->goalEntity), sizeof( ((idMoveState *)0)->goalEntity ) },
 	{ "idVec3", "goalEntityOrigin", (intptr_t)(&((idMoveState *)0)->goalEntityOrigin), sizeof( ((idMoveState *)0)->goalEntityOrigin ) },
@@ -5836,7 +5854,7 @@ static classVariableInfo_t idMoveState_typeInfo[] = {
 };
 
 static classVariableInfo_t idAI_typeInfo[] = {
-	{ ": idScriptBool", "ambush", (intptr_t)(&((idAI *)0)->ambush), sizeof( ((idAI *)0)->ambush ) },
+	{ "idScriptBool", "ambush", (intptr_t)(&((idAI *)0)->ambush), sizeof( ((idAI *)0)->ambush ) },
 	{ "idScriptBool", "ignoreEnemies", (intptr_t)(&((idAI *)0)->ignoreEnemies), sizeof( ((idAI *)0)->ignoreEnemies ) },
 	{ "idScriptBool", "stay_on_attackpath", (intptr_t)(&((idAI *)0)->stay_on_attackpath), sizeof( ((idAI *)0)->stay_on_attackpath ) },
 	{ "idScriptBool", "ignore_sight", (intptr_t)(&((idAI *)0)->ignore_sight), sizeof( ((idAI *)0)->ignore_sight ) },
@@ -5850,13 +5868,18 @@ static classVariableInfo_t idAI_typeInfo[] = {
 	{ "float", "blockedRadius", (intptr_t)(&((idAI *)0)->blockedRadius), sizeof( ((idAI *)0)->blockedRadius ) },
 	{ "int", "blockedMoveTime", (intptr_t)(&((idAI *)0)->blockedMoveTime), sizeof( ((idAI *)0)->blockedMoveTime ) },
 	{ "int", "blockedAttackTime", (intptr_t)(&((idAI *)0)->blockedAttackTime), sizeof( ((idAI *)0)->blockedAttackTime ) },
+	{ "idAngles", "ideal_angles", (intptr_t)(&((idAI *)0)->ideal_angles), sizeof( ((idAI *)0)->ideal_angles ) },
 	{ "float", "ideal_yaw", (intptr_t)(&((idAI *)0)->ideal_yaw), sizeof( ((idAI *)0)->ideal_yaw ) },
 	{ "float", "current_yaw", (intptr_t)(&((idAI *)0)->current_yaw), sizeof( ((idAI *)0)->current_yaw ) },
+	{ "idAngles", "current_angles", (intptr_t)(&((idAI *)0)->current_angles), sizeof( ((idAI *)0)->current_angles ) },
 	{ "float", "turnRate", (intptr_t)(&((idAI *)0)->turnRate), sizeof( ((idAI *)0)->turnRate ) },
+	{ "idAngles", "turnRateAngles", (intptr_t)(&((idAI *)0)->turnRateAngles), sizeof( ((idAI *)0)->turnRateAngles ) },
 	{ "float", "turnVel", (intptr_t)(&((idAI *)0)->turnVel), sizeof( ((idAI *)0)->turnVel ) },
+	{ "idAngles", "turnVelAngles", (intptr_t)(&((idAI *)0)->turnVelAngles), sizeof( ((idAI *)0)->turnVelAngles ) },
 	{ "float", "anim_turn_yaw", (intptr_t)(&((idAI *)0)->anim_turn_yaw), sizeof( ((idAI *)0)->anim_turn_yaw ) },
 	{ "float", "anim_turn_amount", (intptr_t)(&((idAI *)0)->anim_turn_amount), sizeof( ((idAI *)0)->anim_turn_amount ) },
 	{ "float", "anim_turn_angles", (intptr_t)(&((idAI *)0)->anim_turn_angles), sizeof( ((idAI *)0)->anim_turn_angles ) },
+	{ "bool", "yaw_angles_only", (intptr_t)(&((idAI *)0)->yaw_angles_only), sizeof( ((idAI *)0)->yaw_angles_only ) },
 	{ "idPhysics_Monster", "physicsObj", (intptr_t)(&((idAI *)0)->physicsObj), sizeof( ((idAI *)0)->physicsObj ) },
 	{ "jointHandle_t", "flyTiltJoint", (intptr_t)(&((idAI *)0)->flyTiltJoint), sizeof( ((idAI *)0)->flyTiltJoint ) },
 	{ "float", "fly_speed", (intptr_t)(&((idAI *)0)->fly_speed), sizeof( ((idAI *)0)->fly_speed ) },
@@ -5962,7 +5985,7 @@ static classVariableInfo_t idAI_typeInfo[] = {
 	{ "idScriptBool", "AI_PUSHED", (intptr_t)(&((idAI *)0)->AI_PUSHED), sizeof( ((idAI *)0)->AI_PUSHED ) },
 	{ "idScriptFloat", "run_distance", (intptr_t)(&((idAI *)0)->run_distance), sizeof( ((idAI *)0)->run_distance ) },
 	{ "idScriptFloat", "walk_turn", (intptr_t)(&((idAI *)0)->walk_turn), sizeof( ((idAI *)0)->walk_turn ) },
-	{ ": float", "allow_attack", (intptr_t)(&((idAI *)0)->allow_attack), sizeof( ((idAI *)0)->allow_attack ) },
+	{ "float", "allow_attack", (intptr_t)(&((idAI *)0)->allow_attack), sizeof( ((idAI *)0)->allow_attack ) },
 	{ "float", "lost_time", (intptr_t)(&((idAI *)0)->lost_time), sizeof( ((idAI *)0)->lost_time ) },
 	{ "idEntity *", "lost_combat_node", (intptr_t)(&((idAI *)0)->lost_combat_node), sizeof( ((idAI *)0)->lost_combat_node ) },
 	{ "float", "attack_flags", (intptr_t)(&((idAI *)0)->attack_flags), sizeof( ((idAI *)0)->attack_flags ) },
@@ -5973,7 +5996,7 @@ static classVariableInfo_t idAI_typeInfo[] = {
 };
 
 static classVariableInfo_t idCombatNode_typeInfo[] = {
-	{ ": float", "min_dist", (intptr_t)(&((idCombatNode *)0)->min_dist), sizeof( ((idCombatNode *)0)->min_dist ) },
+	{ "float", "min_dist", (intptr_t)(&((idCombatNode *)0)->min_dist), sizeof( ((idCombatNode *)0)->min_dist ) },
 	{ "float", "max_dist", (intptr_t)(&((idCombatNode *)0)->max_dist), sizeof( ((idCombatNode *)0)->max_dist ) },
 	{ "float", "cone_dist", (intptr_t)(&((idCombatNode *)0)->cone_dist), sizeof( ((idCombatNode *)0)->cone_dist ) },
 	{ "float", "min_height", (intptr_t)(&((idCombatNode *)0)->min_height), sizeof( ((idCombatNode *)0)->min_height ) },
@@ -5986,13 +6009,13 @@ static classVariableInfo_t idCombatNode_typeInfo[] = {
 };
 
 static classVariableInfo_t iceAI_Follower_typeInfo[] = {
-	{ ": bool", "inCustomAnim", (intptr_t)(&((iceAI_Follower *)0)->inCustomAnim), sizeof( ((iceAI_Follower *)0)->inCustomAnim ) },
+	{ "bool", "inCustomAnim", (intptr_t)(&((iceAI_Follower *)0)->inCustomAnim), sizeof( ((iceAI_Follower *)0)->inCustomAnim ) },
 	{ "idEntity *", "leader", (intptr_t)(&((iceAI_Follower *)0)->leader), sizeof( ((iceAI_Follower *)0)->leader ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t iceMonsterBossVagary_typeInfo[] = {
-	{ ": float", "nextDodge", (intptr_t)(&((iceMonsterBossVagary *)0)->nextDodge), sizeof( ((iceMonsterBossVagary *)0)->nextDodge ) },
+	{ "float", "nextDodge", (intptr_t)(&((iceMonsterBossVagary *)0)->nextDodge), sizeof( ((iceMonsterBossVagary *)0)->nextDodge ) },
 	{ "float", "nextAttack", (intptr_t)(&((iceMonsterBossVagary *)0)->nextAttack), sizeof( ((iceMonsterBossVagary *)0)->nextAttack ) },
 	{ "float", "nextNoFOVAttack", (intptr_t)(&((iceMonsterBossVagary *)0)->nextNoFOVAttack), sizeof( ((iceMonsterBossVagary *)0)->nextNoFOVAttack ) },
 	{ "idEntity *", "combat_node", (intptr_t)(&((iceMonsterBossVagary *)0)->combat_node), sizeof( ((iceMonsterBossVagary *)0)->combat_node ) },
@@ -6009,7 +6032,7 @@ static classVariableInfo_t iceMonsterBossVagary_typeInfo[] = {
 };
 
 static classVariableInfo_t iceMonsterDemonHellknight_typeInfo[] = {
-	{ ": float", "nextAttack", (intptr_t)(&((iceMonsterDemonHellknight *)0)->nextAttack), sizeof( ((iceMonsterDemonHellknight *)0)->nextAttack ) },
+	{ "float", "nextAttack", (intptr_t)(&((iceMonsterDemonHellknight *)0)->nextAttack), sizeof( ((iceMonsterDemonHellknight *)0)->nextAttack ) },
 	{ "float", "nextNoFOVAttack", (intptr_t)(&((iceMonsterDemonHellknight *)0)->nextNoFOVAttack), sizeof( ((iceMonsterDemonHellknight *)0)->nextNoFOVAttack ) },
 	{ "idEntity *", "combat_node", (intptr_t)(&((iceMonsterDemonHellknight *)0)->combat_node), sizeof( ((iceMonsterDemonHellknight *)0)->combat_node ) },
 	{ "idScriptString", "range_attack_anim", (intptr_t)(&((iceMonsterDemonHellknight *)0)->range_attack_anim), sizeof( ((iceMonsterDemonHellknight *)0)->range_attack_anim ) },
@@ -6017,7 +6040,7 @@ static classVariableInfo_t iceMonsterDemonHellknight_typeInfo[] = {
 };
 
 static classVariableInfo_t iceMonsterDemonImp_typeInfo[] = {
-	{ ": float", "nextDodge", (intptr_t)(&((iceMonsterDemonImp *)0)->nextDodge), sizeof( ((iceMonsterDemonImp *)0)->nextDodge ) },
+	{ "float", "nextDodge", (intptr_t)(&((iceMonsterDemonImp *)0)->nextDodge), sizeof( ((iceMonsterDemonImp *)0)->nextDodge ) },
 	{ "float", "nextAttack", (intptr_t)(&((iceMonsterDemonImp *)0)->nextAttack), sizeof( ((iceMonsterDemonImp *)0)->nextAttack ) },
 	{ "float", "nextLeap", (intptr_t)(&((iceMonsterDemonImp *)0)->nextLeap), sizeof( ((iceMonsterDemonImp *)0)->nextLeap ) },
 	{ "float", "nextNoFOVAttack", (intptr_t)(&((iceMonsterDemonImp *)0)->nextNoFOVAttack), sizeof( ((iceMonsterDemonImp *)0)->nextNoFOVAttack ) },
@@ -6028,25 +6051,25 @@ static classVariableInfo_t iceMonsterDemonImp_typeInfo[] = {
 };
 
 static classVariableInfo_t iceMonsterLostSoul_typeInfo[] = {
-	{ ": float", "nextAttack", (intptr_t)(&((iceMonsterLostSoul *)0)->nextAttack), sizeof( ((iceMonsterLostSoul *)0)->nextAttack ) },
+	{ "float", "nextAttack", (intptr_t)(&((iceMonsterLostSoul *)0)->nextAttack), sizeof( ((iceMonsterLostSoul *)0)->nextAttack ) },
 	{ "float", "nextNoFOVAttack", (intptr_t)(&((iceMonsterLostSoul *)0)->nextNoFOVAttack), sizeof( ((iceMonsterLostSoul *)0)->nextNoFOVAttack ) },
 	{ "float", "noMeleeTime", (intptr_t)(&((iceMonsterLostSoul *)0)->noMeleeTime), sizeof( ((iceMonsterLostSoul *)0)->noMeleeTime ) },
 	{ "float", "fly_offset", (intptr_t)(&((iceMonsterLostSoul *)0)->fly_offset), sizeof( ((iceMonsterLostSoul *)0)->fly_offset ) },
-	{ ": idVec3", "vel", (intptr_t)(&((iceMonsterLostSoul *)0)->vel), sizeof( ((iceMonsterLostSoul *)0)->vel ) },
+	{ "idVec3", "vel", (intptr_t)(&((iceMonsterLostSoul *)0)->vel), sizeof( ((iceMonsterLostSoul *)0)->vel ) },
 	{ "idVec3", "pos", (intptr_t)(&((iceMonsterLostSoul *)0)->pos), sizeof( ((iceMonsterLostSoul *)0)->pos ) },
 	{ "float", "endtime", (intptr_t)(&((iceMonsterLostSoul *)0)->endtime), sizeof( ((iceMonsterLostSoul *)0)->endtime ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t iceMonsterFlyingCacodemon_typeInfo[] = {
-	{ ": float", "nextAttack", (intptr_t)(&((iceMonsterFlyingCacodemon *)0)->nextAttack), sizeof( ((iceMonsterFlyingCacodemon *)0)->nextAttack ) },
+	{ "float", "nextAttack", (intptr_t)(&((iceMonsterFlyingCacodemon *)0)->nextAttack), sizeof( ((iceMonsterFlyingCacodemon *)0)->nextAttack ) },
 	{ "float", "nextNoFOVAttack", (intptr_t)(&((iceMonsterFlyingCacodemon *)0)->nextNoFOVAttack), sizeof( ((iceMonsterFlyingCacodemon *)0)->nextNoFOVAttack ) },
 	{ "idEntity *", "combat_node", (intptr_t)(&((iceMonsterFlyingCacodemon *)0)->combat_node), sizeof( ((iceMonsterFlyingCacodemon *)0)->combat_node ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t iceMonsterZombie_typeInfo[] = {
-	{ ": idScriptBool", "can_run", (intptr_t)(&((iceMonsterZombie *)0)->can_run), sizeof( ((iceMonsterZombie *)0)->can_run ) },
+	{ "idScriptBool", "can_run", (intptr_t)(&((iceMonsterZombie *)0)->can_run), sizeof( ((iceMonsterZombie *)0)->can_run ) },
 	{ NULL, 0 }
 };
 
@@ -6065,7 +6088,7 @@ static classVariableInfo_t iceMonsterZombieMorgue_typeInfo[] = {
 };
 
 static classVariableInfo_t iceMonsterZombieSecurityPistol_typeInfo[] = {
-	{ ": idEntity *", "combat_node", (intptr_t)(&((iceMonsterZombieSecurityPistol *)0)->combat_node), sizeof( ((iceMonsterZombieSecurityPistol *)0)->combat_node ) },
+	{ "idEntity *", "combat_node", (intptr_t)(&((iceMonsterZombieSecurityPistol *)0)->combat_node), sizeof( ((iceMonsterZombieSecurityPistol *)0)->combat_node ) },
 	{ "idScriptBool", "fire", (intptr_t)(&((iceMonsterZombieSecurityPistol *)0)->fire), sizeof( ((iceMonsterZombieSecurityPistol *)0)->fire ) },
 	{ "idScriptBool", "crouch_fire", (intptr_t)(&((iceMonsterZombieSecurityPistol *)0)->crouch_fire), sizeof( ((iceMonsterZombieSecurityPistol *)0)->crouch_fire ) },
 	{ "idScriptBool", "run_attack", (intptr_t)(&((iceMonsterZombieSecurityPistol *)0)->run_attack), sizeof( ((iceMonsterZombieSecurityPistol *)0)->run_attack ) },
@@ -6074,26 +6097,26 @@ static classVariableInfo_t iceMonsterZombieSecurityPistol_typeInfo[] = {
 	{ "idScriptFloat", "nextNoFOVAttack", (intptr_t)(&((iceMonsterZombieSecurityPistol *)0)->nextNoFOVAttack), sizeof( ((iceMonsterZombieSecurityPistol *)0)->nextNoFOVAttack ) },
 	{ "float", "zsecp_num_stand_attacks", (intptr_t)(&((iceMonsterZombieSecurityPistol *)0)->zsecp_num_stand_attacks), sizeof( ((iceMonsterZombieSecurityPistol *)0)->zsecp_num_stand_attacks ) },
 	{ "float", "zsecp_num_crouch_attacks", (intptr_t)(&((iceMonsterZombieSecurityPistol *)0)->zsecp_num_crouch_attacks), sizeof( ((iceMonsterZombieSecurityPistol *)0)->zsecp_num_crouch_attacks ) },
-	{ ": float", "attackTime", (intptr_t)(&((iceMonsterZombieSecurityPistol *)0)->attackTime), sizeof( ((iceMonsterZombieSecurityPistol *)0)->attackTime ) },
+	{ "float", "attackTime", (intptr_t)(&((iceMonsterZombieSecurityPistol *)0)->attackTime), sizeof( ((iceMonsterZombieSecurityPistol *)0)->attackTime ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t iceMonsterZombieCommandoTentacle_typeInfo[] = {
-	{ ": float", "nextAttack", (intptr_t)(&((iceMonsterZombieCommandoTentacle *)0)->nextAttack), sizeof( ((iceMonsterZombieCommandoTentacle *)0)->nextAttack ) },
+	{ "float", "nextAttack", (intptr_t)(&((iceMonsterZombieCommandoTentacle *)0)->nextAttack), sizeof( ((iceMonsterZombieCommandoTentacle *)0)->nextAttack ) },
 	{ "float", "nextNoFOVAttack", (intptr_t)(&((iceMonsterZombieCommandoTentacle *)0)->nextNoFOVAttack), sizeof( ((iceMonsterZombieCommandoTentacle *)0)->nextNoFOVAttack ) },
 	{ "bool", "tentacleDamage", (intptr_t)(&((iceMonsterZombieCommandoTentacle *)0)->tentacleDamage), sizeof( ((iceMonsterZombieCommandoTentacle *)0)->tentacleDamage ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t iceMonsterZombieCommandoChaingun_typeInfo[] = {
-	{ ": idScriptBool", "fire", (intptr_t)(&((iceMonsterZombieCommandoChaingun *)0)->fire), sizeof( ((iceMonsterZombieCommandoChaingun *)0)->fire ) },
+	{ "idScriptBool", "fire", (intptr_t)(&((iceMonsterZombieCommandoChaingun *)0)->fire), sizeof( ((iceMonsterZombieCommandoChaingun *)0)->fire ) },
 	{ "idScriptBool", "crouch_fire", (intptr_t)(&((iceMonsterZombieCommandoChaingun *)0)->crouch_fire), sizeof( ((iceMonsterZombieCommandoChaingun *)0)->crouch_fire ) },
 	{ "idScriptBool", "step_left", (intptr_t)(&((iceMonsterZombieCommandoChaingun *)0)->step_left), sizeof( ((iceMonsterZombieCommandoChaingun *)0)->step_left ) },
 	{ "idScriptBool", "step_right", (intptr_t)(&((iceMonsterZombieCommandoChaingun *)0)->step_right), sizeof( ((iceMonsterZombieCommandoChaingun *)0)->step_right ) },
 	{ "idScriptFloat", "nextDodge", (intptr_t)(&((iceMonsterZombieCommandoChaingun *)0)->nextDodge), sizeof( ((iceMonsterZombieCommandoChaingun *)0)->nextDodge ) },
 	{ "idScriptFloat", "nextAttack", (intptr_t)(&((iceMonsterZombieCommandoChaingun *)0)->nextAttack), sizeof( ((iceMonsterZombieCommandoChaingun *)0)->nextAttack ) },
 	{ "idScriptFloat", "nextNoFOVAttack", (intptr_t)(&((iceMonsterZombieCommandoChaingun *)0)->nextNoFOVAttack), sizeof( ((iceMonsterZombieCommandoChaingun *)0)->nextNoFOVAttack ) },
-	{ ": idEntity *", "combat_node", (intptr_t)(&((iceMonsterZombieCommandoChaingun *)0)->combat_node), sizeof( ((iceMonsterZombieCommandoChaingun *)0)->combat_node ) },
+	{ "idEntity *", "combat_node", (intptr_t)(&((iceMonsterZombieCommandoChaingun *)0)->combat_node), sizeof( ((iceMonsterZombieCommandoChaingun *)0)->combat_node ) },
 	{ "float", "attackTime", (intptr_t)(&((iceMonsterZombieCommandoChaingun *)0)->attackTime), sizeof( ((iceMonsterZombieCommandoChaingun *)0)->attackTime ) },
 	{ NULL, 0 }
 };
@@ -6241,7 +6264,7 @@ static classVariableInfo_t bot_weaponstate_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idBotWeaponInfoManager_typeInfo[] = {
-	{ ": idList < projectileinfo_t >", "projectileinfo", (intptr_t)(&((idBotWeaponInfoManager *)0)->projectileinfo), sizeof( ((idBotWeaponInfoManager *)0)->projectileinfo ) },
+	{ "idList < projectileinfo_t >", "projectileinfo", (intptr_t)(&((idBotWeaponInfoManager *)0)->projectileinfo), sizeof( ((idBotWeaponInfoManager *)0)->projectileinfo ) },
 	{ "bot_weaponstate_t[1]", "botweaponstates", (intptr_t)(&((idBotWeaponInfoManager *)0)->botweaponstates), sizeof( ((idBotWeaponInfoManager *)0)->botweaponstates ) },
 	{ "bot_weaponinfo_t[32]", "weaponinfo", (intptr_t)(&((idBotWeaponInfoManager *)0)->weaponinfo), sizeof( ((idBotWeaponInfoManager *)0)->weaponinfo ) },
 	{ NULL, 0 }
@@ -6327,7 +6350,7 @@ static classVariableInfo_t bot_goalstate_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idBotGoalManager_typeInfo[] = {
-	{ ": bot_goalstate_t[1]", "botgoalstates", (intptr_t)(&((idBotGoalManager *)0)->botgoalstates), sizeof( ((idBotGoalManager *)0)->botgoalstates ) },
+	{ "bot_goalstate_t[1]", "botgoalstates", (intptr_t)(&((idBotGoalManager *)0)->botgoalstates), sizeof( ((idBotGoalManager *)0)->botgoalstates ) },
 	{ "itemconfig_t", "itemconfiglocal", (intptr_t)(&((idBotGoalManager *)0)->itemconfiglocal), sizeof( ((idBotGoalManager *)0)->itemconfiglocal ) },
 	{ "itemconfig_t *", "itemconfig", (intptr_t)(&((idBotGoalManager *)0)->itemconfig), sizeof( ((idBotGoalManager *)0)->itemconfig ) },
 	{ "levelitem_t[256]", "levelitemheap", (intptr_t)(&((idBotGoalManager *)0)->levelitemheap), sizeof( ((idBotGoalManager *)0)->levelitemheap ) },
@@ -6386,18 +6409,28 @@ static classVariableInfo_t bot_state_t_typeInfo[] = {
 };
 
 static classVariableInfo_t iceBot_typeInfo[] = {
-	{ ": bot_state_t", "bs", (intptr_t)(&((iceBot *)0)->bs), sizeof( ((iceBot *)0)->bs ) },
+	{ "bot_state_t", "bs", (intptr_t)(&((iceBot *)0)->bs), sizeof( ((iceBot *)0)->bs ) },
 	{ "bool", "hasSpawned", (intptr_t)(&((iceBot *)0)->hasSpawned), sizeof( ((iceBot *)0)->hasSpawned ) },
-	{ ": int", "weapon_machinegun", (intptr_t)(&((iceBot *)0)->weapon_machinegun), sizeof( ((iceBot *)0)->weapon_machinegun ) },
+	{ "int", "weapon_machinegun", (intptr_t)(&((iceBot *)0)->weapon_machinegun), sizeof( ((iceBot *)0)->weapon_machinegun ) },
 	{ "int", "weapon_shotgun", (intptr_t)(&((iceBot *)0)->weapon_shotgun), sizeof( ((iceBot *)0)->weapon_shotgun ) },
 	{ "int", "weapon_plasmagun", (intptr_t)(&((iceBot *)0)->weapon_plasmagun), sizeof( ((iceBot *)0)->weapon_plasmagun ) },
 	{ "int", "weapon_rocketlauncher", (intptr_t)(&((iceBot *)0)->weapon_rocketlauncher), sizeof( ((iceBot *)0)->weapon_rocketlauncher ) },
-	{ ": idAAS *", "aas", (intptr_t)(&((iceBot *)0)->aas), sizeof( ((iceBot *)0)->aas ) },
+	{ "idAAS *", "aas", (intptr_t)(&((iceBot *)0)->aas), sizeof( ((iceBot *)0)->aas ) },
+	{ NULL, 0 }
+};
+
+static classVariableInfo_t rcDrone_Miner_typeInfo[] = {
+	{ "idEntity", "light", (intptr_t)(&((rcDrone_Miner *)0)->light), sizeof( ((rcDrone_Miner *)0)->light ) },
+	{ "boolean", "light_is_on", (intptr_t)(&((rcDrone_Miner *)0)->light_is_on), sizeof( ((rcDrone_Miner *)0)->light_is_on ) },
+	{ "idEntityPtr < rcAsteroid >", "targetAsteroid", (intptr_t)(&((rcDrone_Miner *)0)->targetAsteroid), sizeof( ((rcDrone_Miner *)0)->targetAsteroid ) },
+	{ "const asteroidMine_s *", "targetMine", (intptr_t)(&((rcDrone_Miner *)0)->targetMine), sizeof( ((rcDrone_Miner *)0)->targetMine ) },
+	{ "idList < jointHandle_t >", "flashJointWorldHandles", (intptr_t)(&((rcDrone_Miner *)0)->flashJointWorldHandles), sizeof( ((rcDrone_Miner *)0)->flashJointWorldHandles ) },
+	{ "idClipModel *", "clipModel", (intptr_t)(&((rcDrone_Miner *)0)->clipModel), sizeof( ((rcDrone_Miner *)0)->clipModel ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idTestModel_typeInfo[] = {
-	{ ": idEntityPtr < idEntity >", "head", (intptr_t)(&((idTestModel *)0)->head), sizeof( ((idTestModel *)0)->head ) },
+	{ "idEntityPtr < idEntity >", "head", (intptr_t)(&((idTestModel *)0)->head), sizeof( ((idTestModel *)0)->head ) },
 	{ "idAnimator *", "headAnimator", (intptr_t)(&((idTestModel *)0)->headAnimator), sizeof( ((idTestModel *)0)->headAnimator ) },
 	{ "idAnim", "customAnim", (intptr_t)(&((idTestModel *)0)->customAnim), sizeof( ((idTestModel *)0)->customAnim ) },
 	{ "idPhysics_Parametric", "physicsObj", (intptr_t)(&((idTestModel *)0)->physicsObj), sizeof( ((idTestModel *)0)->physicsObj ) },
@@ -6418,7 +6451,7 @@ static classVariableInfo_t iceWeaponFist_typeInfo[] = {
 };
 
 static classVariableInfo_t iceWeaponPistol_typeInfo[] = {
-	{ ": float", "spread", (intptr_t)(&((iceWeaponPistol *)0)->spread), sizeof( ((iceWeaponPistol *)0)->spread ) },
+	{ "float", "spread", (intptr_t)(&((iceWeaponPistol *)0)->spread), sizeof( ((iceWeaponPistol *)0)->spread ) },
 	{ "const idSoundShader *", "snd_lowammo", (intptr_t)(&((iceWeaponPistol *)0)->snd_lowammo), sizeof( ((iceWeaponPistol *)0)->snd_lowammo ) },
 	{ NULL, 0 }
 };
@@ -6438,7 +6471,7 @@ static classVariableInfo_t iceWeaponPDA_typeInfo[] = {
 };
 
 static classVariableInfo_t iceWeaponShotgun_typeInfo[] = {
-	{ ": float", "spread", (intptr_t)(&((iceWeaponShotgun *)0)->spread), sizeof( ((iceWeaponShotgun *)0)->spread ) },
+	{ "float", "spread", (intptr_t)(&((iceWeaponShotgun *)0)->spread), sizeof( ((iceWeaponShotgun *)0)->spread ) },
 	{ "const idSoundShader *", "snd_lowammo", (intptr_t)(&((iceWeaponShotgun *)0)->snd_lowammo), sizeof( ((iceWeaponShotgun *)0)->snd_lowammo ) },
 	{ NULL, 0 }
 };
@@ -6448,19 +6481,19 @@ static classVariableInfo_t iceWeaponDoubleShotgun_typeInfo[] = {
 };
 
 static classVariableInfo_t iceWeaponMachineGun_typeInfo[] = {
-	{ ": float", "spread", (intptr_t)(&((iceWeaponMachineGun *)0)->spread), sizeof( ((iceWeaponMachineGun *)0)->spread ) },
+	{ "float", "spread", (intptr_t)(&((iceWeaponMachineGun *)0)->spread), sizeof( ((iceWeaponMachineGun *)0)->spread ) },
 	{ "const idSoundShader *", "snd_lowammo", (intptr_t)(&((iceWeaponMachineGun *)0)->snd_lowammo), sizeof( ((iceWeaponMachineGun *)0)->snd_lowammo ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t iceWeaponPlasmaGun_typeInfo[] = {
-	{ ": float", "spread", (intptr_t)(&((iceWeaponPlasmaGun *)0)->spread), sizeof( ((iceWeaponPlasmaGun *)0)->spread ) },
+	{ "float", "spread", (intptr_t)(&((iceWeaponPlasmaGun *)0)->spread), sizeof( ((iceWeaponPlasmaGun *)0)->spread ) },
 	{ "const idSoundShader *", "snd_lowammo", (intptr_t)(&((iceWeaponPlasmaGun *)0)->snd_lowammo), sizeof( ((iceWeaponPlasmaGun *)0)->snd_lowammo ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t iceWeaponChainGun_typeInfo[] = {
-	{ ": idAnimatedEntity *", "world_model", (intptr_t)(&((iceWeaponChainGun *)0)->world_model), sizeof( ((iceWeaponChainGun *)0)->world_model ) },
+	{ "idAnimatedEntity *", "world_model", (intptr_t)(&((iceWeaponChainGun *)0)->world_model), sizeof( ((iceWeaponChainGun *)0)->world_model ) },
 	{ "jointHandle_t", "world_barrel_joint", (intptr_t)(&((iceWeaponChainGun *)0)->world_barrel_joint), sizeof( ((iceWeaponChainGun *)0)->world_barrel_joint ) },
 	{ "jointHandle_t", "barrel_joint", (intptr_t)(&((iceWeaponChainGun *)0)->barrel_joint), sizeof( ((iceWeaponChainGun *)0)->barrel_joint ) },
 	{ "float", "barrel_angle", (intptr_t)(&((iceWeaponChainGun *)0)->barrel_angle), sizeof( ((iceWeaponChainGun *)0)->barrel_angle ) },
@@ -6492,7 +6525,7 @@ static classVariableInfo_t iceWeaponBFG_typeInfo[] = {
 };
 
 static classVariableInfo_t iceWeaponHandgrenade_typeInfo[] = {
-	{ ": float", "spread", (intptr_t)(&((iceWeaponHandgrenade *)0)->spread), sizeof( ((iceWeaponHandgrenade *)0)->spread ) },
+	{ "float", "spread", (intptr_t)(&((iceWeaponHandgrenade *)0)->spread), sizeof( ((iceWeaponHandgrenade *)0)->spread ) },
 	{ "float", "fuse_start", (intptr_t)(&((iceWeaponHandgrenade *)0)->fuse_start), sizeof( ((iceWeaponHandgrenade *)0)->fuse_start ) },
 	{ "idStr", "skin_nade", (intptr_t)(&((iceWeaponHandgrenade *)0)->skin_nade), sizeof( ((iceWeaponHandgrenade *)0)->skin_nade ) },
 	{ "idStr", "skin_nade_invis", (intptr_t)(&((iceWeaponHandgrenade *)0)->skin_nade_invis), sizeof( ((iceWeaponHandgrenade *)0)->skin_nade_invis ) },
@@ -6500,7 +6533,7 @@ static classVariableInfo_t iceWeaponHandgrenade_typeInfo[] = {
 	{ "idStr", "skin_nonade_invis", (intptr_t)(&((iceWeaponHandgrenade *)0)->skin_nonade_invis), sizeof( ((iceWeaponHandgrenade *)0)->skin_nonade_invis ) },
 	{ "idProjectile *", "projectile", (intptr_t)(&((iceWeaponHandgrenade *)0)->projectile), sizeof( ((iceWeaponHandgrenade *)0)->projectile ) },
 	{ "bool", "show_grenade", (intptr_t)(&((iceWeaponHandgrenade *)0)->show_grenade), sizeof( ((iceWeaponHandgrenade *)0)->show_grenade ) },
-	{ ": float", "fuse_end", (intptr_t)(&((iceWeaponHandgrenade *)0)->fuse_end), sizeof( ((iceWeaponHandgrenade *)0)->fuse_end ) },
+	{ "float", "fuse_end", (intptr_t)(&((iceWeaponHandgrenade *)0)->fuse_end), sizeof( ((iceWeaponHandgrenade *)0)->fuse_end ) },
 	{ "float", "current_time", (intptr_t)(&((iceWeaponHandgrenade *)0)->current_time), sizeof( ((iceWeaponHandgrenade *)0)->current_time ) },
 	{ "float", "time_held", (intptr_t)(&((iceWeaponHandgrenade *)0)->time_held), sizeof( ((iceWeaponHandgrenade *)0)->time_held ) },
 	{ "float", "power", (intptr_t)(&((iceWeaponHandgrenade *)0)->power), sizeof( ((iceWeaponHandgrenade *)0)->power ) },
@@ -6510,7 +6543,7 @@ static classVariableInfo_t iceWeaponHandgrenade_typeInfo[] = {
 };
 
 static classVariableInfo_t iceWeaponChainsaw_typeInfo[] = {
-	{ ": bool", "side", (intptr_t)(&((iceWeaponChainsaw *)0)->side), sizeof( ((iceWeaponChainsaw *)0)->side ) },
+	{ "bool", "side", (intptr_t)(&((iceWeaponChainsaw *)0)->side), sizeof( ((iceWeaponChainsaw *)0)->side ) },
 	{ NULL, 0 }
 };
 
@@ -6521,7 +6554,7 @@ static classVariableInfo_t iceWeaponGrabber_typeInfo[] = {
 	{ "const idSoundShader *", "snd_cangrab", (intptr_t)(&((iceWeaponGrabber *)0)->snd_cangrab), sizeof( ((iceWeaponGrabber *)0)->snd_cangrab ) },
 	{ "const idSoundShader *", "snd_warning", (intptr_t)(&((iceWeaponGrabber *)0)->snd_warning), sizeof( ((iceWeaponGrabber *)0)->snd_warning ) },
 	{ "const idSoundShader *", "snd_stopfire", (intptr_t)(&((iceWeaponGrabber *)0)->snd_stopfire), sizeof( ((iceWeaponGrabber *)0)->snd_stopfire ) },
-	{ ": float", "next_attack", (intptr_t)(&((iceWeaponGrabber *)0)->next_attack), sizeof( ((iceWeaponGrabber *)0)->next_attack ) },
+	{ "float", "next_attack", (intptr_t)(&((iceWeaponGrabber *)0)->next_attack), sizeof( ((iceWeaponGrabber *)0)->next_attack ) },
 	{ "float", "fireStartTime", (intptr_t)(&((iceWeaponGrabber *)0)->fireStartTime), sizeof( ((iceWeaponGrabber *)0)->fireStartTime ) },
 	{ "bool", "warningBeep1", (intptr_t)(&((iceWeaponGrabber *)0)->warningBeep1), sizeof( ((iceWeaponGrabber *)0)->warningBeep1 ) },
 	{ "bool", "warningBeep2", (intptr_t)(&((iceWeaponGrabber *)0)->warningBeep2), sizeof( ((iceWeaponGrabber *)0)->warningBeep2 ) },
@@ -6561,21 +6594,21 @@ static classVariableInfo_t idWidgetEvent_typeInfo[] = {
 };
 
 static classVariableInfo_t idWidgetAction_typeInfo[] = {
-	{ ": widgetAction_t", "action", (intptr_t)(&((idWidgetAction *)0)->action), sizeof( ((idWidgetAction *)0)->action ) },
+	{ "widgetAction_t", "action", (intptr_t)(&((idWidgetAction *)0)->action), sizeof( ((idWidgetAction *)0)->action ) },
 	{ "idSWFParmList", "parms", (intptr_t)(&((idWidgetAction *)0)->parms), sizeof( ((idWidgetAction *)0)->parms ) },
 	{ "idSWFScriptFunction *", "scriptFunction", (intptr_t)(&((idWidgetAction *)0)->scriptFunction), sizeof( ((idWidgetAction *)0)->scriptFunction ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuWidget_WrapWidgetSWFEvent_typeInfo[] = {
-	{ ": idMenuWidget *", "targetWidget", (intptr_t)(&((idMenuWidget::WrapWidgetSWFEvent *)0)->targetWidget), sizeof( ((idMenuWidget::WrapWidgetSWFEvent *)0)->targetWidget ) },
+	{ "idMenuWidget *", "targetWidget", (intptr_t)(&((idMenuWidget::WrapWidgetSWFEvent *)0)->targetWidget), sizeof( ((idMenuWidget::WrapWidgetSWFEvent *)0)->targetWidget ) },
 	{ "widgetEvent_t", "targetEvent", (intptr_t)(&((idMenuWidget::WrapWidgetSWFEvent *)0)->targetEvent), sizeof( ((idMenuWidget::WrapWidgetSWFEvent *)0)->targetEvent ) },
 	{ "int", "targetEventArg", (intptr_t)(&((idMenuWidget::WrapWidgetSWFEvent *)0)->targetEventArg), sizeof( ((idMenuWidget::WrapWidgetSWFEvent *)0)->targetEventArg ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuWidget_typeInfo[] = {
-	{ ": bool", "handlerIsParent", (intptr_t)(&((idMenuWidget *)0)->handlerIsParent), sizeof( ((idMenuWidget *)0)->handlerIsParent ) },
+	{ "bool", "handlerIsParent", (intptr_t)(&((idMenuWidget *)0)->handlerIsParent), sizeof( ((idMenuWidget *)0)->handlerIsParent ) },
 	{ "idMenuHandler *", "menuData", (intptr_t)(&((idMenuWidget *)0)->menuData), sizeof( ((idMenuWidget *)0)->menuData ) },
 	{ "idSWF *", "swfObj", (intptr_t)(&((idMenuWidget *)0)->swfObj), sizeof( ((idMenuWidget *)0)->swfObj ) },
 	{ "idSWFSpriteInstance *", "boundSprite", (intptr_t)(&((idMenuWidget *)0)->boundSprite), sizeof( ((idMenuWidget *)0)->boundSprite ) },
@@ -6606,25 +6639,25 @@ static classVariableInfo_t idMenuWidget_Button_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuWidget_LobbyButton_typeInfo[] = {
-	{ ": idStr", "name", (intptr_t)(&((idMenuWidget_LobbyButton *)0)->name), sizeof( ((idMenuWidget_LobbyButton *)0)->name ) },
+	{ "idStr", "name", (intptr_t)(&((idMenuWidget_LobbyButton *)0)->name), sizeof( ((idMenuWidget_LobbyButton *)0)->name ) },
 	{ "voiceStateDisplay_t", "voiceState", (intptr_t)(&((idMenuWidget_LobbyButton *)0)->voiceState), sizeof( ((idMenuWidget_LobbyButton *)0)->voiceState ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuWidget_ScoreboardButton_typeInfo[] = {
-	{ ": voiceStateDisplay_t", "voiceState", (intptr_t)(&((idMenuWidget_ScoreboardButton *)0)->voiceState), sizeof( ((idMenuWidget_ScoreboardButton *)0)->voiceState ) },
+	{ "voiceStateDisplay_t", "voiceState", (intptr_t)(&((idMenuWidget_ScoreboardButton *)0)->voiceState), sizeof( ((idMenuWidget_ScoreboardButton *)0)->voiceState ) },
 	{ "int", "index", (intptr_t)(&((idMenuWidget_ScoreboardButton *)0)->index), sizeof( ((idMenuWidget_ScoreboardButton *)0)->index ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuWidget_ControlButton_typeInfo[] = {
-	{ ": menuOption_t", "optionType", (intptr_t)(&((idMenuWidget_ControlButton *)0)->optionType), sizeof( ((idMenuWidget_ControlButton *)0)->optionType ) },
+	{ "menuOption_t", "optionType", (intptr_t)(&((idMenuWidget_ControlButton *)0)->optionType), sizeof( ((idMenuWidget_ControlButton *)0)->optionType ) },
 	{ "bool", "disabled", (intptr_t)(&((idMenuWidget_ControlButton *)0)->disabled), sizeof( ((idMenuWidget_ControlButton *)0)->disabled ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuWidget_ServerButton_typeInfo[] = {
-	{ ": idStr", "serverName", (intptr_t)(&((idMenuWidget_ServerButton *)0)->serverName), sizeof( ((idMenuWidget_ServerButton *)0)->serverName ) },
+	{ "idStr", "serverName", (intptr_t)(&((idMenuWidget_ServerButton *)0)->serverName), sizeof( ((idMenuWidget_ServerButton *)0)->serverName ) },
 	{ "int", "index", (intptr_t)(&((idMenuWidget_ServerButton *)0)->index), sizeof( ((idMenuWidget_ServerButton *)0)->index ) },
 	{ "int", "players", (intptr_t)(&((idMenuWidget_ServerButton *)0)->players), sizeof( ((idMenuWidget_ServerButton *)0)->players ) },
 	{ "int", "maxPlayers", (intptr_t)(&((idMenuWidget_ServerButton *)0)->maxPlayers), sizeof( ((idMenuWidget_ServerButton *)0)->maxPlayers ) },
@@ -6636,19 +6669,19 @@ static classVariableInfo_t idMenuWidget_ServerButton_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuWidget_NavButton_typeInfo[] = {
-	{ ": int", "navIndex", (intptr_t)(&((idMenuWidget_NavButton *)0)->navIndex), sizeof( ((idMenuWidget_NavButton *)0)->navIndex ) },
+	{ "int", "navIndex", (intptr_t)(&((idMenuWidget_NavButton *)0)->navIndex), sizeof( ((idMenuWidget_NavButton *)0)->navIndex ) },
 	{ "float", "xPos", (intptr_t)(&((idMenuWidget_NavButton *)0)->xPos), sizeof( ((idMenuWidget_NavButton *)0)->xPos ) },
 	{ "navWidgetState_t", "navState", (intptr_t)(&((idMenuWidget_NavButton *)0)->navState), sizeof( ((idMenuWidget_NavButton *)0)->navState ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuWidget_MenuButton_typeInfo[] = {
-	{ ": float", "xPos", (intptr_t)(&((idMenuWidget_MenuButton *)0)->xPos), sizeof( ((idMenuWidget_MenuButton *)0)->xPos ) },
+	{ "float", "xPos", (intptr_t)(&((idMenuWidget_MenuButton *)0)->xPos), sizeof( ((idMenuWidget_MenuButton *)0)->xPos ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuWidget_List_typeInfo[] = {
-	{ ": int", "numVisibleOptions", (intptr_t)(&((idMenuWidget_List *)0)->numVisibleOptions), sizeof( ((idMenuWidget_List *)0)->numVisibleOptions ) },
+	{ "int", "numVisibleOptions", (intptr_t)(&((idMenuWidget_List *)0)->numVisibleOptions), sizeof( ((idMenuWidget_List *)0)->numVisibleOptions ) },
 	{ "int", "viewOffset", (intptr_t)(&((idMenuWidget_List *)0)->viewOffset), sizeof( ((idMenuWidget_List *)0)->viewOffset ) },
 	{ "int", "viewIndex", (intptr_t)(&((idMenuWidget_List *)0)->viewIndex), sizeof( ((idMenuWidget_List *)0)->viewIndex ) },
 	{ "bool", "allowWrapping", (intptr_t)(&((idMenuWidget_List *)0)->allowWrapping), sizeof( ((idMenuWidget_List *)0)->allowWrapping ) },
@@ -6656,7 +6689,7 @@ static classVariableInfo_t idMenuWidget_List_typeInfo[] = {
 };
 
 static classVariableInfo_t idBrowserEntry_t_typeInfo[] = {
-	{ ": idStr", "serverName", (intptr_t)(&((idBrowserEntry_t *)0)->serverName), sizeof( ((idBrowserEntry_t *)0)->serverName ) },
+	{ "idStr", "serverName", (intptr_t)(&((idBrowserEntry_t *)0)->serverName), sizeof( ((idBrowserEntry_t *)0)->serverName ) },
 	{ "int", "index", (intptr_t)(&((idBrowserEntry_t *)0)->index), sizeof( ((idBrowserEntry_t *)0)->index ) },
 	{ "int", "players", (intptr_t)(&((idBrowserEntry_t *)0)->players), sizeof( ((idBrowserEntry_t *)0)->players ) },
 	{ "int", "maxPlayers", (intptr_t)(&((idBrowserEntry_t *)0)->maxPlayers), sizeof( ((idBrowserEntry_t *)0)->maxPlayers ) },
@@ -6668,12 +6701,12 @@ static classVariableInfo_t idBrowserEntry_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuWidget_GameBrowserList_typeInfo[] = {
-	{ ": idList < idBrowserEntry_t >", "games", (intptr_t)(&((idMenuWidget_GameBrowserList *)0)->games), sizeof( ((idMenuWidget_GameBrowserList *)0)->games ) },
+	{ "idList < idBrowserEntry_t >", "games", (intptr_t)(&((idMenuWidget_GameBrowserList *)0)->games), sizeof( ((idMenuWidget_GameBrowserList *)0)->games ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuWidget_Carousel_typeInfo[] = {
-	{ ": int", "numVisibleOptions", (intptr_t)(&((idMenuWidget_Carousel *)0)->numVisibleOptions), sizeof( ((idMenuWidget_Carousel *)0)->numVisibleOptions ) },
+	{ "int", "numVisibleOptions", (intptr_t)(&((idMenuWidget_Carousel *)0)->numVisibleOptions), sizeof( ((idMenuWidget_Carousel *)0)->numVisibleOptions ) },
 	{ "int", "viewIndex", (intptr_t)(&((idMenuWidget_Carousel *)0)->viewIndex), sizeof( ((idMenuWidget_Carousel *)0)->viewIndex ) },
 	{ "int", "moveToIndex", (intptr_t)(&((idMenuWidget_Carousel *)0)->moveToIndex), sizeof( ((idMenuWidget_Carousel *)0)->moveToIndex ) },
 	{ "int", "moveDiff", (intptr_t)(&((idMenuWidget_Carousel *)0)->moveDiff), sizeof( ((idMenuWidget_Carousel *)0)->moveDiff ) },
@@ -6684,7 +6717,7 @@ static classVariableInfo_t idMenuWidget_Carousel_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuWidget_Help_typeInfo[] = {
-	{ ": idStr", "lastFocusedMessage", (intptr_t)(&((idMenuWidget_Help *)0)->lastFocusedMessage), sizeof( ((idMenuWidget_Help *)0)->lastFocusedMessage ) },
+	{ "idStr", "lastFocusedMessage", (intptr_t)(&((idMenuWidget_Help *)0)->lastFocusedMessage), sizeof( ((idMenuWidget_Help *)0)->lastFocusedMessage ) },
 	{ "idStr", "lastHoveredMessage", (intptr_t)(&((idMenuWidget_Help *)0)->lastHoveredMessage), sizeof( ((idMenuWidget_Help *)0)->lastHoveredMessage ) },
 	{ "bool", "hideMessage", (intptr_t)(&((idMenuWidget_Help *)0)->hideMessage), sizeof( ((idMenuWidget_Help *)0)->hideMessage ) },
 	{ NULL, 0 }
@@ -6697,19 +6730,19 @@ static classVariableInfo_t idMenuWidget_CommandBar_buttonInfo_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuWidget_CommandBar_typeInfo[] = {
-	{ ": idStaticList < buttonInfo_t , MAX_BUTTONS >", "buttons", (intptr_t)(&((idMenuWidget_CommandBar *)0)->buttons), sizeof( ((idMenuWidget_CommandBar *)0)->buttons ) },
+	{ "idStaticList < buttonInfo_t , MAX_BUTTONS >", "buttons", (intptr_t)(&((idMenuWidget_CommandBar *)0)->buttons), sizeof( ((idMenuWidget_CommandBar *)0)->buttons ) },
 	{ "alignment_t", "alignment", (intptr_t)(&((idMenuWidget_CommandBar *)0)->alignment), sizeof( ((idMenuWidget_CommandBar *)0)->alignment ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuWidget_LobbyList_typeInfo[] = {
-	{ ": idList < idStr , TAG_IDLIB_LIST_MENU >", "headings", (intptr_t)(&((idMenuWidget_LobbyList *)0)->headings), sizeof( ((idMenuWidget_LobbyList *)0)->headings ) },
+	{ "idList < idStr , TAG_IDLIB_LIST_MENU >", "headings", (intptr_t)(&((idMenuWidget_LobbyList *)0)->headings), sizeof( ((idMenuWidget_LobbyList *)0)->headings ) },
 	{ "int", "numEntries", (intptr_t)(&((idMenuWidget_LobbyList *)0)->numEntries), sizeof( ((idMenuWidget_LobbyList *)0)->numEntries ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuWidget_DynamicList_typeInfo[] = {
-	{ ": idList < idList < idStr , TAG_IDLIB_LIST_MENU > , TAG_IDLIB_LIST_MENU >", "listItemInfo", (intptr_t)(&((idMenuWidget_DynamicList *)0)->listItemInfo), sizeof( ((idMenuWidget_DynamicList *)0)->listItemInfo ) },
+	{ "idList < idList < idStr , TAG_IDLIB_LIST_MENU > , TAG_IDLIB_LIST_MENU >", "listItemInfo", (intptr_t)(&((idMenuWidget_DynamicList *)0)->listItemInfo), sizeof( ((idMenuWidget_DynamicList *)0)->listItemInfo ) },
 	{ "bool", "controlList", (intptr_t)(&((idMenuWidget_DynamicList *)0)->controlList), sizeof( ((idMenuWidget_DynamicList *)0)->controlList ) },
 	{ "bool", "ignoreColor", (intptr_t)(&((idMenuWidget_DynamicList *)0)->ignoreColor), sizeof( ((idMenuWidget_DynamicList *)0)->ignoreColor ) },
 	{ NULL, 0 }
@@ -6724,7 +6757,7 @@ static classVariableInfo_t idMenuWidget_SystemOptionsList_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuWidget_NavBar_typeInfo[] = {
-	{ ": idList < idStr , TAG_IDLIB_LIST_MENU >", "headings", (intptr_t)(&((idMenuWidget_NavBar *)0)->headings), sizeof( ((idMenuWidget_NavBar *)0)->headings ) },
+	{ "idList < idStr , TAG_IDLIB_LIST_MENU >", "headings", (intptr_t)(&((idMenuWidget_NavBar *)0)->headings), sizeof( ((idMenuWidget_NavBar *)0)->headings ) },
 	{ "float", "initialPos", (intptr_t)(&((idMenuWidget_NavBar *)0)->initialPos), sizeof( ((idMenuWidget_NavBar *)0)->initialPos ) },
 	{ "float", "buttonPos", (intptr_t)(&((idMenuWidget_NavBar *)0)->buttonPos), sizeof( ((idMenuWidget_NavBar *)0)->buttonPos ) },
 	{ "float", "leftSpacer", (intptr_t)(&((idMenuWidget_NavBar *)0)->leftSpacer), sizeof( ((idMenuWidget_NavBar *)0)->leftSpacer ) },
@@ -6734,7 +6767,7 @@ static classVariableInfo_t idMenuWidget_NavBar_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuWidget_MenuBar_typeInfo[] = {
-	{ ": idList < idStr , TAG_IDLIB_LIST_MENU >", "headings", (intptr_t)(&((idMenuWidget_MenuBar *)0)->headings), sizeof( ((idMenuWidget_MenuBar *)0)->headings ) },
+	{ "idList < idStr , TAG_IDLIB_LIST_MENU >", "headings", (intptr_t)(&((idMenuWidget_MenuBar *)0)->headings), sizeof( ((idMenuWidget_MenuBar *)0)->headings ) },
 	{ "float", "totalWidth", (intptr_t)(&((idMenuWidget_MenuBar *)0)->totalWidth), sizeof( ((idMenuWidget_MenuBar *)0)->totalWidth ) },
 	{ "float", "buttonPos", (intptr_t)(&((idMenuWidget_MenuBar *)0)->buttonPos), sizeof( ((idMenuWidget_MenuBar *)0)->buttonPos ) },
 	{ "float", "rightSpacer", (intptr_t)(&((idMenuWidget_MenuBar *)0)->rightSpacer), sizeof( ((idMenuWidget_MenuBar *)0)->rightSpacer ) },
@@ -6742,7 +6775,7 @@ static classVariableInfo_t idMenuWidget_MenuBar_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuWidget_PDA_UserData_typeInfo[] = {
-	{ ": int", "pdaIndex", (intptr_t)(&((idMenuWidget_PDA_UserData *)0)->pdaIndex), sizeof( ((idMenuWidget_PDA_UserData *)0)->pdaIndex ) },
+	{ "int", "pdaIndex", (intptr_t)(&((idMenuWidget_PDA_UserData *)0)->pdaIndex), sizeof( ((idMenuWidget_PDA_UserData *)0)->pdaIndex ) },
 	{ NULL, 0 }
 };
 
@@ -6754,31 +6787,31 @@ static classVariableInfo_t idMenuWidget_ScrollBar_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuWidget_InfoBox_typeInfo[] = {
-	{ ": idMenuWidget_ScrollBar *", "scrollbar", (intptr_t)(&((idMenuWidget_InfoBox *)0)->scrollbar), sizeof( ((idMenuWidget_InfoBox *)0)->scrollbar ) },
+	{ "idMenuWidget_ScrollBar *", "scrollbar", (intptr_t)(&((idMenuWidget_InfoBox *)0)->scrollbar), sizeof( ((idMenuWidget_InfoBox *)0)->scrollbar ) },
 	{ "idStr", "heading", (intptr_t)(&((idMenuWidget_InfoBox *)0)->heading), sizeof( ((idMenuWidget_InfoBox *)0)->heading ) },
 	{ "idStr", "info", (intptr_t)(&((idMenuWidget_InfoBox *)0)->info), sizeof( ((idMenuWidget_InfoBox *)0)->info ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuWidget_PDA_Objective_typeInfo[] = {
-	{ ": int", "pdaIndex", (intptr_t)(&((idMenuWidget_PDA_Objective *)0)->pdaIndex), sizeof( ((idMenuWidget_PDA_Objective *)0)->pdaIndex ) },
+	{ "int", "pdaIndex", (intptr_t)(&((idMenuWidget_PDA_Objective *)0)->pdaIndex), sizeof( ((idMenuWidget_PDA_Objective *)0)->pdaIndex ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuWidget_Shell_SaveInfo_typeInfo[] = {
-	{ ": int", "loadIndex", (intptr_t)(&((idMenuWidget_Shell_SaveInfo *)0)->loadIndex), sizeof( ((idMenuWidget_Shell_SaveInfo *)0)->loadIndex ) },
+	{ "int", "loadIndex", (intptr_t)(&((idMenuWidget_Shell_SaveInfo *)0)->loadIndex), sizeof( ((idMenuWidget_Shell_SaveInfo *)0)->loadIndex ) },
 	{ "bool", "forSaveScreen", (intptr_t)(&((idMenuWidget_Shell_SaveInfo *)0)->forSaveScreen), sizeof( ((idMenuWidget_Shell_SaveInfo *)0)->forSaveScreen ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuWidget_PDA_AudioFiles_typeInfo[] = {
-	{ ": int", "pdaIndex", (intptr_t)(&((idMenuWidget_PDA_AudioFiles *)0)->pdaIndex), sizeof( ((idMenuWidget_PDA_AudioFiles *)0)->pdaIndex ) },
+	{ "int", "pdaIndex", (intptr_t)(&((idMenuWidget_PDA_AudioFiles *)0)->pdaIndex), sizeof( ((idMenuWidget_PDA_AudioFiles *)0)->pdaIndex ) },
 	{ "idList < idList < idStr , TAG_IDLIB_LIST_MENU > , TAG_IDLIB_LIST_MENU >", "audioFileNames", (intptr_t)(&((idMenuWidget_PDA_AudioFiles *)0)->audioFileNames), sizeof( ((idMenuWidget_PDA_AudioFiles *)0)->audioFileNames ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuWidget_PDA_EmailInbox_typeInfo[] = {
-	{ ": idMenuWidget_DynamicList *", "emailList", (intptr_t)(&((idMenuWidget_PDA_EmailInbox *)0)->emailList), sizeof( ((idMenuWidget_PDA_EmailInbox *)0)->emailList ) },
+	{ "idMenuWidget_DynamicList *", "emailList", (intptr_t)(&((idMenuWidget_PDA_EmailInbox *)0)->emailList), sizeof( ((idMenuWidget_PDA_EmailInbox *)0)->emailList ) },
 	{ "idMenuWidget_ScrollBar *", "scrollbar", (intptr_t)(&((idMenuWidget_PDA_EmailInbox *)0)->scrollbar), sizeof( ((idMenuWidget_PDA_EmailInbox *)0)->scrollbar ) },
 	{ "int", "pdaIndex", (intptr_t)(&((idMenuWidget_PDA_EmailInbox *)0)->pdaIndex), sizeof( ((idMenuWidget_PDA_EmailInbox *)0)->pdaIndex ) },
 	{ "idList < idList < idStr , TAG_IDLIB_LIST_MENU > , TAG_IDLIB_LIST_MENU >", "emailInfo", (intptr_t)(&((idMenuWidget_PDA_EmailInbox *)0)->emailInfo), sizeof( ((idMenuWidget_PDA_EmailInbox *)0)->emailInfo ) },
@@ -6786,18 +6819,18 @@ static classVariableInfo_t idMenuWidget_PDA_EmailInbox_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuWidget_ItemAssignment_typeInfo[] = {
-	{ ": const idMaterial *[4]", "images", (intptr_t)(&((idMenuWidget_ItemAssignment *)0)->images), sizeof( ((idMenuWidget_ItemAssignment *)0)->images ) },
+	{ "const idMaterial *[4]", "images", (intptr_t)(&((idMenuWidget_ItemAssignment *)0)->images), sizeof( ((idMenuWidget_ItemAssignment *)0)->images ) },
 	{ "int", "slotIndex", (intptr_t)(&((idMenuWidget_ItemAssignment *)0)->slotIndex), sizeof( ((idMenuWidget_ItemAssignment *)0)->slotIndex ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuWidget_PDA_VideoInfo_typeInfo[] = {
-	{ ": int", "videoIndex", (intptr_t)(&((idMenuWidget_PDA_VideoInfo *)0)->videoIndex), sizeof( ((idMenuWidget_PDA_VideoInfo *)0)->videoIndex ) },
+	{ "int", "videoIndex", (intptr_t)(&((idMenuWidget_PDA_VideoInfo *)0)->videoIndex), sizeof( ((idMenuWidget_PDA_VideoInfo *)0)->videoIndex ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idWidgetActionHandler_typeInfo[] = {
-	{ ": idMenuWidget *", "targetWidget", (intptr_t)(&((idWidgetActionHandler *)0)->targetWidget), sizeof( ((idWidgetActionHandler *)0)->targetWidget ) },
+	{ "idMenuWidget *", "targetWidget", (intptr_t)(&((idWidgetActionHandler *)0)->targetWidget), sizeof( ((idWidgetActionHandler *)0)->targetWidget ) },
 	{ "actionHandler_t", "type", (intptr_t)(&((idWidgetActionHandler *)0)->type), sizeof( ((idWidgetActionHandler *)0)->type ) },
 	{ "widgetEvent_t", "targetEvent", (intptr_t)(&((idWidgetActionHandler *)0)->targetEvent), sizeof( ((idWidgetActionHandler *)0)->targetEvent ) },
 	{ NULL, 0 }
@@ -6827,20 +6860,20 @@ static classVariableInfo_t idLBCache_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuScreen_typeInfo[] = {
-	{ ": idSWF *", "menuGUI", (intptr_t)(&((idMenuScreen *)0)->menuGUI), sizeof( ((idMenuScreen *)0)->menuGUI ) },
+	{ "idSWF *", "menuGUI", (intptr_t)(&((idMenuScreen *)0)->menuGUI), sizeof( ((idMenuScreen *)0)->menuGUI ) },
 	{ "mainMenuTransition_t", "transition", (intptr_t)(&((idMenuScreen *)0)->transition), sizeof( ((idMenuScreen *)0)->transition ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuScreen_PDA_UserData_typeInfo[] = {
-	{ ": idMenuWidget_PDA_UserData", "pdaUserData", (intptr_t)(&((idMenuScreen_PDA_UserData *)0)->pdaUserData), sizeof( ((idMenuScreen_PDA_UserData *)0)->pdaUserData ) },
+	{ "idMenuWidget_PDA_UserData", "pdaUserData", (intptr_t)(&((idMenuScreen_PDA_UserData *)0)->pdaUserData), sizeof( ((idMenuScreen_PDA_UserData *)0)->pdaUserData ) },
 	{ "idMenuWidget_PDA_Objective", "pdaObjectiveSimple", (intptr_t)(&((idMenuScreen_PDA_UserData *)0)->pdaObjectiveSimple), sizeof( ((idMenuScreen_PDA_UserData *)0)->pdaObjectiveSimple ) },
 	{ "idMenuWidget_PDA_AudioFiles", "pdaAudioFiles", (intptr_t)(&((idMenuScreen_PDA_UserData *)0)->pdaAudioFiles), sizeof( ((idMenuScreen_PDA_UserData *)0)->pdaAudioFiles ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuScreen_PDA_UserEmails_typeInfo[] = {
-	{ ": idMenuWidget_PDA_EmailInbox", "pdaInbox", (intptr_t)(&((idMenuScreen_PDA_UserEmails *)0)->pdaInbox), sizeof( ((idMenuScreen_PDA_UserEmails *)0)->pdaInbox ) },
+	{ "idMenuWidget_PDA_EmailInbox", "pdaInbox", (intptr_t)(&((idMenuScreen_PDA_UserEmails *)0)->pdaInbox), sizeof( ((idMenuScreen_PDA_UserEmails *)0)->pdaInbox ) },
 	{ "idMenuWidget_InfoBox", "emailInfo", (intptr_t)(&((idMenuScreen_PDA_UserEmails *)0)->emailInfo), sizeof( ((idMenuScreen_PDA_UserEmails *)0)->emailInfo ) },
 	{ "idMenuWidget_ScrollBar", "emailScrollbar", (intptr_t)(&((idMenuScreen_PDA_UserEmails *)0)->emailScrollbar), sizeof( ((idMenuScreen_PDA_UserEmails *)0)->emailScrollbar ) },
 	{ "bool", "readingEmails", (intptr_t)(&((idMenuScreen_PDA_UserEmails *)0)->readingEmails), sizeof( ((idMenuScreen_PDA_UserEmails *)0)->readingEmails ) },
@@ -6849,7 +6882,7 @@ static classVariableInfo_t idMenuScreen_PDA_UserEmails_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuScreen_PDA_VideoDisks_typeInfo[] = {
-	{ ": idMenuWidget_ScrollBar", "scrollbar", (intptr_t)(&((idMenuScreen_PDA_VideoDisks *)0)->scrollbar), sizeof( ((idMenuScreen_PDA_VideoDisks *)0)->scrollbar ) },
+	{ "idMenuWidget_ScrollBar", "scrollbar", (intptr_t)(&((idMenuScreen_PDA_VideoDisks *)0)->scrollbar), sizeof( ((idMenuScreen_PDA_VideoDisks *)0)->scrollbar ) },
 	{ "idMenuWidget_DynamicList", "pdaVideoList", (intptr_t)(&((idMenuScreen_PDA_VideoDisks *)0)->pdaVideoList), sizeof( ((idMenuScreen_PDA_VideoDisks *)0)->pdaVideoList ) },
 	{ "idMenuWidget_PDA_VideoInfo", "videoDetails", (intptr_t)(&((idMenuScreen_PDA_VideoDisks *)0)->videoDetails), sizeof( ((idMenuScreen_PDA_VideoDisks *)0)->videoDetails ) },
 	{ "idList < idList < idStr , TAG_IDLIB_LIST_MENU > , TAG_IDLIB_LIST_MENU >", "videoItems", (intptr_t)(&((idMenuScreen_PDA_VideoDisks *)0)->videoItems), sizeof( ((idMenuScreen_PDA_VideoDisks *)0)->videoItems ) },
@@ -6858,25 +6891,25 @@ static classVariableInfo_t idMenuScreen_PDA_VideoDisks_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuScreen_PDA_Inventory_typeInfo[] = {
-	{ ": idMenuWidget_Carousel", "itemList", (intptr_t)(&((idMenuScreen_PDA_Inventory *)0)->itemList), sizeof( ((idMenuScreen_PDA_Inventory *)0)->itemList ) },
+	{ "idMenuWidget_Carousel", "itemList", (intptr_t)(&((idMenuScreen_PDA_Inventory *)0)->itemList), sizeof( ((idMenuScreen_PDA_Inventory *)0)->itemList ) },
 	{ "idMenuWidget_InfoBox", "infoBox", (intptr_t)(&((idMenuScreen_PDA_Inventory *)0)->infoBox), sizeof( ((idMenuScreen_PDA_Inventory *)0)->infoBox ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuScreen_Shell_Root_typeInfo[] = {
-	{ ": idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_Root *)0)->options), sizeof( ((idMenuScreen_Shell_Root *)0)->options ) },
+	{ "idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_Root *)0)->options), sizeof( ((idMenuScreen_Shell_Root *)0)->options ) },
 	{ "idMenuWidget_Help *", "helpWidget", (intptr_t)(&((idMenuScreen_Shell_Root *)0)->helpWidget), sizeof( ((idMenuScreen_Shell_Root *)0)->helpWidget ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuScreen_Shell_Pause_typeInfo[] = {
-	{ ": idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_Pause *)0)->options), sizeof( ((idMenuScreen_Shell_Pause *)0)->options ) },
+	{ "idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_Pause *)0)->options), sizeof( ((idMenuScreen_Shell_Pause *)0)->options ) },
 	{ "bool", "isMpPause", (intptr_t)(&((idMenuScreen_Shell_Pause *)0)->isMpPause), sizeof( ((idMenuScreen_Shell_Pause *)0)->isMpPause ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuScreen_Shell_PressStart_typeInfo[] = {
-	{ ": idMenuWidget_Button *", "startButton", (intptr_t)(&((idMenuScreen_Shell_PressStart *)0)->startButton), sizeof( ((idMenuScreen_Shell_PressStart *)0)->startButton ) },
+	{ "idMenuWidget_Button *", "startButton", (intptr_t)(&((idMenuScreen_Shell_PressStart *)0)->startButton), sizeof( ((idMenuScreen_Shell_PressStart *)0)->startButton ) },
 	{ "idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_PressStart *)0)->options), sizeof( ((idMenuScreen_Shell_PressStart *)0)->options ) },
 	{ "idMenuWidget_Carousel *", "itemList", (intptr_t)(&((idMenuScreen_Shell_PressStart *)0)->itemList), sizeof( ((idMenuScreen_Shell_PressStart *)0)->itemList ) },
 	{ "const idMaterial *", "doomCover", (intptr_t)(&((idMenuScreen_Shell_PressStart *)0)->doomCover), sizeof( ((idMenuScreen_Shell_PressStart *)0)->doomCover ) },
@@ -6886,7 +6919,7 @@ static classVariableInfo_t idMenuScreen_Shell_PressStart_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuScreen_Shell_GameSelect_typeInfo[] = {
-	{ ": idMenuWidget_Button *", "startButton", (intptr_t)(&((idMenuScreen_Shell_GameSelect *)0)->startButton), sizeof( ((idMenuScreen_Shell_GameSelect *)0)->startButton ) },
+	{ "idMenuWidget_Button *", "startButton", (intptr_t)(&((idMenuScreen_Shell_GameSelect *)0)->startButton), sizeof( ((idMenuScreen_Shell_GameSelect *)0)->startButton ) },
 	{ "idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_GameSelect *)0)->options), sizeof( ((idMenuScreen_Shell_GameSelect *)0)->options ) },
 	{ "idMenuWidget_Carousel *", "itemList", (intptr_t)(&((idMenuScreen_Shell_GameSelect *)0)->itemList), sizeof( ((idMenuScreen_Shell_GameSelect *)0)->itemList ) },
 	{ "const idMaterial *", "doomCover", (intptr_t)(&((idMenuScreen_Shell_GameSelect *)0)->doomCover), sizeof( ((idMenuScreen_Shell_GameSelect *)0)->doomCover ) },
@@ -6896,14 +6929,14 @@ static classVariableInfo_t idMenuScreen_Shell_GameSelect_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuScreen_Shell_Singleplayer_typeInfo[] = {
-	{ ": bool", "canContinue", (intptr_t)(&((idMenuScreen_Shell_Singleplayer *)0)->canContinue), sizeof( ((idMenuScreen_Shell_Singleplayer *)0)->canContinue ) },
+	{ "bool", "canContinue", (intptr_t)(&((idMenuScreen_Shell_Singleplayer *)0)->canContinue), sizeof( ((idMenuScreen_Shell_Singleplayer *)0)->canContinue ) },
 	{ "idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_Singleplayer *)0)->options), sizeof( ((idMenuScreen_Shell_Singleplayer *)0)->options ) },
 	{ "idMenuWidget_Button *", "btnBack", (intptr_t)(&((idMenuScreen_Shell_Singleplayer *)0)->btnBack), sizeof( ((idMenuScreen_Shell_Singleplayer *)0)->btnBack ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuScreen_Shell_Settings_typeInfo[] = {
-	{ ": idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_Settings *)0)->options), sizeof( ((idMenuScreen_Shell_Settings *)0)->options ) },
+	{ "idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_Settings *)0)->options), sizeof( ((idMenuScreen_Shell_Settings *)0)->options ) },
 	{ "idMenuWidget_Button *", "btnBack", (intptr_t)(&((idMenuScreen_Shell_Settings *)0)->btnBack), sizeof( ((idMenuScreen_Shell_Settings *)0)->btnBack ) },
 	{ NULL, 0 }
 };
@@ -6915,7 +6948,7 @@ static classVariableInfo_t creditInfo_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuScreen_Shell_Credits_typeInfo[] = {
-	{ ": idMenuWidget_Button *", "btnBack", (intptr_t)(&((idMenuScreen_Shell_Credits *)0)->btnBack), sizeof( ((idMenuScreen_Shell_Credits *)0)->btnBack ) },
+	{ "idMenuWidget_Button *", "btnBack", (intptr_t)(&((idMenuScreen_Shell_Credits *)0)->btnBack), sizeof( ((idMenuScreen_Shell_Credits *)0)->btnBack ) },
 	{ "idList < creditInfo_t >", "creditList", (intptr_t)(&((idMenuScreen_Shell_Credits *)0)->creditList), sizeof( ((idMenuScreen_Shell_Credits *)0)->creditList ) },
 	{ "int", "creditIndex", (intptr_t)(&((idMenuScreen_Shell_Credits *)0)->creditIndex), sizeof( ((idMenuScreen_Shell_Credits *)0)->creditIndex ) },
 	{ NULL, 0 }
@@ -6936,26 +6969,26 @@ static classVariableInfo_t idMenuScreen_Shell_Resolution_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuScreen_Shell_Difficulty_typeInfo[] = {
-	{ ": bool", "nightmareUnlocked", (intptr_t)(&((idMenuScreen_Shell_Difficulty *)0)->nightmareUnlocked), sizeof( ((idMenuScreen_Shell_Difficulty *)0)->nightmareUnlocked ) },
+	{ "bool", "nightmareUnlocked", (intptr_t)(&((idMenuScreen_Shell_Difficulty *)0)->nightmareUnlocked), sizeof( ((idMenuScreen_Shell_Difficulty *)0)->nightmareUnlocked ) },
 	{ "idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_Difficulty *)0)->options), sizeof( ((idMenuScreen_Shell_Difficulty *)0)->options ) },
 	{ "idMenuWidget_Button *", "btnBack", (intptr_t)(&((idMenuScreen_Shell_Difficulty *)0)->btnBack), sizeof( ((idMenuScreen_Shell_Difficulty *)0)->btnBack ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuScreen_Shell_Playstation_typeInfo[] = {
-	{ ": idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_Playstation *)0)->options), sizeof( ((idMenuScreen_Shell_Playstation *)0)->options ) },
+	{ "idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_Playstation *)0)->options), sizeof( ((idMenuScreen_Shell_Playstation *)0)->options ) },
 	{ "idMenuWidget_Button *", "btnBack", (intptr_t)(&((idMenuScreen_Shell_Playstation *)0)->btnBack), sizeof( ((idMenuScreen_Shell_Playstation *)0)->btnBack ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuScreen_Shell_ModeSelect_typeInfo[] = {
-	{ ": idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_ModeSelect *)0)->options), sizeof( ((idMenuScreen_Shell_ModeSelect *)0)->options ) },
+	{ "idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_ModeSelect *)0)->options), sizeof( ((idMenuScreen_Shell_ModeSelect *)0)->options ) },
 	{ "idMenuWidget_Button *", "btnBack", (intptr_t)(&((idMenuScreen_Shell_ModeSelect *)0)->btnBack), sizeof( ((idMenuScreen_Shell_ModeSelect *)0)->btnBack ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuScreen_Shell_GameBrowser_typeInfo[] = {
-	{ ": idMenuWidget_GameBrowserList *", "listWidget", (intptr_t)(&((idMenuScreen_Shell_GameBrowser *)0)->listWidget), sizeof( ((idMenuScreen_Shell_GameBrowser *)0)->listWidget ) },
+	{ "idMenuWidget_GameBrowserList *", "listWidget", (intptr_t)(&((idMenuScreen_Shell_GameBrowser *)0)->listWidget), sizeof( ((idMenuScreen_Shell_GameBrowser *)0)->listWidget ) },
 	{ "idMenuWidget_Button *", "btnBack", (intptr_t)(&((idMenuScreen_Shell_GameBrowser *)0)->btnBack), sizeof( ((idMenuScreen_Shell_GameBrowser *)0)->btnBack ) },
 	{ NULL, 0 }
 };
@@ -7001,20 +7034,20 @@ static classVariableInfo_t idMenuScreen_Shell_Dev_devOption_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuScreen_Shell_Dev_typeInfo[] = {
-	{ ": idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_Dev *)0)->options), sizeof( ((idMenuScreen_Shell_Dev *)0)->options ) },
+	{ "idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_Dev *)0)->options), sizeof( ((idMenuScreen_Shell_Dev *)0)->options ) },
 	{ "idMenuWidget_Button *", "btnBack", (intptr_t)(&((idMenuScreen_Shell_Dev *)0)->btnBack), sizeof( ((idMenuScreen_Shell_Dev *)0)->btnBack ) },
 	{ "idList < devOption_t , TAG_IDLIB_LIST_MENU >", "devOptions", (intptr_t)(&((idMenuScreen_Shell_Dev *)0)->devOptions), sizeof( ((idMenuScreen_Shell_Dev *)0)->devOptions ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuScreen_Shell_NewGame_typeInfo[] = {
-	{ ": idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_NewGame *)0)->options), sizeof( ((idMenuScreen_Shell_NewGame *)0)->options ) },
+	{ "idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_NewGame *)0)->options), sizeof( ((idMenuScreen_Shell_NewGame *)0)->options ) },
 	{ "idMenuWidget_Button *", "btnBack", (intptr_t)(&((idMenuScreen_Shell_NewGame *)0)->btnBack), sizeof( ((idMenuScreen_Shell_NewGame *)0)->btnBack ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuScreen_Shell_Load_typeInfo[] = {
-	{ ": idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_Load *)0)->options), sizeof( ((idMenuScreen_Shell_Load *)0)->options ) },
+	{ "idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_Load *)0)->options), sizeof( ((idMenuScreen_Shell_Load *)0)->options ) },
 	{ "idMenuWidget_Shell_SaveInfo *", "saveInfo", (intptr_t)(&((idMenuScreen_Shell_Load *)0)->saveInfo), sizeof( ((idMenuScreen_Shell_Load *)0)->saveInfo ) },
 	{ "idMenuWidget_Button *", "btnBack", (intptr_t)(&((idMenuScreen_Shell_Load *)0)->btnBack), sizeof( ((idMenuScreen_Shell_Load *)0)->btnBack ) },
 	{ "idMenuWidget_Button *", "btnDelete", (intptr_t)(&((idMenuScreen_Shell_Load *)0)->btnDelete), sizeof( ((idMenuScreen_Shell_Load *)0)->btnDelete ) },
@@ -7023,7 +7056,7 @@ static classVariableInfo_t idMenuScreen_Shell_Load_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuScreen_Shell_Save_typeInfo[] = {
-	{ ": idMenuWidget_Button *", "btnBack", (intptr_t)(&((idMenuScreen_Shell_Save *)0)->btnBack), sizeof( ((idMenuScreen_Shell_Save *)0)->btnBack ) },
+	{ "idMenuWidget_Button *", "btnBack", (intptr_t)(&((idMenuScreen_Shell_Save *)0)->btnBack), sizeof( ((idMenuScreen_Shell_Save *)0)->btnBack ) },
 	{ "idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_Save *)0)->options), sizeof( ((idMenuScreen_Shell_Save *)0)->options ) },
 	{ "idMenuWidget_Shell_SaveInfo *", "saveInfo", (intptr_t)(&((idMenuScreen_Shell_Save *)0)->saveInfo), sizeof( ((idMenuScreen_Shell_Save *)0)->saveInfo ) },
 	{ "idMenuWidget_Button *", "btnDelete", (intptr_t)(&((idMenuScreen_Shell_Save *)0)->btnDelete), sizeof( ((idMenuScreen_Shell_Save *)0)->btnDelete ) },
@@ -7032,13 +7065,13 @@ static classVariableInfo_t idMenuScreen_Shell_Save_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuScreen_Shell_GameOptions_idMenuDataSource_GameSettings_typeInfo[] = {
-	{ ": idStaticList < idSWFScriptVar , MAX_GAME_FIELDS >", "fields", (intptr_t)(&((idMenuScreen_Shell_GameOptions::idMenuDataSource_GameSettings *)0)->fields), sizeof( ((idMenuScreen_Shell_GameOptions::idMenuDataSource_GameSettings *)0)->fields ) },
+	{ "idStaticList < idSWFScriptVar , MAX_GAME_FIELDS >", "fields", (intptr_t)(&((idMenuScreen_Shell_GameOptions::idMenuDataSource_GameSettings *)0)->fields), sizeof( ((idMenuScreen_Shell_GameOptions::idMenuDataSource_GameSettings *)0)->fields ) },
 	{ "idStaticList < idSWFScriptVar , MAX_GAME_FIELDS >", "originalFields", (intptr_t)(&((idMenuScreen_Shell_GameOptions::idMenuDataSource_GameSettings *)0)->originalFields), sizeof( ((idMenuScreen_Shell_GameOptions::idMenuDataSource_GameSettings *)0)->originalFields ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuScreen_Shell_GameOptions_typeInfo[] = {
-	{ ": idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_GameOptions *)0)->options), sizeof( ((idMenuScreen_Shell_GameOptions *)0)->options ) },
+	{ "idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_GameOptions *)0)->options), sizeof( ((idMenuScreen_Shell_GameOptions *)0)->options ) },
 	{ "idMenuDataSource_GameSettings", "systemData", (intptr_t)(&((idMenuScreen_Shell_GameOptions *)0)->systemData), sizeof( ((idMenuScreen_Shell_GameOptions *)0)->systemData ) },
 	{ "idMenuWidget_Button *", "btnBack", (intptr_t)(&((idMenuScreen_Shell_GameOptions *)0)->btnBack), sizeof( ((idMenuScreen_Shell_GameOptions *)0)->btnBack ) },
 	{ NULL, 0 }
@@ -7052,53 +7085,53 @@ static classVariableInfo_t idMenuScreen_Shell_MatchSettings_idMenuDataSource_Mat
 };
 
 static classVariableInfo_t idMenuScreen_Shell_MatchSettings_typeInfo[] = {
-	{ ": idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_MatchSettings *)0)->options), sizeof( ((idMenuScreen_Shell_MatchSettings *)0)->options ) },
+	{ "idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_MatchSettings *)0)->options), sizeof( ((idMenuScreen_Shell_MatchSettings *)0)->options ) },
 	{ "idMenuDataSource_MatchSettings", "matchData", (intptr_t)(&((idMenuScreen_Shell_MatchSettings *)0)->matchData), sizeof( ((idMenuScreen_Shell_MatchSettings *)0)->matchData ) },
 	{ "idMenuWidget_Button *", "btnBack", (intptr_t)(&((idMenuScreen_Shell_MatchSettings *)0)->btnBack), sizeof( ((idMenuScreen_Shell_MatchSettings *)0)->btnBack ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuScreen_Shell_Controls_idMenuDataSource_ControlSettings_typeInfo[] = {
-	{ ": idStaticList < idSWFScriptVar , MAX_CONTROL_FIELDS >", "fields", (intptr_t)(&((idMenuScreen_Shell_Controls::idMenuDataSource_ControlSettings *)0)->fields), sizeof( ((idMenuScreen_Shell_Controls::idMenuDataSource_ControlSettings *)0)->fields ) },
+	{ "idStaticList < idSWFScriptVar , MAX_CONTROL_FIELDS >", "fields", (intptr_t)(&((idMenuScreen_Shell_Controls::idMenuDataSource_ControlSettings *)0)->fields), sizeof( ((idMenuScreen_Shell_Controls::idMenuDataSource_ControlSettings *)0)->fields ) },
 	{ "idStaticList < idSWFScriptVar , MAX_CONTROL_FIELDS >", "originalFields", (intptr_t)(&((idMenuScreen_Shell_Controls::idMenuDataSource_ControlSettings *)0)->originalFields), sizeof( ((idMenuScreen_Shell_Controls::idMenuDataSource_ControlSettings *)0)->originalFields ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuScreen_Shell_Controls_typeInfo[] = {
-	{ ": idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_Controls *)0)->options), sizeof( ((idMenuScreen_Shell_Controls *)0)->options ) },
+	{ "idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_Controls *)0)->options), sizeof( ((idMenuScreen_Shell_Controls *)0)->options ) },
 	{ "idMenuDataSource_ControlSettings", "controlData", (intptr_t)(&((idMenuScreen_Shell_Controls *)0)->controlData), sizeof( ((idMenuScreen_Shell_Controls *)0)->controlData ) },
 	{ "idMenuWidget_Button *", "btnBack", (intptr_t)(&((idMenuScreen_Shell_Controls *)0)->btnBack), sizeof( ((idMenuScreen_Shell_Controls *)0)->btnBack ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuScreen_Shell_Gamepad_idMenuDataSource_GamepadSettings_typeInfo[] = {
-	{ ": idStaticList < idSWFScriptVar , MAX_GAMEPAD_FIELDS >", "fields", (intptr_t)(&((idMenuScreen_Shell_Gamepad::idMenuDataSource_GamepadSettings *)0)->fields), sizeof( ((idMenuScreen_Shell_Gamepad::idMenuDataSource_GamepadSettings *)0)->fields ) },
+	{ "idStaticList < idSWFScriptVar , MAX_GAMEPAD_FIELDS >", "fields", (intptr_t)(&((idMenuScreen_Shell_Gamepad::idMenuDataSource_GamepadSettings *)0)->fields), sizeof( ((idMenuScreen_Shell_Gamepad::idMenuDataSource_GamepadSettings *)0)->fields ) },
 	{ "idStaticList < idSWFScriptVar , MAX_GAMEPAD_FIELDS >", "originalFields", (intptr_t)(&((idMenuScreen_Shell_Gamepad::idMenuDataSource_GamepadSettings *)0)->originalFields), sizeof( ((idMenuScreen_Shell_Gamepad::idMenuDataSource_GamepadSettings *)0)->originalFields ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuScreen_Shell_Gamepad_typeInfo[] = {
-	{ ": idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_Gamepad *)0)->options), sizeof( ((idMenuScreen_Shell_Gamepad *)0)->options ) },
+	{ "idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_Gamepad *)0)->options), sizeof( ((idMenuScreen_Shell_Gamepad *)0)->options ) },
 	{ "idMenuDataSource_GamepadSettings", "gamepadData", (intptr_t)(&((idMenuScreen_Shell_Gamepad *)0)->gamepadData), sizeof( ((idMenuScreen_Shell_Gamepad *)0)->gamepadData ) },
 	{ "idMenuWidget_Button *", "btnBack", (intptr_t)(&((idMenuScreen_Shell_Gamepad *)0)->btnBack), sizeof( ((idMenuScreen_Shell_Gamepad *)0)->btnBack ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuScreen_Shell_ControllerLayout_idMenuDataSource_LayoutSettings_typeInfo[] = {
-	{ ": idStaticList < idSWFScriptVar , MAX_LAYOUT_FIELDS >", "fields", (intptr_t)(&((idMenuScreen_Shell_ControllerLayout::idMenuDataSource_LayoutSettings *)0)->fields), sizeof( ((idMenuScreen_Shell_ControllerLayout::idMenuDataSource_LayoutSettings *)0)->fields ) },
+	{ "idStaticList < idSWFScriptVar , MAX_LAYOUT_FIELDS >", "fields", (intptr_t)(&((idMenuScreen_Shell_ControllerLayout::idMenuDataSource_LayoutSettings *)0)->fields), sizeof( ((idMenuScreen_Shell_ControllerLayout::idMenuDataSource_LayoutSettings *)0)->fields ) },
 	{ "idStaticList < idSWFScriptVar , MAX_LAYOUT_FIELDS >", "originalFields", (intptr_t)(&((idMenuScreen_Shell_ControllerLayout::idMenuDataSource_LayoutSettings *)0)->originalFields), sizeof( ((idMenuScreen_Shell_ControllerLayout::idMenuDataSource_LayoutSettings *)0)->originalFields ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuScreen_Shell_ControllerLayout_typeInfo[] = {
-	{ ": idMenuDataSource_LayoutSettings", "layoutData", (intptr_t)(&((idMenuScreen_Shell_ControllerLayout *)0)->layoutData), sizeof( ((idMenuScreen_Shell_ControllerLayout *)0)->layoutData ) },
+	{ "idMenuDataSource_LayoutSettings", "layoutData", (intptr_t)(&((idMenuScreen_Shell_ControllerLayout *)0)->layoutData), sizeof( ((idMenuScreen_Shell_ControllerLayout *)0)->layoutData ) },
 	{ "idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_ControllerLayout *)0)->options), sizeof( ((idMenuScreen_Shell_ControllerLayout *)0)->options ) },
 	{ "idMenuWidget_Button *", "btnBack", (intptr_t)(&((idMenuScreen_Shell_ControllerLayout *)0)->btnBack), sizeof( ((idMenuScreen_Shell_ControllerLayout *)0)->btnBack ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuScreen_Shell_SystemOptions_idMenuDataSource_SystemSettings_typeInfo[] = {
-	{ ": idStr", "originalRenderAPI", (intptr_t)(&((idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings *)0)->originalRenderAPI), sizeof( ((idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings *)0)->originalRenderAPI ) },
+	{ "idStr", "originalRenderAPI", (intptr_t)(&((idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings *)0)->originalRenderAPI), sizeof( ((idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings *)0)->originalRenderAPI ) },
 	{ "int", "originalFramerate", (intptr_t)(&((idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings *)0)->originalFramerate), sizeof( ((idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings *)0)->originalFramerate ) },
 	{ "int", "originalAntialias", (intptr_t)(&((idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings *)0)->originalAntialias), sizeof( ((idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings *)0)->originalAntialias ) },
 	{ "int", "originalVsync", (intptr_t)(&((idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings *)0)->originalVsync), sizeof( ((idMenuScreen_Shell_SystemOptions::idMenuDataSource_SystemSettings *)0)->originalVsync ) },
@@ -7113,20 +7146,20 @@ static classVariableInfo_t idMenuScreen_Shell_SystemOptions_idMenuDataSource_Sys
 };
 
 static classVariableInfo_t idMenuScreen_Shell_SystemOptions_typeInfo[] = {
-	{ ": idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_SystemOptions *)0)->options), sizeof( ((idMenuScreen_Shell_SystemOptions *)0)->options ) },
+	{ "idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_SystemOptions *)0)->options), sizeof( ((idMenuScreen_Shell_SystemOptions *)0)->options ) },
 	{ "idMenuDataSource_SystemSettings", "systemData", (intptr_t)(&((idMenuScreen_Shell_SystemOptions *)0)->systemData), sizeof( ((idMenuScreen_Shell_SystemOptions *)0)->systemData ) },
 	{ "idMenuWidget_Button *", "btnBack", (intptr_t)(&((idMenuScreen_Shell_SystemOptions *)0)->btnBack), sizeof( ((idMenuScreen_Shell_SystemOptions *)0)->btnBack ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuScreen_Shell_Stereoscopics_idMenuDataSource_StereoSettings_typeInfo[] = {
-	{ ": idStaticList < idSWFScriptVar , MAX_STEREO_FIELDS >", "fields", (intptr_t)(&((idMenuScreen_Shell_Stereoscopics::idMenuDataSource_StereoSettings *)0)->fields), sizeof( ((idMenuScreen_Shell_Stereoscopics::idMenuDataSource_StereoSettings *)0)->fields ) },
+	{ "idStaticList < idSWFScriptVar , MAX_STEREO_FIELDS >", "fields", (intptr_t)(&((idMenuScreen_Shell_Stereoscopics::idMenuDataSource_StereoSettings *)0)->fields), sizeof( ((idMenuScreen_Shell_Stereoscopics::idMenuDataSource_StereoSettings *)0)->fields ) },
 	{ "idStaticList < idSWFScriptVar , MAX_STEREO_FIELDS >", "originalFields", (intptr_t)(&((idMenuScreen_Shell_Stereoscopics::idMenuDataSource_StereoSettings *)0)->originalFields), sizeof( ((idMenuScreen_Shell_Stereoscopics::idMenuDataSource_StereoSettings *)0)->originalFields ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idMenuScreen_Shell_Stereoscopics_typeInfo[] = {
-	{ ": idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_Stereoscopics *)0)->options), sizeof( ((idMenuScreen_Shell_Stereoscopics *)0)->options ) },
+	{ "idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_Stereoscopics *)0)->options), sizeof( ((idMenuScreen_Shell_Stereoscopics *)0)->options ) },
 	{ "idMenuDataSource_StereoSettings", "stereoData", (intptr_t)(&((idMenuScreen_Shell_Stereoscopics *)0)->stereoData), sizeof( ((idMenuScreen_Shell_Stereoscopics *)0)->stereoData ) },
 	{ "idMenuWidget_Button *", "btnBack", (intptr_t)(&((idMenuScreen_Shell_Stereoscopics *)0)->btnBack), sizeof( ((idMenuScreen_Shell_Stereoscopics *)0)->btnBack ) },
 	{ "const idMaterial *", "leftEyeMat", (intptr_t)(&((idMenuScreen_Shell_Stereoscopics *)0)->leftEyeMat), sizeof( ((idMenuScreen_Shell_Stereoscopics *)0)->leftEyeMat ) },
@@ -7135,7 +7168,7 @@ static classVariableInfo_t idMenuScreen_Shell_Stereoscopics_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuScreen_Shell_PartyLobby_typeInfo[] = {
-	{ ": bool", "isHost", (intptr_t)(&((idMenuScreen_Shell_PartyLobby *)0)->isHost), sizeof( ((idMenuScreen_Shell_PartyLobby *)0)->isHost ) },
+	{ "bool", "isHost", (intptr_t)(&((idMenuScreen_Shell_PartyLobby *)0)->isHost), sizeof( ((idMenuScreen_Shell_PartyLobby *)0)->isHost ) },
 	{ "bool", "isPeer", (intptr_t)(&((idMenuScreen_Shell_PartyLobby *)0)->isPeer), sizeof( ((idMenuScreen_Shell_PartyLobby *)0)->isPeer ) },
 	{ "bool", "inParty", (intptr_t)(&((idMenuScreen_Shell_PartyLobby *)0)->inParty), sizeof( ((idMenuScreen_Shell_PartyLobby *)0)->inParty ) },
 	{ "idMenuWidget_DynamicList *", "options", (intptr_t)(&((idMenuScreen_Shell_PartyLobby *)0)->options), sizeof( ((idMenuScreen_Shell_PartyLobby *)0)->options ) },
@@ -7146,7 +7179,7 @@ static classVariableInfo_t idMenuScreen_Shell_PartyLobby_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuScreen_Shell_GameLobby_typeInfo[] = {
-	{ ": int", "longCountdown", (intptr_t)(&((idMenuScreen_Shell_GameLobby *)0)->longCountdown), sizeof( ((idMenuScreen_Shell_GameLobby *)0)->longCountdown ) },
+	{ "int", "longCountdown", (intptr_t)(&((idMenuScreen_Shell_GameLobby *)0)->longCountdown), sizeof( ((idMenuScreen_Shell_GameLobby *)0)->longCountdown ) },
 	{ "int", "longCountRemaining", (intptr_t)(&((idMenuScreen_Shell_GameLobby *)0)->longCountRemaining), sizeof( ((idMenuScreen_Shell_GameLobby *)0)->longCountRemaining ) },
 	{ "int", "shortCountdown", (intptr_t)(&((idMenuScreen_Shell_GameLobby *)0)->shortCountdown), sizeof( ((idMenuScreen_Shell_GameLobby *)0)->shortCountdown ) },
 	{ "bool", "isHost", (intptr_t)(&((idMenuScreen_Shell_GameLobby *)0)->isHost), sizeof( ((idMenuScreen_Shell_GameLobby *)0)->isHost ) },
@@ -7160,7 +7193,7 @@ static classVariableInfo_t idMenuScreen_Shell_GameLobby_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuScreen_HUD_typeInfo[] = {
-	{ ": idSWFScriptObject *", "weaponInfo", (intptr_t)(&((idMenuScreen_HUD *)0)->weaponInfo), sizeof( ((idMenuScreen_HUD *)0)->weaponInfo ) },
+	{ "idSWFScriptObject *", "weaponInfo", (intptr_t)(&((idMenuScreen_HUD *)0)->weaponInfo), sizeof( ((idMenuScreen_HUD *)0)->weaponInfo ) },
 	{ "idSWFScriptObject *", "playerInfo", (intptr_t)(&((idMenuScreen_HUD *)0)->playerInfo), sizeof( ((idMenuScreen_HUD *)0)->playerInfo ) },
 	{ "idSWFScriptObject *", "stamina", (intptr_t)(&((idMenuScreen_HUD *)0)->stamina), sizeof( ((idMenuScreen_HUD *)0)->stamina ) },
 	{ "idSWFScriptObject *", "weaponName", (intptr_t)(&((idMenuScreen_HUD *)0)->weaponName), sizeof( ((idMenuScreen_HUD *)0)->weaponName ) },
@@ -7227,7 +7260,7 @@ static classVariableInfo_t idMenuScreen_HUD_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuScreen_Scoreboard_typeInfo[] = {
-	{ ": idMenuWidget_ScoreboardList *", "playerList", (intptr_t)(&((idMenuScreen_Scoreboard *)0)->playerList), sizeof( ((idMenuScreen_Scoreboard *)0)->playerList ) },
+	{ "idMenuWidget_ScoreboardList *", "playerList", (intptr_t)(&((idMenuScreen_Scoreboard *)0)->playerList), sizeof( ((idMenuScreen_Scoreboard *)0)->playerList ) },
 	{ NULL, 0 }
 };
 
@@ -7264,7 +7297,7 @@ static classVariableInfo_t mpScoreboardInfo_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuHandler_typeInfo[] = {
-	{ ": bool", "scrollingMenu", (intptr_t)(&((idMenuHandler *)0)->scrollingMenu), sizeof( ((idMenuHandler *)0)->scrollingMenu ) },
+	{ "bool", "scrollingMenu", (intptr_t)(&((idMenuHandler *)0)->scrollingMenu), sizeof( ((idMenuHandler *)0)->scrollingMenu ) },
 	{ "int", "scrollCounter", (intptr_t)(&((idMenuHandler *)0)->scrollCounter), sizeof( ((idMenuHandler *)0)->scrollCounter ) },
 	{ "int", "activeScreen", (intptr_t)(&((idMenuHandler *)0)->activeScreen), sizeof( ((idMenuHandler *)0)->activeScreen ) },
 	{ "int", "nextScreen", (intptr_t)(&((idMenuHandler *)0)->nextScreen), sizeof( ((idMenuHandler *)0)->nextScreen ) },
@@ -7287,7 +7320,7 @@ static classVariableInfo_t lobbyPlayerInfo_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuHandler_Shell_typeInfo[] = {
-	{ ": shellState_t", "state", (intptr_t)(&((idMenuHandler_Shell *)0)->state), sizeof( ((idMenuHandler_Shell *)0)->state ) },
+	{ "shellState_t", "state", (intptr_t)(&((idMenuHandler_Shell *)0)->state), sizeof( ((idMenuHandler_Shell *)0)->state ) },
 	{ "shellState_t", "nextState", (intptr_t)(&((idMenuHandler_Shell *)0)->nextState), sizeof( ((idMenuHandler_Shell *)0)->nextState ) },
 	{ "bool", "smallFrameShowing", (intptr_t)(&((idMenuHandler_Shell *)0)->smallFrameShowing), sizeof( ((idMenuHandler_Shell *)0)->smallFrameShowing ) },
 	{ "bool", "largeFrameShowing", (intptr_t)(&((idMenuHandler_Shell *)0)->largeFrameShowing), sizeof( ((idMenuHandler_Shell *)0)->largeFrameShowing ) },
@@ -7316,7 +7349,7 @@ static classVariableInfo_t idMenuHandler_Shell_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuHandler_PDA_typeInfo[] = {
-	{ ": bool", "audioLogPlaying", (intptr_t)(&((idMenuHandler_PDA *)0)->audioLogPlaying), sizeof( ((idMenuHandler_PDA *)0)->audioLogPlaying ) },
+	{ "bool", "audioLogPlaying", (intptr_t)(&((idMenuHandler_PDA *)0)->audioLogPlaying), sizeof( ((idMenuHandler_PDA *)0)->audioLogPlaying ) },
 	{ "bool", "videoPlaying", (intptr_t)(&((idMenuHandler_PDA *)0)->videoPlaying), sizeof( ((idMenuHandler_PDA *)0)->videoPlaying ) },
 	{ "idList < idList < idStr , TAG_IDLIB_LIST_MENU > , TAG_IDLIB_LIST_MENU >", "pdaNames", (intptr_t)(&((idMenuHandler_PDA *)0)->pdaNames), sizeof( ((idMenuHandler_PDA *)0)->pdaNames ) },
 	{ "idList < idStr , TAG_IDLIB_LIST_MENU >", "navOptions", (intptr_t)(&((idMenuHandler_PDA *)0)->navOptions), sizeof( ((idMenuHandler_PDA *)0)->navOptions ) },
@@ -7329,7 +7362,7 @@ static classVariableInfo_t idMenuHandler_PDA_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuHandler_HUD_typeInfo[] = {
-	{ ": bool", "autoHideTip", (intptr_t)(&((idMenuHandler_HUD *)0)->autoHideTip), sizeof( ((idMenuHandler_HUD *)0)->autoHideTip ) },
+	{ "bool", "autoHideTip", (intptr_t)(&((idMenuHandler_HUD *)0)->autoHideTip), sizeof( ((idMenuHandler_HUD *)0)->autoHideTip ) },
 	{ "int", "tipStartTime", (intptr_t)(&((idMenuHandler_HUD *)0)->tipStartTime), sizeof( ((idMenuHandler_HUD *)0)->tipStartTime ) },
 	{ "bool", "hiding", (intptr_t)(&((idMenuHandler_HUD *)0)->hiding), sizeof( ((idMenuHandler_HUD *)0)->hiding ) },
 	{ "bool", "radioMessage", (intptr_t)(&((idMenuHandler_HUD *)0)->radioMessage), sizeof( ((idMenuHandler_HUD *)0)->radioMessage ) },
@@ -7337,7 +7370,7 @@ static classVariableInfo_t idMenuHandler_HUD_typeInfo[] = {
 };
 
 static classVariableInfo_t idMenuHandler_Scoreboard_typeInfo[] = {
-	{ ": int", "redScore", (intptr_t)(&((idMenuHandler_Scoreboard *)0)->redScore), sizeof( ((idMenuHandler_Scoreboard *)0)->redScore ) },
+	{ "int", "redScore", (intptr_t)(&((idMenuHandler_Scoreboard *)0)->redScore), sizeof( ((idMenuHandler_Scoreboard *)0)->redScore ) },
 	{ "int", "blueScore", (intptr_t)(&((idMenuHandler_Scoreboard *)0)->blueScore), sizeof( ((idMenuHandler_Scoreboard *)0)->blueScore ) },
 	{ "int", "activationScreen", (intptr_t)(&((idMenuHandler_Scoreboard *)0)->activationScreen), sizeof( ((idMenuHandler_Scoreboard *)0)->activationScreen ) },
 	{ "idList < mpScoreboardInfo >", "scoreboardInfo", (intptr_t)(&((idMenuHandler_Scoreboard *)0)->scoreboardInfo), sizeof( ((idMenuHandler_Scoreboard *)0)->scoreboardInfo ) },
@@ -7384,7 +7417,7 @@ static classVariableInfo_t prstack_t_typeInfo[] = {
 };
 
 static classVariableInfo_t idInterpreter_typeInfo[] = {
-	{ ": prstack_t[64]", "callStack", (intptr_t)(&((idInterpreter *)0)->callStack), sizeof( ((idInterpreter *)0)->callStack ) },
+	{ "prstack_t[64]", "callStack", (intptr_t)(&((idInterpreter *)0)->callStack), sizeof( ((idInterpreter *)0)->callStack ) },
 	{ "int", "callStackDepth", (intptr_t)(&((idInterpreter *)0)->callStackDepth), sizeof( ((idInterpreter *)0)->callStackDepth ) },
 	{ "int", "maxStackDepth", (intptr_t)(&((idInterpreter *)0)->maxStackDepth), sizeof( ((idInterpreter *)0)->maxStackDepth ) },
 	{ "byte[12288]", "localstack", (intptr_t)(&((idInterpreter *)0)->localstack), sizeof( ((idInterpreter *)0)->localstack ) },
@@ -7397,7 +7430,7 @@ static classVariableInfo_t idInterpreter_typeInfo[] = {
 	{ "const idEventDef *", "multiFrameEvent", (intptr_t)(&((idInterpreter *)0)->multiFrameEvent), sizeof( ((idInterpreter *)0)->multiFrameEvent ) },
 	{ "idEntity *", "eventEntity", (intptr_t)(&((idInterpreter *)0)->eventEntity), sizeof( ((idInterpreter *)0)->eventEntity ) },
 	{ "idThread *", "thread", (intptr_t)(&((idInterpreter *)0)->thread), sizeof( ((idInterpreter *)0)->thread ) },
-	{ ": bool", "doneProcessing", (intptr_t)(&((idInterpreter *)0)->doneProcessing), sizeof( ((idInterpreter *)0)->doneProcessing ) },
+	{ "bool", "doneProcessing", (intptr_t)(&((idInterpreter *)0)->doneProcessing), sizeof( ((idInterpreter *)0)->doneProcessing ) },
 	{ "bool", "threadDying", (intptr_t)(&((idInterpreter *)0)->threadDying), sizeof( ((idInterpreter *)0)->threadDying ) },
 	{ "bool", "terminateOnExit", (intptr_t)(&((idInterpreter *)0)->terminateOnExit), sizeof( ((idInterpreter *)0)->terminateOnExit ) },
 	{ "bool", "debug", (intptr_t)(&((idInterpreter *)0)->debug), sizeof( ((idInterpreter *)0)->debug ) },
@@ -7420,6 +7453,50 @@ static classVariableInfo_t idThread_typeInfo[] = {
 
 static classVariableInfo_t rcPilotable_typeInfo[] = {
 	{ "idPhysics_RigidBody", "physicsObj", (intptr_t)(&((rcPilotable *)0)->physicsObj), sizeof( ((rcPilotable *)0)->physicsObj ) },
+	{ "idEntityPtr < idActor >", "pilot", (intptr_t)(&((rcPilotable *)0)->pilot), sizeof( ((rcPilotable *)0)->pilot ) },
+	{ "idMat3", "initialAxis", (intptr_t)(&((rcPilotable *)0)->initialAxis), sizeof( ((rcPilotable *)0)->initialAxis ) },
+	{ "idClipModel *", "clipModel", (intptr_t)(&((rcPilotable *)0)->clipModel), sizeof( ((rcPilotable *)0)->clipModel ) },
+	{ "float", "steerAngle", (intptr_t)(&((rcPilotable *)0)->steerAngle), sizeof( ((rcPilotable *)0)->steerAngle ) },
+	{ "float", "steerSpeed", (intptr_t)(&((rcPilotable *)0)->steerSpeed), sizeof( ((rcPilotable *)0)->steerSpeed ) },
+	{ "float", "maxSpeed", (intptr_t)(&((rcPilotable *)0)->maxSpeed), sizeof( ((rcPilotable *)0)->maxSpeed ) },
+	{ "float", "deltaTime", (intptr_t)(&((rcPilotable *)0)->deltaTime), sizeof( ((rcPilotable *)0)->deltaTime ) },
+	{ NULL, 0 }
+};
+
+static classVariableInfo_t rcShipPodLarge_typeInfo[] = {
+	{ "idHashTable < funcEmitter_t >", "funcEmitters", (intptr_t)(&((rcShipPodLarge *)0)->funcEmitters), sizeof( ((rcShipPodLarge *)0)->funcEmitters ) },
+	{ "idFuncEmitter *", "prtBackCenter", (intptr_t)(&((rcShipPodLarge *)0)->prtBackCenter), sizeof( ((rcShipPodLarge *)0)->prtBackCenter ) },
+	{ "idFuncEmitter *", "prtBackTop", (intptr_t)(&((rcShipPodLarge *)0)->prtBackTop), sizeof( ((rcShipPodLarge *)0)->prtBackTop ) },
+	{ "idFuncEmitter *", "prtBackBottom", (intptr_t)(&((rcShipPodLarge *)0)->prtBackBottom), sizeof( ((rcShipPodLarge *)0)->prtBackBottom ) },
+	{ NULL, 0 }
+};
+
+static classVariableInfo_t asteroidMine_s_typeInfo[] = {
+	{ "idVec3", "posOnSurface", (intptr_t)(&((asteroidMine_s *)0)->posOnSurface), sizeof( ((asteroidMine_s *)0)->posOnSurface ) },
+	{ "idVec3", "alignPos", (intptr_t)(&((asteroidMine_s *)0)->alignPos), sizeof( ((asteroidMine_s *)0)->alignPos ) },
+	{ "idMat3", "alignAxis", (intptr_t)(&((asteroidMine_s *)0)->alignAxis), sizeof( ((asteroidMine_s *)0)->alignAxis ) },
+	{ "float", "radius", (intptr_t)(&((asteroidMine_s *)0)->radius), sizeof( ((asteroidMine_s *)0)->radius ) },
+	{ NULL, 0 }
+};
+
+static classVariableInfo_t rcAsteroid_typeInfo[] = {
+	{ "idList < asteroidMine_s >", "mines", (intptr_t)(&((rcAsteroid *)0)->mines), sizeof( ((rcAsteroid *)0)->mines ) },
+	{ "int", "totalMines", (intptr_t)(&((rcAsteroid *)0)->totalMines), sizeof( ((rcAsteroid *)0)->totalMines ) },
+	{ "float", "minRadius", (intptr_t)(&((rcAsteroid *)0)->minRadius), sizeof( ((rcAsteroid *)0)->minRadius ) },
+	{ "float", "maxRadius", (intptr_t)(&((rcAsteroid *)0)->maxRadius), sizeof( ((rcAsteroid *)0)->maxRadius ) },
+	{ "float", "mineChance", (intptr_t)(&((rcAsteroid *)0)->mineChance), sizeof( ((rcAsteroid *)0)->mineChance ) },
+	{ NULL, 0 }
+};
+
+static classVariableInfo_t rcWeaponRifleBlaster_typeInfo[] = {
+	{ "float", "spread", (intptr_t)(&((rcWeaponRifleBlaster *)0)->spread), sizeof( ((rcWeaponRifleBlaster *)0)->spread ) },
+	{ "const idSoundShader *", "snd_lowammo", (intptr_t)(&((rcWeaponRifleBlaster *)0)->snd_lowammo), sizeof( ((rcWeaponRifleBlaster *)0)->snd_lowammo ) },
+	{ NULL, 0 }
+};
+
+static classVariableInfo_t rcWeaponNone_typeInfo[] = {
+	{ "float", "spread", (intptr_t)(&((rcWeaponNone *)0)->spread), sizeof( ((rcWeaponNone *)0)->spread ) },
+	{ "const idSoundShader *", "snd_lowammo", (intptr_t)(&((rcWeaponNone *)0)->snd_lowammo), sizeof( ((rcWeaponNone *)0)->snd_lowammo ) },
 	{ NULL, 0 }
 };
 
@@ -7786,6 +7863,7 @@ static classTypeInfo_t classTypeInfo[] = {
 	{ "idBotGoalManager", "", sizeof(idBotGoalManager), idBotGoalManager_typeInfo },
 	{ "bot_state_t", "", sizeof(bot_state_t), bot_state_t_typeInfo },
 	{ "iceBot", "idPlayer", sizeof(iceBot), iceBot_typeInfo },
+	{ "rcDrone_Miner", "idAI", sizeof(rcDrone_Miner), rcDrone_Miner_typeInfo },
 	{ "idTestModel", "idAnimatedEntity", sizeof(idTestModel), idTestModel_typeInfo },
 	{ "iceWeaponFist", "iceWeaponObject", sizeof(iceWeaponFist), iceWeaponFist_typeInfo },
 	{ "iceWeaponPistol", "iceWeaponObject", sizeof(iceWeaponPistol), iceWeaponPistol_typeInfo },
@@ -7902,6 +7980,11 @@ static classTypeInfo_t classTypeInfo[] = {
 	{ "idInterpreter", "", sizeof(idInterpreter), idInterpreter_typeInfo },
 	{ "idThread", "idClass", sizeof(idThread), idThread_typeInfo },
 	{ "rcPilotable", "idInteractable", sizeof(rcPilotable), rcPilotable_typeInfo },
+	{ "rcShipPodLarge", "rcPilotable", sizeof(rcShipPodLarge), rcShipPodLarge_typeInfo },
+	{ "asteroidMine_s", "", sizeof(asteroidMine_s), asteroidMine_s_typeInfo },
+	{ "rcAsteroid", "idStaticEntity", sizeof(rcAsteroid), rcAsteroid_typeInfo },
+	{ "rcWeaponRifleBlaster", "iceWeaponObject", sizeof(rcWeaponRifleBlaster), rcWeaponRifleBlaster_typeInfo },
+	{ "rcWeaponNone", "iceWeaponObject", sizeof(rcWeaponNone), rcWeaponNone_typeInfo },
 	{ NULL, NULL, 0, NULL }
 };
 

@@ -364,22 +364,15 @@ struct weightconfig_t
 #define MAX_PROXMINES				64
 
 
-#define MAX_CHARACTERISTICS		80
+#define MAX_CHARACTERISTICS			80
 
-#define CT_INTEGER				1
-#define CT_FLOAT				2
-#define CT_STRING				3
+#define CT_INTEGER					1
+#define CT_FLOAT					2
+#define CT_STRING					3
 
-#define DEFAULT_CHARACTER		"bots/default_c.c"
+#define DEFAULT_CHARACTER			"bots/default_c.c"
 
-#define MAX_AVOIDGOALS			256
-#define MAX_GOALSTACK			8
-
-#define GFL_NONE				0
-#define GFL_ITEM				1
-#define GFL_ROAM				2
-#define GFL_DROPPED				4
-#define MAX_EPAIRKEY		128
+#define MAX_EPAIRKEY				128
 
 //characteristic value
 struct cvalue
