@@ -5141,13 +5141,18 @@ void idPlayer::NextWeapon()
 		return;
 	}
 
+	bool wrapped = false;
 	int w = idealWeapon.Get();
-	while( 1 )
+	while( !wrapped )
 	{
 		w++;
 		if( w >= MAX_WEAPONS )
 		{
 			w = 0;
+			if ( !wrapped )
+			{
+				wrapped = true;
+			}
 		}
 		if( w == idealWeapon )
 		{

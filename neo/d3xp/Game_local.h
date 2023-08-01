@@ -1038,7 +1038,7 @@ const int	CINEMATIC_SKIP_DELAY	= SEC2MS( 2.0f );
 #include "roidc/rcVehicle.h"
 #include "roidc/rcRoids.h"
 #include "roidc/weapons/Weapon_space_rifle_blaster.h"
-
+#include "roidc/weapons/Weapon_space_none.h"
 
 
 #endif	/* !__GAME_LOCAL_H__ */
