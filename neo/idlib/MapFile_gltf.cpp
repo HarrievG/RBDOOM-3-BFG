@@ -544,7 +544,7 @@ void ResolveEntity( gltfData* data, idMapEntity* newEntity, gltfNode* node )
 		newEntity->epairs.SetVector( "origin", origin );
 
 		idQuat q = ( entityToWorldTransform * node->matrix.Inverse() ).ToMat3().ToQuat();
-		q = blenderToDoomTransform.Inverse().ToMat3().ToQuat() * q * blenderToDoomTransform.ToMat3().ToQuat();
+		q = blenderToDoomTransform.Inverse().ToMat3().ToQuat() * q * node->rotation * blenderToDoomTransform.ToMat3().ToQuat();
 		idMat3 rot = q.ToMat3();
 		//idMat3 rot = ( blenderToDoomTransform * entityToWorldTransform ).ToMat3();
 		newEntity->epairs.SetMatrix( "rotation", rot );
