@@ -553,8 +553,9 @@ void idTypeInfoGen::ParseScope( const char* scope, bool isTemplate, idParser& sr
 		}
 		else if( token == "public" || token == "protected" || token == "private" )
 		{
-			if ( !src.ExpectTokenString( ":" ) ) {
-				common->FatalError("!src.ExpectTokenString( \":\" ) after %s", token);
+			if( !src.ExpectTokenString( ":" ) )
+			{
+				common->FatalError( "!src.ExpectTokenString( \":\" ) after %s", token );
 			}
 
 			varType = "";
