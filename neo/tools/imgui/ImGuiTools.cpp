@@ -35,7 +35,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "afeditor/AfEditor.h"
 #include "lighteditor/LightEditor.h"
-
+#include "stateEditor/StateEditor.h"
 
 extern idCVar g_editEntityMode;
 
@@ -91,6 +91,11 @@ void DrawToolWindows()
 	{
 		AfEditor::Instance().Draw();
 	}
+
+	if( StateGraphEditor::Instance().IsShown() )
+	{
+		StateGraphEditor::Instance().Draw();
+	}
 	// TODO: other editor windows..
 	//ImGui::End();
 }
@@ -117,6 +122,12 @@ void LightEditorInit( const idDict* dict, idEntity* ent )
 void AfEditorInit()
 {
 	AfEditor::Instance().ShowIt( true );
+	impl::SetReleaseToolMouse( true );
+}
+
+void StateEditorInit()
+{
+	StateGraphEditor::Instance().ShowIt( true );
 	impl::SetReleaseToolMouse( true );
 }
 

@@ -33,6 +33,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "../Game_local.h"
 
 #include "../tools/imgui/afeditor/AfEditor.h"
+#include "../tools/imgui/stateEditor/StateEditor.h"
 
 CONSOLE_COMMAND_SHIP( addBot, "adds a bot to a multiplayer game", NULL )
 {
@@ -2764,24 +2765,25 @@ void Cmd_EditLights_f( const idCmdArgs& args )
 }
 // RB end
 
-// SP begin
-void Cmd_ShowAfEditor_f( const idCmdArgs& args )
+// HvG begin
+template<class T, toolFlag_t ToolFlag, int EntityMode>
+void Cmd_ShowEditor_f( const idCmdArgs& args )
 {
-	if( g_editEntityMode.GetInteger() != 3 )
+	if( g_editEntityMode.GetInteger() != EntityMode )
 	{
-		g_editEntityMode.SetInteger( 3 );
-		com_editors |= EDITOR_AF;
-		ImGuiTools::AfEditor::Instance().Init();
-		ImGuiTools::AfEditor::Instance().ShowIt( true );
+		g_editEntityMode.SetInteger( EntityMode );
+		com_editors |= ToolFlag;
+		T::Instance().Init();
+		T::Instance().ShowIt( true );
 	}
 	else
 	{
 		g_editEntityMode.SetInteger( 0 );
-		com_editors &= ~EDITOR_AF;
-		ImGuiTools::AfEditor::Instance().ShowIt( false );
+		com_editors &= ~ToolFlag;
+		T::Instance().ShowIt( false );
 	}
 }
-// SP end
+// HvG end
 
 /*
 =================
@@ -2875,8 +2877,12 @@ void idGameLocal::InitConsoleCommands()
 	// RB end
 
 	// SP Begin
-	cmdSystem->AddCommand( "editAFs",				Cmd_ShowAfEditor_f,			CMD_FL_GAME | CMD_FL_TOOL, "launches the in-game Articulated Figure Editor" );
+	cmdSystem->AddCommand( "editAFs",				Cmd_ShowEditor_f<ImGuiTools::AfEditor, EDITOR_AF, 3>,			CMD_FL_GAME | CMD_FL_TOOL, "launches the in-game Articulated Figure Editor" );
 	// SP end
+
+	// HvG Begin
+	cmdSystem->AddCommand( "editStates",			Cmd_ShowEditor_f<ImGuiTools::StateGraphEditor, EDITOR_STATE, 3>,		CMD_FL_GAME | CMD_FL_TOOL, "launches the in-game State Editor" );
+	// HvG end
 
 	// multiplayer client commands ( replaces old impulses stuff )
 	//cmdSystem->AddCommand( "clientDropWeapon",		idMultiplayerGame::DropWeapon_f, CMD_FL_GAME,			"drop current weapon" );

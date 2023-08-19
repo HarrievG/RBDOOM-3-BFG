@@ -816,8 +816,10 @@ set(GAMED3XP_INCLUDES
 	d3xp/Target.h
 	d3xp/Trigger.h
 	d3xp/Weapon.h
-	d3xp/WorldSpawn.h)
-	
+	d3xp/WorldSpawn.h
+	d3xp/StateGraph.h
+	d3xp/StateGraphNodes.h)
+
 set(GAMED3XP_SOURCES
 	d3xp/Achievements.cpp
 	d3xp/Actor.cpp
@@ -854,7 +856,9 @@ set(GAMED3XP_SOURCES
 	d3xp/Target.cpp
 	d3xp/Trigger.cpp
 	d3xp/Weapon.cpp
-	d3xp/WorldSpawn.cpp)
+	d3xp/WorldSpawn.cpp
+	d3xp/StateGraph.cpp
+	d3xp/StateGraphNodes.cpp)
 
 file(GLOB RC_INCLUDES d3xp/roidc/*.h)
 file(GLOB RC_SOURCES d3xp/roidc/*.cpp)
@@ -1492,6 +1496,7 @@ macro(AddSubdirectory dirName)
 endmacro()
 
 AddSubdirectory( tools/imgui/afeditor )
+AddSubdirectory( tools/imgui/stateEditor )
 
 if(DOOM_CLASSIC)
 	add_definitions(-DUSE_DOOMCLASSIC)

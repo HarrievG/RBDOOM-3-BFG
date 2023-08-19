@@ -366,6 +366,11 @@ void idCommonLocal::InitTool( const toolFlag_t tool, const idDict* dict, idEntit
 	{
 		ImGuiTools::AfEditorInit();
 	}
+
+	if( tool & EDITOR_STATE )
+	{
+		ImGuiTools::StateEditorInit();
+	}
 }
 // DG end
 

@@ -59,6 +59,7 @@ void	LightEditorInit( const idDict* dict, idEntity* entity );
 
 void	AfEditorInit();
 
+void	StateEditorInit();
 }
 
 #endif /* !__EDIT_PUBLIC_H__ */

@@ -4,6 +4,7 @@
 Doom 3 BFG Edition GPL Source Code
 Copyright (C) 1993-2012 id Software LLC, a ZeniMax Media company.
 Copyright (C) 2012 Robert Beckebans
+Copyright (C) 2023 Harrie van Ginneken
 
 This file is part of the Doom 3 BFG Edition GPL Source Code ("Doom 3 BFG Edition Source Code").
 
@@ -194,20 +195,45 @@ will cause an error.
 
 ***********************************************************************/
 
+class idScriptVariableBase
+{
+public:
+	virtual	void GetType( etype_t& classType ) = 0;
+};
+
+
 template<class type, etype_t etype, class returnType>
-class idScriptVariable
+class idScriptVariable : public idScriptVariableBase
 {
 private:
 	type*				data;
 
 public:
+
+	void GetType( etype_t& classType ) override
+	{
+		classType = etype;
+	}
+
+	idScriptVariable( void* bytes );
 	idScriptVariable();
 	bool				IsLinked() const;
 	void				Unlink();
 	void				LinkTo( idScriptObject& obj, const char* name );
 	idScriptVariable&	operator=( const returnType& value );
 	operator returnType() const;
+	type* GetData() const
+	{
+		return data;
+	}
 };
+
+
+template<class type, etype_t etype, class returnType>
+ID_INLINE idScriptVariable<type, etype, returnType>::idScriptVariable( void* bytes )
+{
+	data = ( type* )bytes;
+}
 
 template<class type, etype_t etype, class returnType>
 ID_INLINE idScriptVariable<type, etype, returnType>::idScriptVariable()
@@ -284,7 +310,26 @@ typedef idScriptVariable<int, ev_boolean, int>				idScriptBool;
 typedef idScriptVariable<float, ev_float, float>			idScriptFloat;
 typedef idScriptVariable<float, ev_float, int>				idScriptInt;
 typedef idScriptVariable<idVec3, ev_vector, idVec3>			idScriptVector;
-typedef idScriptVariable<idStr, ev_string, const char*>	idScriptString;
+typedef idScriptVariable<idStr, ev_string, const char*>		idScriptString;
+
+typedef struct
+{
+	const char* varName;
+	const char* typeName;
+	idScriptVariableBase* scriptVariable;
+} idScriptVariableInstance_t;
+
+//keep in sync with list above, used for finding scripts vars in a idClass
+static idStr idScriptVariableTypes[] =
+{
+	"idScriptBool",
+	"idScriptFloat",
+	"idScriptInt",
+	"idScriptVector",
+	"idScriptString",
+	NULL
+};
+
 
 /***********************************************************************
 
@@ -312,14 +357,14 @@ defined in script.
 
 typedef union varEval_s
 {
-	idScriptObject**			objectPtrPtr;
+	idScriptObject**		objectPtrPtr;
 	char*					stringPtr;
 	float*					floatPtr;
 	idVec3*					vectorPtr;
 	function_t*				functionPtr;
-	int*					 intPtr;
+	int*					intPtr;
 	byte*					bytePtr;
-	int*					 entityNumberPtr;
+	int*					entityNumberPtr;
 	int						virtualFunction;
 	int						jumpOffset;
 	int						stackOffset;		// offset in stack for local variables

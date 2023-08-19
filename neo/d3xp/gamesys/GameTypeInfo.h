@@ -7,9 +7,9 @@
 
 	This file has been generated with the Type Info Generator v1.1 (c) 2004 id Software
 
-	965 constants
-	93 enums
-	484 classes/structs/unions
+	971 constants
+	95 enums
+	495 classes/structs/unions
 	3 templates
 	9 max inheritance level for 'iceMonsterZombieSawyer'
 
@@ -567,6 +567,12 @@ static constantInfo_t constantInfo[] = {
 	{ "int", "idBrittleFracture::EVENT_PROJECT_DECAL", "2" },
 	{ "int", "idBrittleFracture::EVENT_SHATTER", "3" },
 	{ "int", "idBrittleFracture::EVENT_MAXEVENTS", "4" },
+	{ "int", "idStateNode::Set", "0" },
+	{ "int", "idStateNode::Post", "1" },
+	{ "int", "idStateNode::Interrupt", "2" },
+	{ "int", "idClassNode::Call", "0" },
+	{ "int", "idClassNode::Set", "1" },
+	{ "int", "idClassNode::Get", "2" },
 	{ "const float", "SQUARE_ROOT_OF_2", "1.414213562" },
 	{ "const float", "AI_TURN_PREDICTION", "0.2" },
 	{ "const float", "AI_TURN_SCALE", "60.0" },
@@ -1687,6 +1693,20 @@ static enumValueInfo_t idBrittleFracture_enum_55_typeInfo[] = {
 	{ NULL, 0 }
 };
 
+static enumValueInfo_t idStateNode_NodeType_typeInfo[] = {
+	{ "Set", 0 },
+	{ "Post", 1 },
+	{ "Interrupt", 2 },
+	{ NULL, 0 }
+};
+
+static enumValueInfo_t idClassNode_NodeType_typeInfo[] = {
+	{ "Call", 0 },
+	{ "Set", 1 },
+	{ "Get", 2 },
+	{ NULL, 0 }
+};
+
 static enumValueInfo_t moveType_t_typeInfo[] = {
 	{ "MOVETYPE_DEAD", 0 },
 	{ "MOVETYPE_ANIM", 1 },
@@ -2137,7 +2157,7 @@ static enumValueInfo_t menuSounds_t_typeInfo[] = {
 	{ NULL, 0 }
 };
 
-static enumValueInfo_t enum_92_typeInfo[] = {
+static enumValueInfo_t enum_94_typeInfo[] = {
 	{ "OP_RETURN", 0 },
 	{ "OP_UINC_F", 1 },
 	{ "OP_UINCP_F", 2 },
@@ -2322,6 +2342,8 @@ static enumTypeInfo_t enumTypeInfo[] = {
 	{ "idExplodingBarrel::explode_state_t", idExplodingBarrel_explode_state_t_typeInfo },
 	{ "idSecurityCamera::enum_54", idSecurityCamera_enum_54_typeInfo },
 	{ "idBrittleFracture::enum_55", idBrittleFracture_enum_55_typeInfo },
+	{ "idStateNode::NodeType", idStateNode_NodeType_typeInfo },
+	{ "idClassNode::NodeType", idClassNode_NodeType_typeInfo },
 	{ "moveType_t", moveType_t_typeInfo },
 	{ "moveCommand_t", moveCommand_t_typeInfo },
 	{ "talkState_t", talkState_t_typeInfo },
@@ -2358,7 +2380,7 @@ static enumTypeInfo_t enumTypeInfo[] = {
 	{ "pdaHandlerWidgets_t", pdaHandlerWidgets_t_typeInfo },
 	{ "scoreboardHandlerWidgets_t", scoreboardHandlerWidgets_t_typeInfo },
 	{ "menuSounds_t", menuSounds_t_typeInfo },
-	{ "enum_92", enum_92_typeInfo },
+	{ "enum_94", enum_94_typeInfo },
 	{ NULL, NULL }
 };
 
@@ -2424,61 +2446,6 @@ static classVariableInfo_t rvStateThread_typeInfo[] = {
 	{ NULL, 0 }
 };
 
-static classVariableInfo_t idEventArg_typeInfo[] = {
-	{ "int", "type", (intptr_t)(&((idEventArg *)0)->type), sizeof( ((idEventArg *)0)->type ) },
-	{ "intptr_t", "value", (intptr_t)(&((idEventArg *)0)->value), sizeof( ((idEventArg *)0)->value ) },
-	{ NULL, 0 }
-};
-
-static classVariableInfo_t idAllocError_typeInfo[] = {
-	{ NULL, 0 }
-};
-
-static classVariableInfo_t idClass_typeInfo[] = {
-	{ NULL, 0 }
-};
-
-static classVariableInfo_t idTypeInfo_typeInfo[] = {
-	{ "const char *", "classname", (intptr_t)(&((idTypeInfo *)0)->classname), sizeof( ((idTypeInfo *)0)->classname ) },
-	{ "const char *", "superclass", (intptr_t)(&((idTypeInfo *)0)->superclass), sizeof( ((idTypeInfo *)0)->superclass ) },
-	{ "idEventFunc < idClass > *", "eventCallbacks", (intptr_t)(&((idTypeInfo *)0)->eventCallbacks), sizeof( ((idTypeInfo *)0)->eventCallbacks ) },
-	{ "eventCallback_t *", "eventMap", (intptr_t)(&((idTypeInfo *)0)->eventMap), sizeof( ((idTypeInfo *)0)->eventMap ) },
-	{ "idTypeInfo *", "super", (intptr_t)(&((idTypeInfo *)0)->super), sizeof( ((idTypeInfo *)0)->super ) },
-	{ "idTypeInfo *", "next", (intptr_t)(&((idTypeInfo *)0)->next), sizeof( ((idTypeInfo *)0)->next ) },
-	{ "bool", "freeEventMap", (intptr_t)(&((idTypeInfo *)0)->freeEventMap), sizeof( ((idTypeInfo *)0)->freeEventMap ) },
-	{ "int", "typeNum", (intptr_t)(&((idTypeInfo *)0)->typeNum), sizeof( ((idTypeInfo *)0)->typeNum ) },
-	{ "int", "lastChild", (intptr_t)(&((idTypeInfo *)0)->lastChild), sizeof( ((idTypeInfo *)0)->lastChild ) },
-	{ "idHierarchy < idTypeInfo >", "node", (intptr_t)(&((idTypeInfo *)0)->node), sizeof( ((idTypeInfo *)0)->node ) },
-	{ NULL, 0 }
-};
-
-static classVariableInfo_t idSaveGame_stringTableIndex_s_typeInfo[] = {
-	{ "idStr", "string", (intptr_t)(&((idSaveGame::stringTableIndex_s *)0)->string), sizeof( ((idSaveGame::stringTableIndex_s *)0)->string ) },
-	{ "int", "offset", (intptr_t)(&((idSaveGame::stringTableIndex_s *)0)->offset), sizeof( ((idSaveGame::stringTableIndex_s *)0)->offset ) },
-	{ NULL, 0 }
-};
-
-static classVariableInfo_t idSaveGame_typeInfo[] = {
-	{ "idFile *", "file", (intptr_t)(&((idSaveGame *)0)->file), sizeof( ((idSaveGame *)0)->file ) },
-	{ "idFile *", "stringFile", (intptr_t)(&((idSaveGame *)0)->stringFile), sizeof( ((idSaveGame *)0)->stringFile ) },
-	{ "idCompressor *", "compressor", (intptr_t)(&((idSaveGame *)0)->compressor), sizeof( ((idSaveGame *)0)->compressor ) },
-	{ "idList < const idClass * >", "objects", (intptr_t)(&((idSaveGame *)0)->objects), sizeof( ((idSaveGame *)0)->objects ) },
-	{ "int", "version", (intptr_t)(&((idSaveGame *)0)->version), sizeof( ((idSaveGame *)0)->version ) },
-	{ "idHashIndex", "stringHash", (intptr_t)(&((idSaveGame *)0)->stringHash), sizeof( ((idSaveGame *)0)->stringHash ) },
-	{ "idList < stringTableIndex_s >", "stringTable", (intptr_t)(&((idSaveGame *)0)->stringTable), sizeof( ((idSaveGame *)0)->stringTable ) },
-	{ "int", "curStringTableOffset", (intptr_t)(&((idSaveGame *)0)->curStringTableOffset), sizeof( ((idSaveGame *)0)->curStringTableOffset ) },
-	{ NULL, 0 }
-};
-
-static classVariableInfo_t idRestoreGame_typeInfo[] = {
-	{ "idFile *", "file", (intptr_t)(&((idRestoreGame *)0)->file), sizeof( ((idRestoreGame *)0)->file ) },
-	{ "idFile *", "stringFile", (intptr_t)(&((idRestoreGame *)0)->stringFile), sizeof( ((idRestoreGame *)0)->stringFile ) },
-	{ "idList < idClass * , TAG_SAVEGAMES >", "objects", (intptr_t)(&((idRestoreGame *)0)->objects), sizeof( ((idRestoreGame *)0)->objects ) },
-	{ "int", "version", (intptr_t)(&((idRestoreGame *)0)->version), sizeof( ((idRestoreGame *)0)->version ) },
-	{ "int", "stringTableOffset", (intptr_t)(&((idRestoreGame *)0)->stringTableOffset), sizeof( ((idRestoreGame *)0)->stringTableOffset ) },
-	{ NULL, 0 }
-};
-
 static classVariableInfo_t function_t_typeInfo[] = {
 	{ "idStr", "name", (intptr_t)(&((function_t *)0)->name), sizeof( ((function_t *)0)->name ) },
 	{ "const idEventDef *", "eventdef", (intptr_t)(&((function_t *)0)->eventdef), sizeof( ((function_t *)0)->eventdef ) },
@@ -2518,6 +2485,17 @@ static classVariableInfo_t idTypeDef_typeInfo[] = {
 static classVariableInfo_t idScriptObject_typeInfo[] = {
 	{ "idTypeDef *", "type", (intptr_t)(&((idScriptObject *)0)->type), sizeof( ((idScriptObject *)0)->type ) },
 	{ "byte *", "data", (intptr_t)(&((idScriptObject *)0)->data), sizeof( ((idScriptObject *)0)->data ) },
+	{ NULL, 0 }
+};
+
+static classVariableInfo_t idScriptVariableBase_typeInfo[] = {
+	{ NULL, 0 }
+};
+
+static classVariableInfo_t idScriptVariableInstance_t_typeInfo[] = {
+	{ "const char *", "varName", (intptr_t)(&((idScriptVariableInstance_t *)0)->varName), sizeof( ((idScriptVariableInstance_t *)0)->varName ) },
+	{ "const char *", "typeName", (intptr_t)(&((idScriptVariableInstance_t *)0)->typeName), sizeof( ((idScriptVariableInstance_t *)0)->typeName ) },
+	{ "idScriptVariableBase *", "scriptVariable", (intptr_t)(&((idScriptVariableInstance_t *)0)->scriptVariable), sizeof( ((idScriptVariableInstance_t *)0)->scriptVariable ) },
 	{ NULL, 0 }
 };
 
@@ -2596,6 +2574,61 @@ static classVariableInfo_t idProgram_typeInfo[] = {
 	{ NULL, 0 }
 };
 
+static classVariableInfo_t idEventArg_typeInfo[] = {
+	{ "int", "type", (intptr_t)(&((idEventArg *)0)->type), sizeof( ((idEventArg *)0)->type ) },
+	{ "intptr_t", "value", (intptr_t)(&((idEventArg *)0)->value), sizeof( ((idEventArg *)0)->value ) },
+	{ NULL, 0 }
+};
+
+static classVariableInfo_t idAllocError_typeInfo[] = {
+	{ NULL, 0 }
+};
+
+static classVariableInfo_t idClass_typeInfo[] = {
+	{ NULL, 0 }
+};
+
+static classVariableInfo_t idTypeInfo_typeInfo[] = {
+	{ "const char *", "classname", (intptr_t)(&((idTypeInfo *)0)->classname), sizeof( ((idTypeInfo *)0)->classname ) },
+	{ "const char *", "superclass", (intptr_t)(&((idTypeInfo *)0)->superclass), sizeof( ((idTypeInfo *)0)->superclass ) },
+	{ "idEventFunc < idClass > *", "eventCallbacks", (intptr_t)(&((idTypeInfo *)0)->eventCallbacks), sizeof( ((idTypeInfo *)0)->eventCallbacks ) },
+	{ "eventCallback_t *", "eventMap", (intptr_t)(&((idTypeInfo *)0)->eventMap), sizeof( ((idTypeInfo *)0)->eventMap ) },
+	{ "idTypeInfo *", "super", (intptr_t)(&((idTypeInfo *)0)->super), sizeof( ((idTypeInfo *)0)->super ) },
+	{ "idTypeInfo *", "next", (intptr_t)(&((idTypeInfo *)0)->next), sizeof( ((idTypeInfo *)0)->next ) },
+	{ "bool", "freeEventMap", (intptr_t)(&((idTypeInfo *)0)->freeEventMap), sizeof( ((idTypeInfo *)0)->freeEventMap ) },
+	{ "int", "typeNum", (intptr_t)(&((idTypeInfo *)0)->typeNum), sizeof( ((idTypeInfo *)0)->typeNum ) },
+	{ "int", "lastChild", (intptr_t)(&((idTypeInfo *)0)->lastChild), sizeof( ((idTypeInfo *)0)->lastChild ) },
+	{ "idHierarchy < idTypeInfo >", "node", (intptr_t)(&((idTypeInfo *)0)->node), sizeof( ((idTypeInfo *)0)->node ) },
+	{ NULL, 0 }
+};
+
+static classVariableInfo_t idSaveGame_stringTableIndex_s_typeInfo[] = {
+	{ "idStr", "string", (intptr_t)(&((idSaveGame::stringTableIndex_s *)0)->string), sizeof( ((idSaveGame::stringTableIndex_s *)0)->string ) },
+	{ "int", "offset", (intptr_t)(&((idSaveGame::stringTableIndex_s *)0)->offset), sizeof( ((idSaveGame::stringTableIndex_s *)0)->offset ) },
+	{ NULL, 0 }
+};
+
+static classVariableInfo_t idSaveGame_typeInfo[] = {
+	{ "idFile *", "file", (intptr_t)(&((idSaveGame *)0)->file), sizeof( ((idSaveGame *)0)->file ) },
+	{ "idFile *", "stringFile", (intptr_t)(&((idSaveGame *)0)->stringFile), sizeof( ((idSaveGame *)0)->stringFile ) },
+	{ "idCompressor *", "compressor", (intptr_t)(&((idSaveGame *)0)->compressor), sizeof( ((idSaveGame *)0)->compressor ) },
+	{ "idList < const idClass * >", "objects", (intptr_t)(&((idSaveGame *)0)->objects), sizeof( ((idSaveGame *)0)->objects ) },
+	{ "int", "version", (intptr_t)(&((idSaveGame *)0)->version), sizeof( ((idSaveGame *)0)->version ) },
+	{ "idHashIndex", "stringHash", (intptr_t)(&((idSaveGame *)0)->stringHash), sizeof( ((idSaveGame *)0)->stringHash ) },
+	{ "idList < stringTableIndex_s >", "stringTable", (intptr_t)(&((idSaveGame *)0)->stringTable), sizeof( ((idSaveGame *)0)->stringTable ) },
+	{ "int", "curStringTableOffset", (intptr_t)(&((idSaveGame *)0)->curStringTableOffset), sizeof( ((idSaveGame *)0)->curStringTableOffset ) },
+	{ NULL, 0 }
+};
+
+static classVariableInfo_t idRestoreGame_typeInfo[] = {
+	{ "idFile *", "file", (intptr_t)(&((idRestoreGame *)0)->file), sizeof( ((idRestoreGame *)0)->file ) },
+	{ "idFile *", "stringFile", (intptr_t)(&((idRestoreGame *)0)->stringFile), sizeof( ((idRestoreGame *)0)->stringFile ) },
+	{ "idList < idClass * , TAG_SAVEGAMES >", "objects", (intptr_t)(&((idRestoreGame *)0)->objects), sizeof( ((idRestoreGame *)0)->objects ) },
+	{ "int", "version", (intptr_t)(&((idRestoreGame *)0)->version), sizeof( ((idRestoreGame *)0)->version ) },
+	{ "int", "stringTableOffset", (intptr_t)(&((idRestoreGame *)0)->stringTableOffset), sizeof( ((idRestoreGame *)0)->stringTableOffset ) },
+	{ NULL, 0 }
+};
+
 static classVariableInfo_t frameBlend_t_typeInfo[] = {
 	{ "int", "cycleCount", (intptr_t)(&((frameBlend_t *)0)->cycleCount), sizeof( ((frameBlend_t *)0)->cycleCount ) },
 	{ "int", "frame1", (intptr_t)(&((frameBlend_t *)0)->frame1), sizeof( ((frameBlend_t *)0)->frame1 ) },
@@ -2635,11 +2668,11 @@ static classVariableInfo_t frameLookup_t_typeInfo[] = {
 	{ NULL, 0 }
 };
 
-static classVariableInfo_t class_29_class_29_typeInfo[] = {
-//	{ "const idSoundShader *", "soundShader", (intptr_t)(&((class_29::class_29 *)0)->soundShader), sizeof( ((class_29::class_29 *)0)->soundShader ) },
-//	{ "const function_t *", "function", (intptr_t)(&((class_29::class_29 *)0)->function), sizeof( ((class_29::class_29 *)0)->function ) },
-//	{ "const idDeclSkin *", "skin", (intptr_t)(&((class_29::class_29 *)0)->skin), sizeof( ((class_29::class_29 *)0)->skin ) },
-//	{ "int", "index", (intptr_t)(&((class_29::class_29 *)0)->index), sizeof( ((class_29::class_29 *)0)->index ) },
+static classVariableInfo_t class_31_class_31_typeInfo[] = {
+//	{ "const idSoundShader *", "soundShader", (intptr_t)(&((class_31::class_31 *)0)->soundShader), sizeof( ((class_31::class_31 *)0)->soundShader ) },
+//	{ "const function_t *", "function", (intptr_t)(&((class_31::class_31 *)0)->function), sizeof( ((class_31::class_31 *)0)->function ) },
+//	{ "const idDeclSkin *", "skin", (intptr_t)(&((class_31::class_31 *)0)->skin), sizeof( ((class_31::class_31 *)0)->skin ) },
+//	{ "int", "index", (intptr_t)(&((class_31::class_31 *)0)->index), sizeof( ((class_31::class_31 *)0)->index ) },
 	{ NULL, 0 }
 };
 
@@ -4331,10 +4364,10 @@ static classVariableInfo_t idAnimState_typeInfo[] = {
 	{ "idStr", "state", (intptr_t)(&((idAnimState *)0)->state), sizeof( ((idAnimState *)0)->state ) },
 	{ "int", "animBlendFrames", (intptr_t)(&((idAnimState *)0)->animBlendFrames), sizeof( ((idAnimState *)0)->animBlendFrames ) },
 	{ "int", "lastAnimBlendFrames", (intptr_t)(&((idAnimState *)0)->lastAnimBlendFrames), sizeof( ((idAnimState *)0)->lastAnimBlendFrames ) },
+	{ "rvStateThread", "stateThread", (intptr_t)(&((idAnimState *)0)->stateThread), sizeof( ((idAnimState *)0)->stateThread ) },
 	{ "idActor *", "self", (intptr_t)(&((idAnimState *)0)->self), sizeof( ((idAnimState *)0)->self ) },
 	{ "idAnimator *", "animator", (intptr_t)(&((idAnimState *)0)->animator), sizeof( ((idAnimState *)0)->animator ) },
 	{ "idThread *", "thread", (intptr_t)(&((idAnimState *)0)->thread), sizeof( ((idAnimState *)0)->thread ) },
-	{ "rvStateThread", "stateThread", (intptr_t)(&((idAnimState *)0)->stateThread), sizeof( ((idAnimState *)0)->stateThread ) },
 	{ "int", "channel", (intptr_t)(&((idAnimState *)0)->channel), sizeof( ((idAnimState *)0)->channel ) },
 	{ "bool", "disabled", (intptr_t)(&((idAnimState *)0)->disabled), sizeof( ((idAnimState *)0)->disabled ) },
 	{ NULL, 0 }
@@ -5786,6 +5819,68 @@ static classVariableInfo_t idBrittleFracture_typeInfo[] = {
 	{ "bool", "disableFracture", (intptr_t)(&((idBrittleFracture *)0)->disableFracture), sizeof( ((idBrittleFracture *)0)->disableFracture ) },
 	{ "mutable int", "lastRenderEntityUpdate", (intptr_t)(&((idBrittleFracture *)0)->lastRenderEntityUpdate), sizeof( ((idBrittleFracture *)0)->lastRenderEntityUpdate ) },
 	{ "mutable bool", "changed", (intptr_t)(&((idBrittleFracture *)0)->changed), sizeof( ((idBrittleFracture *)0)->changed ) },
+	{ NULL, 0 }
+};
+
+static classVariableInfo_t idBlackBoard_typeInfo[] = {
+	{ "idBlockAlloc < byte , 4 , TAG_BLACKBOARD >", "data", (intptr_t)(&((idBlackBoard *)0)->data), sizeof( ((idBlackBoard *)0)->data ) },
+	{ "idStrPool", "strPool", (intptr_t)(&((idBlackBoard *)0)->strPool), sizeof( ((idBlackBoard *)0)->strPool ) },
+	{ NULL, 0 }
+};
+
+static classVariableInfo_t idGraphNodeSocket_Link_t_typeInfo[] = {
+	{ "idGraphNodeSocket *", "start", (intptr_t)(&((idGraphNodeSocket::Link_t *)0)->start), sizeof( ((idGraphNodeSocket::Link_t *)0)->start ) },
+	{ "idGraphNodeSocket *", "end", (intptr_t)(&((idGraphNodeSocket::Link_t *)0)->end), sizeof( ((idGraphNodeSocket::Link_t *)0)->end ) },
+	{ NULL, 0 }
+};
+
+static classVariableInfo_t idGraphNodeSocket_typeInfo[] = {
+	{ "idList < idGraphNodeSocket * >", "connections", (intptr_t)(&((idGraphNodeSocket *)0)->connections), sizeof( ((idGraphNodeSocket *)0)->connections ) },
+	{ "idGraphNode *", "owner", (intptr_t)(&((idGraphNodeSocket *)0)->owner), sizeof( ((idGraphNodeSocket *)0)->owner ) },
+	{ "idScriptVariableBase *", "var", (intptr_t)(&((idGraphNodeSocket *)0)->var), sizeof( ((idGraphNodeSocket *)0)->var ) },
+	{ "bool", "active", (intptr_t)(&((idGraphNodeSocket *)0)->active), sizeof( ((idGraphNodeSocket *)0)->active ) },
+	{ "idStr", "name", (intptr_t)(&((idGraphNodeSocket *)0)->name), sizeof( ((idGraphNodeSocket *)0)->name ) },
+	{ NULL, 0 }
+};
+
+static classVariableInfo_t idGraphNode_typeInfo[] = {
+	{ "idList < idGraphNodeSocket >", "inputSockets", (intptr_t)(&((idGraphNode *)0)->inputSockets), sizeof( ((idGraphNode *)0)->inputSockets ) },
+	{ "idList < idGraphNodeSocket >", "outputSockets", (intptr_t)(&((idGraphNode *)0)->outputSockets), sizeof( ((idGraphNode *)0)->outputSockets ) },
+	{ "idStateGraph *", "graph", (intptr_t)(&((idGraphNode *)0)->graph), sizeof( ((idGraphNode *)0)->graph ) },
+	{ NULL, 0 }
+};
+
+static classVariableInfo_t idStateGraph_typeInfo[] = {
+	{ "idClass *", "owner", (intptr_t)(&((idStateGraph *)0)->owner), sizeof( ((idStateGraph *)0)->owner ) },
+	{ "rvStateThread *", "stateThread", (intptr_t)(&((idStateGraph *)0)->stateThread), sizeof( ((idStateGraph *)0)->stateThread ) },
+	{ "idBlackBoard", "blackBoard", (intptr_t)(&((idStateGraph *)0)->blackBoard), sizeof( ((idStateGraph *)0)->blackBoard ) },
+	{ "idList < idGraphNode * >", "nodes", (intptr_t)(&((idStateGraph *)0)->nodes), sizeof( ((idStateGraph *)0)->nodes ) },
+	{ "idList < idGraphNode * >", "activeNodes", (intptr_t)(&((idStateGraph *)0)->activeNodes), sizeof( ((idStateGraph *)0)->activeNodes ) },
+	{ "idList < idGraphNodeSocket :: Link_t >", "links", (intptr_t)(&((idStateGraph *)0)->links), sizeof( ((idStateGraph *)0)->links ) },
+	{ NULL, 0 }
+};
+
+static classVariableInfo_t idGraphedEntity_typeInfo[] = {
+	{ "idStateGraph", "graph", (intptr_t)(&((idGraphedEntity *)0)->graph), sizeof( ((idGraphedEntity *)0)->graph ) },
+	{ "rvStateThread", "stateThread", (intptr_t)(&((idGraphedEntity *)0)->stateThread), sizeof( ((idGraphedEntity *)0)->stateThread ) },
+	{ NULL, 0 }
+};
+
+static classVariableInfo_t idStateNode_typeInfo[] = {
+	{ "rvStateThread *", "stateThread", (intptr_t)(&((idStateNode *)0)->stateThread), sizeof( ((idStateNode *)0)->stateThread ) },
+	{ "idStr", "input_State", (intptr_t)(&((idStateNode *)0)->input_State), sizeof( ((idStateNode *)0)->input_State ) },
+	{ "stateResult_t", "output_Result", (intptr_t)(&((idStateNode *)0)->output_Result), sizeof( ((idStateNode *)0)->output_Result ) },
+	{ "NodeType", "type", (intptr_t)(&((idStateNode *)0)->type), sizeof( ((idStateNode *)0)->type ) },
+	{ NULL, 0 }
+};
+
+static classVariableInfo_t idClassNode_typeInfo[] = {
+	{ "idBlackBoard", "blackBoard", (intptr_t)(&((idClassNode *)0)->blackBoard), sizeof( ((idClassNode *)0)->blackBoard ) },
+	{ NULL, 0 }
+};
+
+static classVariableInfo_t idGraphOnInitNode_typeInfo[] = {
+	{ "bool", "done", (intptr_t)(&((idGraphOnInitNode *)0)->done), sizeof( ((idGraphOnInitNode *)0)->done ) },
 	{ NULL, 0 }
 };
 
@@ -7507,6 +7602,19 @@ static classTypeInfo_t classTypeInfo[] = {
 	{ "stateCall_t", "", sizeof(stateCall_t), stateCall_t_typeInfo },
 	{ "rvStateThread::flags", "", sizeof(rvStateThread::flags), rvStateThread_flags_typeInfo },
 	{ "rvStateThread", "", sizeof(rvStateThread), rvStateThread_typeInfo },
+	{ "function_t", "", sizeof(function_t), function_t_typeInfo },
+	{ "eval_t", "", sizeof(eval_t), eval_t_typeInfo },
+	{ "idTypeDef", "", sizeof(idTypeDef), idTypeDef_typeInfo },
+	{ "idScriptObject", "", sizeof(idScriptObject), idScriptObject_typeInfo },
+	{ "idScriptVariableBase", "", sizeof(idScriptVariableBase), idScriptVariableBase_typeInfo },
+//	{ "idScriptVariable< class type , etype_t etype , class returnType >", "idScriptVariableBase", sizeof(idScriptVariable< class type , etype_t etype , class returnType >), idScriptVariable_class_type_etype_t_etype_class_returnType__typeInfo },
+	{ "idScriptVariableInstance_t", "", sizeof(idScriptVariableInstance_t), idScriptVariableInstance_t_typeInfo },
+	{ "idCompileError", "idException", sizeof(idCompileError), idCompileError_typeInfo },
+	{ "varEval_t", "", sizeof(varEval_t), varEval_t_typeInfo },
+	{ "idVarDef", "", sizeof(idVarDef), idVarDef_typeInfo },
+	{ "idVarDefName", "", sizeof(idVarDefName), idVarDefName_typeInfo },
+	{ "statement_t", "", sizeof(statement_t), statement_t_typeInfo },
+	{ "idProgram", "", sizeof(idProgram), idProgram_typeInfo },
 	{ "idEventArg", "", sizeof(idEventArg), idEventArg_typeInfo },
 	{ "idAllocError", "idException", sizeof(idAllocError), idAllocError_typeInfo },
 	{ "idClass", "", sizeof(idClass), idClass_typeInfo },
@@ -7514,23 +7622,12 @@ static classTypeInfo_t classTypeInfo[] = {
 	{ "idSaveGame::stringTableIndex_s", "", sizeof(idSaveGame::stringTableIndex_s), idSaveGame_stringTableIndex_s_typeInfo },
 	{ "idSaveGame", "", sizeof(idSaveGame), idSaveGame_typeInfo },
 	{ "idRestoreGame", "", sizeof(idRestoreGame), idRestoreGame_typeInfo },
-	{ "function_t", "", sizeof(function_t), function_t_typeInfo },
-	{ "eval_t", "", sizeof(eval_t), eval_t_typeInfo },
-	{ "idTypeDef", "", sizeof(idTypeDef), idTypeDef_typeInfo },
-	{ "idScriptObject", "", sizeof(idScriptObject), idScriptObject_typeInfo },
-//	{ "idScriptVariable< class type , etype_t etype , class returnType >", "", sizeof(idScriptVariable< class type , etype_t etype , class returnType >), idScriptVariable_class_type_etype_t_etype_class_returnType__typeInfo },
-	{ "idCompileError", "idException", sizeof(idCompileError), idCompileError_typeInfo },
-	{ "varEval_t", "", sizeof(varEval_t), varEval_t_typeInfo },
-	{ "idVarDef", "", sizeof(idVarDef), idVarDef_typeInfo },
-	{ "idVarDefName", "", sizeof(idVarDefName), idVarDefName_typeInfo },
-	{ "statement_t", "", sizeof(statement_t), statement_t_typeInfo },
-	{ "idProgram", "", sizeof(idProgram), idProgram_typeInfo },
 	{ "frameBlend_t", "", sizeof(frameBlend_t), frameBlend_t_typeInfo },
 	{ "jointAnimInfo_t", "", sizeof(jointAnimInfo_t), jointAnimInfo_t_typeInfo },
 	{ "jointInfo_t", "", sizeof(jointInfo_t), jointInfo_t_typeInfo },
 	{ "jointMod_t", "", sizeof(jointMod_t), jointMod_t_typeInfo },
 	{ "frameLookup_t", "", sizeof(frameLookup_t), frameLookup_t_typeInfo },
-//	{ "class_29::class_29", "", sizeof(class_29::class_29), class_29_class_29_typeInfo },
+//	{ "class_31::class_31", "", sizeof(class_31::class_31), class_31_class_31_typeInfo },
 	{ "frameCommand_t", "", sizeof(frameCommand_t), frameCommand_t_typeInfo },
 	{ "animFlags_t", "", sizeof(animFlags_t), animFlags_t_typeInfo },
 	{ "idMD5Anim", "", sizeof(idMD5Anim), idMD5Anim_typeInfo },
@@ -7817,6 +7914,15 @@ static classTypeInfo_t classTypeInfo[] = {
 	{ "shard_t", "", sizeof(shard_t), shard_t_typeInfo },
 	{ "idBrittleFracture::fractureEvent_s", "", sizeof(idBrittleFracture::fractureEvent_s), idBrittleFracture_fractureEvent_s_typeInfo },
 	{ "idBrittleFracture", "idEntity", sizeof(idBrittleFracture), idBrittleFracture_typeInfo },
+	{ "idBlackBoard", "", sizeof(idBlackBoard), idBlackBoard_typeInfo },
+	{ "idGraphNodeSocket::Link_t", "", sizeof(idGraphNodeSocket::Link_t), idGraphNodeSocket_Link_t_typeInfo },
+	{ "idGraphNodeSocket", "", sizeof(idGraphNodeSocket), idGraphNodeSocket_typeInfo },
+	{ "idGraphNode", "idClass", sizeof(idGraphNode), idGraphNode_typeInfo },
+	{ "idStateGraph", "idClass", sizeof(idStateGraph), idStateGraph_typeInfo },
+	{ "idGraphedEntity", "idEntity", sizeof(idGraphedEntity), idGraphedEntity_typeInfo },
+	{ "idStateNode", "idGraphNode", sizeof(idStateNode), idStateNode_typeInfo },
+	{ "idClassNode", "idStateNode", sizeof(idClassNode), idClassNode_typeInfo },
+	{ "idGraphOnInitNode", "idGraphNode", sizeof(idGraphOnInitNode), idGraphOnInitNode_typeInfo },
 	{ "ballistics_t", "", sizeof(ballistics_t), ballistics_t_typeInfo },
 	{ "obstaclePath_t", "", sizeof(obstaclePath_t), obstaclePath_t_typeInfo },
 	{ "predictedPath_t", "", sizeof(predictedPath_t), predictedPath_t_typeInfo },

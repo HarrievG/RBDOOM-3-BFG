@@ -316,11 +316,11 @@ stateResult_t rvStateThread::Execute()
 		{
 			if( call->parms.stage )
 			{
-				gameLocal.Printf( "%s: %s (%d)\n", ( ( idEntity* )owner )->GetClassname(), call->state.c_str(), call->parms.stage );
+				gameLocal.Printf( "%s: %s (%d)\n", ( ( idClass* )owner )->GetClassname(), call->state.c_str(), call->parms.stage );
 			}
 			else
 			{
-				gameLocal.Printf( "%s: %s\n", ( ( idEntity* )owner )->GetClassname(), call->state.c_str() );
+				gameLocal.Printf( "%s: %s\n", ( ( idClass* )owner )->GetClassname(), call->state.c_str() );
 			}
 		}
 

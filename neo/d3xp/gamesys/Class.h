@@ -5,6 +5,7 @@ Doom 3 BFG Edition GPL Source Code
 Copyright (C) 1993-2012 id Software LLC, a ZeniMax Media company.
 Copyright (C) 2012 Robert Beckebans
 Copyright (C) 2021 Justin Marshall
+Copyright (C) 2023 Harrie van Ginneken
 
 This file is part of the Doom 3 BFG Edition GPL Source Code ("Doom 3 BFG Edition Source Code").
 
@@ -36,6 +37,7 @@ instancing of objects.
 
 #ifndef __SYS_CLASS_H__
 #define __SYS_CLASS_H__
+#include "../script/Script_Program.h"
 
 class idClass;
 class idTypeInfo;
@@ -381,13 +383,14 @@ public:
 				void ( idClass::*Save )( idSaveGame* savefile ) const, void	( idClass::*Restore )( idRestoreGame* savefile ) );
 	~idTypeInfo();
 
-	void						Init();
-	void						Shutdown();
+	void								Init();
+	void								Shutdown();
 
-	bool						IsType( const idTypeInfo& superclass ) const;
-	bool						RespondsTo( const idEventDef& ev ) const;
+	bool								IsType( const idTypeInfo& superclass ) const;
+	bool								RespondsTo( const idEventDef& ev ) const;
+	idList<idScriptVariableInstance_t>	GetScriptVariables( void* owner );
 
-	static const char*			GetEnumTypeInfo( const char* enumTypeName, int value ) ;
+	static const char*					GetEnumTypeInfo( const char* enumTypeName, int value ) ;
 };
 
 /*

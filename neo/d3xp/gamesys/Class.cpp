@@ -5,6 +5,7 @@ Doom 3 BFG Edition GPL Source Code
 Copyright (C) 1993-2012 id Software LLC, a ZeniMax Media company.
 Copyright (C) 2012 Robert Beckebans
 Copyright (C) 2021 Justin Marshall
+Copyright (C) 2023 Harrie van Ginneken
 
 This file is part of the Doom 3 BFG Edition GPL Source Code ("Doom 3 BFG Edition Source Code").
 
@@ -271,6 +272,61 @@ const char* idTypeInfo::GetEnumTypeInfo( const char* enumTypeName, int value )
 		index++;
 	}
 	return nullptr;
+}
+
+
+/*
+================
+idTypeInfo::GetScriptVariables
+
+Recursively searches up class hierarchy for every item with the same type in idScriptVariableTypes
+
+================
+*/
+
+idList<idScriptVariableInstance_t> idTypeInfo::GetScriptVariables( void* owner ) /*const classVariableInfo_t& classInfo*/
+{
+	//HVG TODO/WARNING
+	//make sure each variable from a super is resolved correctly,offset is not taken into account atm!
+	idList<idScriptVariableInstance_t> ret;
+	idTypeInfo* infoPtr = this;
+
+	while( infoPtr )
+	{
+		int index = 0;
+		while( classTypeInfo[index].typeName )
+		{
+			const classTypeInfo_t& current = classTypeInfo[index];
+			if( !idStr::Cmp( infoPtr->classname, current.typeName ) )
+			{
+				const classVariableInfo_t* variables = current.variables;
+				
+				int varIdx = 0;				
+				bool found = false;
+				while( variables[varIdx].name )
+				{
+					const classVariableInfo_t& currentVar = variables[varIdx];
+
+					int scriptVarIdx = 0;
+					while( const char* scriptVarName = idScriptVariableTypes[scriptVarIdx] )
+					{
+						if( !idStr::Cmp( scriptVarName, variables[varIdx].type ) )
+						{
+							//gameLocal.Printf("found %s \t %s in %s \n", scriptVarName, variables[varIdx].name,infoPtr->classname);
+							ret.Alloc() = { variables[varIdx].name , variables[varIdx].type , ( idScriptVariableBase* )( ( uintptr_t )owner + currentVar.offset ) };
+							break;
+						}
+						scriptVarIdx++;
+					}
+					varIdx++;
+				}
+			}
+			index++;
+		}
+		infoPtr = infoPtr->super;
+	}
+
+	return ret;
 }
 
 /***********************************************************************

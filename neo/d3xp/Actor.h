@@ -87,12 +87,13 @@ public:
 	bool					AnimDone( int blendFrames ) const;
 	bool					IsIdle() const;
 	animFlags_t				GetAnimFlags() const;
+	rvStateThread			stateThread;
 
 private:
 	idActor* 				self;
 	idAnimator* 			animator;
 	idThread* 				thread;
-	rvStateThread			stateThread;
+
 
 	int						channel;
 	bool					disabled;

@@ -5561,6 +5561,18 @@ intptr_t idPlayer::Invoke(const char *functionName, void *param1) {
 	if(functionNameHash == 165154) { // GetPrevWeapon
 		return (intptr_t)GetPrevWeapon();
 	};
+	if(functionNameHash == 111101) { // Legs_Jump
+		return (intptr_t)Legs_Jump((stateParms_t *)param1);
+	};
+	if(functionNameHash == 107329) { // Legs_Idle
+		return (intptr_t)Legs_Idle((stateParms_t *)param1);
+	};
+	if(functionNameHash == 107471) { // Legs_Fall
+		return (intptr_t)Legs_Fall((stateParms_t *)param1);
+	};
+	if(functionNameHash == 217391) { // Legs_Walk_Forward
+		return (intptr_t)Legs_Walk_Forward((stateParms_t *)param1);
+	};
 	if(functionNameHash == 127156) { // StopFiring
 		StopFiring();
 		return 0;
@@ -6059,6 +6071,18 @@ bool idPlayer::HasNativeFunction(const char *functionName) {
 		return true;
 	};
 	if(functionNameHash == 165154) { // GetPrevWeapon
+		return true;
+	};
+	if(functionNameHash == 111101) { // Legs_Jump
+		return true;
+	};
+	if(functionNameHash == 107329) { // Legs_Idle
+		return true;
+	};
+	if(functionNameHash == 107471) { // Legs_Fall
+		return true;
+	};
+	if(functionNameHash == 217391) { // Legs_Walk_Forward
 		return true;
 	};
 	if(functionNameHash == 127156) { // StopFiring
@@ -8262,6 +8286,124 @@ bool idBrittleFracture::HasNativeFunction(const char *functionName) {
 		return true;
 	};
 	if(functionNameHash == 180056) { // FindNeighbours
+		return true;
+	};
+	return __super::HasNativeFunction(functionName);
+
+};
+
+intptr_t idStateGraph::Invoke(const char *functionName, void *param1) {
+	int functionNameHash = idStr::Hash(functionName);
+	if(functionNameHash == 137647) { // SharedThink
+		SharedThink();
+		return 0;
+	};
+	if(functionNameHash == 151836) { // State_Update
+		return (intptr_t)State_Update((stateParms_t *)param1);
+	};
+	if(functionNameHash == 123133) { // State_Exec
+		return (intptr_t)State_Exec((stateParms_t *)param1);
+	};
+	return __super::Invoke(functionName, param1);
+
+};
+
+bool idStateGraph::HasNativeFunction(const char *functionName) {
+	int functionNameHash = idStr::Hash(functionName);
+	if(functionNameHash == 137647) { // SharedThink
+		return true;
+	};
+	if(functionNameHash == 151836) { // State_Update
+		return true;
+	};
+	if(functionNameHash == 123133) { // State_Exec
+		return true;
+	};
+	return __super::HasNativeFunction(functionName);
+
+};
+
+intptr_t idGraphedEntity::Invoke(const char *functionName, void *param1) {
+	int functionNameHash = idStr::Hash(functionName);
+	if(functionNameHash == 63102) { // Spawn
+		Spawn();
+		return 0;
+	};
+	if(functionNameHash == 122258) { // State_Idle
+		return (intptr_t)State_Idle((stateParms_t *)param1);
+	};
+	if(functionNameHash == 137647) { // SharedThink
+		SharedThink();
+		return 0;
+	};
+	if(functionNameHash == 61762) { // Think
+		Think();
+		return 0;
+	};
+	return __super::Invoke(functionName, param1);
+
+};
+
+bool idGraphedEntity::HasNativeFunction(const char *functionName) {
+	int functionNameHash = idStr::Hash(functionName);
+	if(functionNameHash == 63102) { // Spawn
+		return true;
+	};
+	if(functionNameHash == 122258) { // State_Idle
+		return true;
+	};
+	if(functionNameHash == 137647) { // SharedThink
+		return true;
+	};
+	if(functionNameHash == 61762) { // Think
+		return true;
+	};
+	return __super::HasNativeFunction(functionName);
+
+};
+
+intptr_t idStateNode::Invoke(const char *functionName, void *param1) {
+	int functionNameHash = idStr::Hash(functionName);
+	if(functionNameHash == 46910) { // Exec
+		return (intptr_t)Exec((stateParms_t *)param1);
+	};
+	if(functionNameHash == 82193) { // GetName
+		return (intptr_t)GetName();
+	};
+	return __super::Invoke(functionName, param1);
+
+};
+
+bool idStateNode::HasNativeFunction(const char *functionName) {
+	int functionNameHash = idStr::Hash(functionName);
+	if(functionNameHash == 46910) { // Exec
+		return true;
+	};
+	if(functionNameHash == 82193) { // GetName
+		return true;
+	};
+	return __super::HasNativeFunction(functionName);
+
+};
+
+intptr_t idGraphOnInitNode::Invoke(const char *functionName, void *param1) {
+	int functionNameHash = idStr::Hash(functionName);
+	if(functionNameHash == 46910) { // Exec
+		return (intptr_t)Exec((stateParms_t *)param1);
+	};
+	if(functionNameHash == 82193) { // GetName
+		return (intptr_t)GetName();
+	};
+	return __super::Invoke(functionName, param1);
+
+};
+
+bool idGraphOnInitNode::HasNativeFunction(const char *functionName) {
+	int functionNameHash = idStr::Hash(functionName);
+	if(functionNameHash == 46910) { // Exec
+		return true;
+	};
+	if(functionNameHash == 82193) { // GetName
 		return true;
 	};
 	return __super::HasNativeFunction(functionName);
