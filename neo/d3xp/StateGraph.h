@@ -67,36 +67,53 @@ class idGraphNode;
 class idGraphNodeSocket
 {
 public:
+
+	//////////////////////////////////////////////////////////////////////////
+	//should only be used in editor
 	typedef struct
 	{
 		idGraphNodeSocket* start;
 		idGraphNodeSocket* end;
 	} Link_t;
-
-	idGraphNodeSocket() : owner( nullptr ), var( nullptr ), active( false ), name( "" ) {}
+	//////////////////////////////////////////////////////////////////////////
+	idGraphNodeSocket() : owner( nullptr ), var( nullptr ), active( false ), name( "" ), socketIndex(-1){}
 	idList<idGraphNodeSocket*> connections;
 	idGraphNode* owner;
 	idScriptVariableBase* var;
 	bool active;
 	idStr name;
+	int socketIndex;
+	int nodeIndex;
 };
 
 class idStateGraph;
 class idGraphNode : public idClass
 {
 public:
+
 	ABSTRACT_PROTOTYPE(idGraphNode);
 
 	virtual stateResult_t Exec( stateParms_t* parms ) = 0;
 	virtual	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL );
-	virtual	bool LoadBinary( idFile* file, const ID_TIME_T sourceTimeStamp ) = 0;
+	virtual	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp);
 	virtual const char* GetName() = 0;
+	virtual void Setup() = 0;
+
+	//should only be used in editor.
+	virtual void Draw(const ImGuiTools::GraphNode* node);
+	
+	idGraphNodeSocket& CreateInputSocket();
+	idGraphNodeSocket& CreateOutputSocket();
 	bool HasActiveSocket();
 	void ActivateOutputConnections();
 	void DeactivateInputs();
 	idList<idGraphNodeSocket> inputSockets;
 	idList<idGraphNodeSocket> outputSockets;
 	idStateGraph* graph;
+	int nodeIndex;
+
+private:
+	idGraphNodeSocket& CreateSocket(idList<idGraphNodeSocket>& socketList);
 };
 
 class idStateGraph : public idClass
@@ -131,23 +148,24 @@ public:
 
 	void			ConvertScriptObject( idScriptObject* scriptObject );
 	void			WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL );
-	bool			LoadBinary( idFile* file, const ID_TIME_T sourceTimeStamp );
+	bool			LoadBinary( idFile* file, const ID_TIME_T _timeStamp);
 
-	idGraphNode*	AddNode( idGraphNode* node );
+	idGraphNode*						CreateNode( idGraphNode* node );
 	idGraphNodeSocket::Link_t&			AddLink( idGraphNodeSocket& input, idGraphNodeSocket& output );
 	stateResult_t						State_Update( stateParms_t* parms );
 	stateResult_t						State_Exec( stateParms_t* parms );
 
 	idClass* 		owner;
-	rvStateThread*	stateThread;
+	rvStateThread*  targetStateThread;
 	idBlackBoard	blackBoard;
 
 	idList<idGraphNode*> nodes;
 	idList<idGraphNode*> activeNodes;
+	//should only be used in editor.
 	idList<idGraphNodeSocket::Link_t>  links;
 
 private:
-
+	rvStateThread* stateThread;
 };
 //Testcase for idStateGraph[editor]
 class idGraphedEntity : public idEntity

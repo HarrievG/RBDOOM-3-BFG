@@ -36,32 +36,10 @@ If you have questions concerning this license or the applicable additional terms
 CLASS_DECLARATION(idGraphNode, idStateNode)
 END_CLASS
 
-idStateNode::idStateNode( rvStateThread* owner, const char* stateString, NodeType type /*= idStateNode::Set*/ ) : idStateNode( owner )
+idStateNode::idStateNode()
 {
-	input_State = stateString;
 
-	idGraphNodeSocket* newInput = &inputSockets.Alloc();
-	newInput->name = idTypeInfo::GetEnumTypeInfo( "idStateNode::NodeType", type );
-	newInput->owner = this;
-
-	newInput = &inputSockets.Alloc();
-	newInput->owner = this;
-	newInput->name = "State";
-	newInput->var = new idScriptString( ( void* )input_State.c_str() );
-
-	idGraphNodeSocket& newOutput = outputSockets.Alloc();
-	newOutput.owner = this;
-	newOutput.name = "Result";
-	newOutput.var = new idScriptInt( ( void* )output_Result );
 }
-
-idStateNode::idStateNode( rvStateThread* owner )
-{
-	output_Result = SRESULT_ERROR;
-	stateThread = owner;
-	type = idStateNode::Set;
-}
-
 stateResult_t idStateNode::Exec( stateParms_t* parms )
 {
 	idGraphNodeSocket& strSocket = inputSockets[1];
@@ -93,35 +71,47 @@ stateResult_t idStateNode::Exec( stateParms_t* parms )
 
 void idStateNode::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL*/ )
 {
-	idTypeInfo* c = idClass::GetClass("idStateNode");
 	if ( file ) 
 	{
-		file->WriteInt(c->typeNum);
-
+		file->WriteBig(type);
+		file->WriteString(input_State);
+		idGraphNode::WriteBinary(file, _timeStamp);
 	}
 }
 
-bool idStateNode::LoadBinary( idFile* file, const ID_TIME_T sourceTimeStamp )
+bool idStateNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp)
 {
-	throw std::logic_error( "The method or operation is not implemented." );
+	if (file)
+	{
+		file->ReadBig(type);
+		file->ReadString(input_State);
+		return idGraphNode::LoadBinary(file, _timeStamp);
+	}
+}
+
+void idStateNode::Setup()
+{
+	output_Result = SRESULT_ERROR;
+	stateThread = graph->targetStateThread;
+
+	idGraphNodeSocket* newInput = &CreateInputSocket();
+	newInput->name = idTypeInfo::GetEnumTypeInfo("idStateNode::NodeType", type);
+
+	newInput = &CreateInputSocket();
+	newInput->name = "State";
+	newInput->var = new idScriptString((void*)input_State.c_str());
+
+	idGraphNodeSocket& newOutput = CreateOutputSocket();
+	newOutput.name = "Result";
+	newOutput.var = new idScriptInt((void*)output_Result);
 }
 
 //////////////////////////////////////////////////////////////////////////
-
-
 CLASS_DECLARATION(idGraphNode, idGraphOnInitNode)
 END_CLASS
 
-/// <summary>
-/// idGraphOnInitNode
-/// </summary>
 idGraphOnInitNode::idGraphOnInitNode()
 {
-	idGraphNodeSocket& newOutput = outputSockets.Alloc();
-	newOutput.owner = this;
-	newOutput.active = true;
-	newOutput.name = "Initialize";
-	done = false;
 }
 
 stateResult_t idGraphOnInitNode::Exec( stateParms_t* parms )
@@ -133,10 +123,22 @@ void idGraphOnInitNode::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NUL
 {
 	if( file != NULL )
 	{
+		idGraphNode::WriteBinary(file, _timeStamp);
 	}
 }
 
-bool idGraphOnInitNode::LoadBinary( idFile* file, const ID_TIME_T sourceTimeStamp )
+bool idGraphOnInitNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp)
 {
-	throw std::logic_error( "The method or operation is not implemented." );
+	if (file != NULL)
+	{
+		return idGraphNode::LoadBinary(file, _timeStamp);
+	}
+}
+
+void idGraphOnInitNode::Setup()
+{
+	idGraphNodeSocket& newOutput = CreateOutputSocket();
+	newOutput.active = true;
+	newOutput.name = "Initialize";
+	done = false;
 }

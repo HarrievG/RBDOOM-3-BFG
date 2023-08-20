@@ -44,9 +44,9 @@ public:
 		Post,
 		Interrupt
 	};
-	idStateNode() {};
-	idStateNode( rvStateThread* owner );
-	idStateNode( rvStateThread* owner, const char* stateString, NodeType type = NodeType::Set );
+	idStateNode();
+	//idStateNode( rvStateThread* owner );
+	//idStateNode( rvStateThread* owner, const char* stateString, NodeType type = NodeType::Set );
 	//An exec can
 	stateResult_t Exec( stateParms_t* parms ) override;
 	const char* GetName() override
@@ -54,13 +54,13 @@ public:
 		return "idStateNode";
 	}
 	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL ) override;
-	bool LoadBinary( idFile* file, const ID_TIME_T sourceTimeStamp ) override;
+	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp) override;
+	void Setup() override;
 
-private:
-	rvStateThread*	stateThread;
 	idStr			input_State;
-	stateResult_t	output_Result;
 	NodeType		type;
+	rvStateThread*	stateThread;
+	stateResult_t	output_Result;
 };
 
 class idClassNode : public idStateNode
@@ -68,9 +68,9 @@ class idClassNode : public idStateNode
 public:
 	enum NodeType
 	{
-		Call,
-		Set,
-		Get
+		Call,//Event
+		Set,//Scriptvariable
+		Get//Scriptvariable
 	};
 	idClassNode( idClass* owner, NodeType type );
 	stateResult_t Exec( stateParms_t* parms ) override;
@@ -79,10 +79,11 @@ public:
 		return "idClassNode";
 	}
 	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL ) override {}
-	bool LoadBinary( idFile* file, const ID_TIME_T sourceTimeStamp ) override
+	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp) override
 	{
 		return true;
 	}
+	void Setup() override {}
 private:
 	idBlackBoard blackBoard;
 };
@@ -99,8 +100,8 @@ public:
 		return "idGraphOnInitNode";
 	}
 	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL ) override;
-	bool LoadBinary( idFile* file, const ID_TIME_T sourceTimeStamp ) override;
-
+	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp) override;
+	void Setup() override;
 private:
 	bool done;
 };

@@ -32,9 +32,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "../../edit_public.h"
 #include "d3xp/script/Script_Program.h"
 #include "../extern/imgui-node-editor/imgui_node_editor.h"
-#include "d3xp/Game_local.h"
-
-//namespace ax { namespace NodeEditor { class EditorContext; } }
+#include "d3xp/StateGraph.h"
 
 namespace ImGuiTools
 {
@@ -46,78 +44,84 @@ void DrawNode( T* graphNode );
 /**
 * NodeEditor
 */
+
+enum class PinType
+{
+	Flow,
+	Bool,
+	Int,
+	Float,
+	String,
+	Object,
+	Function,
+	Delegate,
+};
+
+enum class PinKind
+{
+	Output,
+	Input
+};
+
+enum class NodeType
+{
+	AnimState,
+	Simple,
+	Tree,
+	Comment,
+	Houdini
+};
+
+struct GraphNodePin
+{
+	ed::PinId   ID;
+	GraphNode* NodePtr;
+	std::string Name;
+	PinType     Type;
+	PinKind     Kind;
+
+	GraphNodePin() :
+		ID(-1), NodePtr(nullptr), Name("newPin"), Type(PinType::Flow), Kind(PinKind::Input)
+	{
+	}
+
+	GraphNodePin(int id, const char* name, PinType type, PinKind kind, GraphNode* parent) :
+		ID(id), NodePtr(parent), Name(name), Type(type), Kind(kind)
+	{
+	}
+};
+
+struct GraphNode
+{
+public:
+	ed::NodeId ID;
+	idStr Name;
+	idList<GraphNodePin> Inputs;
+	idList<GraphNodePin> Outputs;
+	ImColor Color;
+	NodeType Type;
+	ImVec2 Size;
+
+	idStr State;
+	idStr SavedState;
+
+	idGraphNode* Owner;
+
+	bool FirstDraw;
+	GraphNode() :
+		ID(-1), Name("newNode"), Inputs(), Outputs(), Color(ImColor(255, 255, 255)), Type(NodeType::Tree), Size(0, 0), FirstDraw(true)
+	{
+	}
+	GraphNode(int id, const char* name, idGraphNode* owner = nullptr, ImColor color = ImColor(255, 255, 255)) :
+		ID(id), Name(name), Owner(owner), Color(color), Type(NodeType::Tree), Size(0, 0), FirstDraw(true)
+	{
+	}
+};
+
 class StateGraphEditor
 {
 public:
-	struct Node;
-	enum class PinType
-	{
-		Flow,
-		Bool,
-		Int,
-		Float,
-		String,
-		Object,
-		Function,
-		Delegate,
-	};
-	enum class PinKind
-	{
-		Output,
-		Input
-	};
-	enum class NodeType
-	{
-		AnimState,
-		Simple,
-		Tree,
-		Comment,
-		Houdini
-	};
-	struct Pin
-	{
-		ed::PinId   ID;
-		Node*		NodePtr;
-		std::string Name;
-		PinType     Type;
-		PinKind     Kind;
 
-		Pin() :
-			ID( -1 ), NodePtr( nullptr ), Name( "newPin" ), Type( PinType::Flow ), Kind( PinKind::Input )
-		{
-		}
-
-		Pin( int id, const char* name, PinType type, PinKind kind, Node* parent ) :
-			ID( id ), NodePtr( parent ), Name( name ), Type( type ), Kind( kind )
-		{
-		}
-	};
-	struct Node
-	{
-	public:
-		ed::NodeId ID;
-		idStr Name;
-		idList<Pin> Inputs;
-		idList<Pin> Outputs;
-		ImColor Color;
-		NodeType Type;
-		ImVec2 Size;
-
-		idStr State;
-		idStr SavedState;
-
-		idGraphNode* Owner;
-
-		bool FirstDraw;
-		Node() :
-			ID( -1 ), Name( "newNode" ), Inputs(), Outputs(), Color( ImColor( 255, 255, 255 ) ), Type( NodeType::Tree ), Size( 0, 0 ), FirstDraw( true )
-		{
-		}
-		Node( int id, const char* name, idGraphNode* owner = nullptr, ImColor color = ImColor( 255, 255, 255 ) ) :
-			ID( id ), Name( name ), Owner( owner ), Color( color ), Type( NodeType::Tree ), Size( 0, 0 ), FirstDraw( true )
-		{
-		}
-	};
 	struct Link
 	{
 		ed::LinkId ID;
@@ -148,14 +152,15 @@ public:
 	void							Draw();
 	static StateGraphEditor&		Instance();
 	static void						Enable( const idCmdArgs& args );
-
-	Node*		SpawnTreeSequenceNode();
-	const Link& GetLinkByID( ed::LinkId id );
-	const int	GetLinkIndexByID( ed::LinkId& id );
+	
+	GraphNode*						SpawnTreeSequenceNode();
+	const Link&						GetLinkByID( ed::LinkId id );
+	const int						GetLinkIndexByID( ed::LinkId& id );
+	void							ReadGraph(const idStateGraph* graph);
+	void							Clear();
 private:
 
-	void Handle_PlayerNodeEvents();
-	void Handle_PlayerNodeDraw( const Node& node );
+	void Handle_NodeEvents();
 	void DrawPlayer();
 	void GetAllStateThreads();
 
@@ -167,14 +172,12 @@ private:
 	int					nextElementId = 1;
 
 
-	idList<Node>		nodeList;
+	idList<GraphNode>	nodeList;
 	idList<Link>		linkList;
 
 	bool				isShown;
 
 	idGraphedEntity* graphEnt;
-
-	void DrawAnimNode( Node& node );
 };
 
 inline void StateGraphEditor::ShowIt( bool show )

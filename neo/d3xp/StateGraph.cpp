@@ -29,7 +29,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "Game_local.h"
-
+#include "tools/imgui/stateEditor/StateEditor.h"
 
 CLASS_DECLARATION( idClass, idStateGraph )
 END_CLASS
@@ -51,21 +51,56 @@ void idStateGraph::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL*/ )
 {
 	//First write all nodes and sockets.
 	//as last all socket connections;
-	if( file != NULL )
+	if( file != nullptr)
 	{
-		file->WriteInt( nodes.Num() );
+		file->WriteBig( nodes.Num() );
 
 		for (idGraphNode * node : nodes)
+		{
+			idTypeInfo* c = node->GetType();
+			file->WriteBig(c->typeNum);
+		}
+		
+		for (idGraphNode* node : nodes)
 		{
 			node->WriteBinary(file, _timeStamp);
 		}
 	}
 }
 
-idGraphNode* idStateGraph::AddNode(idGraphNode* node)
+bool idStateGraph::LoadBinary( idFile* file, const ID_TIME_T _timeStamp)
+{
+	if( file != nullptr )
+	{
+		int totalNodes;
+		file->ReadBig( totalNodes );
+
+		for (int i = 0; i < totalNodes; i++)
+		{
+			int typeNum;
+			file->ReadBig(typeNum);
+			auto* typeInfo = idClass::GetType(typeNum);
+			auto* newNode = CreateNode(static_cast<idGraphNode*>(typeInfo->CreateInstance()));
+			newNode->Setup();
+		}
+
+		for (auto* node : nodes)
+		{
+			if (!node->LoadBinary(file, _timeStamp))
+				return false;
+		}
+		
+		return true;
+	}
+	return false;
+}
+
+idGraphNode* idStateGraph::CreateNode(idGraphNode* node)
 {
 	node->graph = this;
-	return (nodes.Alloc() = node);
+	auto * retNode = nodes.Alloc() = node;
+	node->nodeIndex = nodes.Num() - 1;
+	return retNode;
 }
 
 idGraphNodeSocket::Link_t& idStateGraph::AddLink( idGraphNodeSocket& input, idGraphNodeSocket& output )
@@ -127,28 +162,154 @@ void idGraphNode::WriteBinary(idFile* file, ID_TIME_T* _timeStamp /*= NULL */)
 	if ( file )
 	{
 		assert(graph);
-		file->WriteBig(inputSockets.Num());
-		for (auto& socket : inputSockets)
-		{
-			//file->WriteBig(socket.connections.Num());
 
-			//for (auto* connSocket : socket.connections)
-			//{
-
-			//	//output socket index from parent node
-			//	connSocket->owner->outputSockets.IndexOf(connSocket);
-			//	//graph->nodes.IndexOf()
-			//}
-		}
-		file->WriteBig(outputSockets.Num());
-		for (int i = 0; i < outputSockets.Num(); i++)
+		static auto writeSockets =
+			[file](idList<idGraphNodeSocket>& socketList)
 		{
-			
-		}
-		file->WriteBigArray(inputSockets.Ptr(), inputSockets.Num());
-		file->WriteBig(outputSockets.Num());
-		file->WriteBigArray(outputSockets.Ptr(), outputSockets.Num());
+			file->WriteBig(socketList.Num());
+			for (auto& socket : socketList)
+			{
+				file->WriteBig(socket.connections.Num());
+
+				for (auto* connSocket : socket.connections)
+				{
+					assert(connSocket->nodeIndex >= 0);
+					assert(connSocket->socketIndex >= 0);					
+					file->WriteBig(connSocket->nodeIndex);
+					file->WriteBig(connSocket->socketIndex);
+				}
+			}
+		};
+
+		writeSockets(inputSockets);
+		writeSockets(outputSockets);
 	}	
+}
+
+bool idGraphNode::LoadBinary(idFile* file, const ID_TIME_T _timeStamp)
+{
+	if (file)
+	{
+		assert(graph);
+		static auto readSockets =
+			[file,this](idList<idGraphNodeSocket>& socketList,bool isInput)
+		{
+			int numSockets;
+			file->ReadBig(numSockets);
+			for (auto& socket : socketList)
+			{
+				socket.owner = this;
+				int numConnections;
+				file->ReadBig(numConnections);
+				socket.connections.AssureSize(numConnections);
+				for (auto& connSocket : socket.connections)
+				{
+					int nodeIndex;
+					file->ReadBig(nodeIndex);
+					assert(nodeIndex >= 0);
+					int socketIndex;
+					file->ReadBig(socketIndex);
+					assert(socketIndex >= 0);
+					if (isInput)
+						connSocket = &graph->nodes[nodeIndex]->outputSockets[socketIndex];
+					else
+						connSocket = &graph->nodes[nodeIndex]->inputSockets[socketIndex];
+				}
+			}
+		};
+
+		readSockets(inputSockets, true);
+		readSockets(outputSockets, false);
+	}
+	return true;
+}
+
+idGraphNodeSocket& idGraphNode::CreateSocket(idList<idGraphNodeSocket>& socketList)
+{
+	idGraphNodeSocket& ret = socketList.Alloc();
+	ret.socketIndex = socketList.Num() - 1;
+	ret.nodeIndex = this->nodeIndex;
+	ret.owner = this;
+	return ret;
+}
+
+
+//Move out of this file and only compile with editor tools.
+void idGraphNode::Draw(const ImGuiTools::GraphNode* nodePtr)
+{
+	auto& node = *nodePtr;
+	namespace ed = ax::NodeEditor;
+	using namespace ImGuiTools;
+
+	ed::BeginNode(node.ID);
+
+	int nodeWidth = 100;
+	ImGui::PushItemWidth(nodeWidth);
+	//ImGui::DragInt("drag int", &nodeWidth, 1);
+
+	ImGui::AlignTextToFramePadding();
+
+	if (auto* owner = node.Owner)
+	{
+		idStr nodeType = owner->GetName();
+
+		ImGui::Text(GetName());
+
+		int maxInputSockets = inputSockets.Num();
+		int maxOutputSockets = outputSockets.Num();
+		int maxSocket = idMath::Imax(maxInputSockets, maxOutputSockets);
+		int inputSocketIdx = 0, outputSocketIdx = 0;
+
+		const char* inputText = nullptr;
+		const char* outputText = nullptr;
+		for (int i = 0; i < maxSocket; i++)
+		{
+			//check for input;
+
+			if (inputSocketIdx <= maxInputSockets - 1)
+			{
+				inputText = owner->inputSockets[inputSocketIdx].name.c_str();
+				ed::BeginPin(node.Inputs[inputSocketIdx].ID, ed::PinKind::Input);
+				ImGui::Text(inputText);
+				ed::EndPin();
+				inputSocketIdx++;
+			}
+			else
+			{
+				ImGui::Text("");
+				inputText = "";
+			}
+			if (outputSocketIdx <= maxOutputSockets - 1)
+			{
+				outputText = owner->outputSockets[outputSocketIdx].name.c_str();
+				ImGui::SameLine();
+				ImGui::Dummy(ImVec2(idMath::Imax(nodeWidth - ImGui::CalcTextSize(outputText).x - ImGui::CalcTextSize(inputText).x, 0), 0));
+				ImGui::SameLine();
+				ed::BeginPin(node.Outputs[outputSocketIdx].ID, ed::PinKind::Output);
+				ImGui::Text(outputText);
+				ed::EndPin();
+				outputSocketIdx++;
+			}
+			else
+			{
+				outputText = nullptr;
+			}
+		}
+	}
+
+	ImGui::PopItemWidth();
+	ed::EndNode();
+
+}
+
+idGraphNodeSocket& idGraphNode::CreateInputSocket()
+{
+	return CreateSocket(inputSockets);
+}
+
+idGraphNodeSocket& idGraphNode::CreateOutputSocket()
+{
+	return CreateSocket(outputSockets);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -215,13 +376,37 @@ END_CLASS
 
 void idGraphedEntity::Spawn()
 {
-	stateThread.SetOwner( this );
-	auto* initNode		= graph.AddNode( new idGraphOnInitNode() );
-	//auto* bbStr			= graph.blackBoard.Alloc("State_Idle");
-	//auto * stateNode		= graph.AddNode(new idStateNode(this, (const char*)(bbStr)));
-	auto* stateNode		= graph.AddNode( new idStateNode( &stateThread, "State_Idle", idStateNode::NodeType::Set ) );
+	idStr graphFile = spawnArgs.GetString("graph", "");
 
-	graph.AddLink( initNode->outputSockets[0], stateNode->inputSockets[0] );
+	stateThread.SetOwner( this );
+	graph.targetStateThread = &stateThread;
+
+	if (graphFile.IsEmpty())
+	{
+		auto* initNode = graph.CreateNode(new idGraphOnInitNode());
+		initNode->Setup();
+
+		//auto* bbStr			= graph.blackBoard.Alloc("State_Idle");
+		//auto * stateNode		= graph.AddNode(new idStateNode(this, (const char*)(bbStr)));
+
+		auto* stateNode = static_cast<idStateNode*>(graph.CreateNode(new idStateNode()));
+		stateNode->stateThread = &stateThread;
+		stateNode->input_State = "State_Idle";
+		stateNode->type = idStateNode::NodeType::Set;
+		stateNode->Setup();
+
+		graph.AddLink(initNode->outputSockets[0], stateNode->inputSockets[0]);
+	}
+	else
+	{
+		idStr generatedFilename = "graphs/" + graphFile + ".bGrph";
+		idFileLocal inputFile(fileSystem->OpenFileRead(generatedFilename, "fs_basepath"));
+		if (inputFile)
+		{
+			graph.LoadBinary(inputFile, inputFile->Timestamp());
+		}
+
+	}
 
 	BecomeInactive( TH_THINK );
 }
@@ -236,8 +421,11 @@ void idGraphedEntity::SharedThink()
 
 void idGraphedEntity::Think()
 {
-	idEntity::Think();
-	stateThread.Execute();
+	if (thinkFlags & TH_THINK)
+	{
+		idEntity::Think();
+		stateThread.Execute();
+	}
 }
 
 stateResult_t idGraphedEntity::State_Idle( stateParms_t* parms )

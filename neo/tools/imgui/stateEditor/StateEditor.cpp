@@ -36,6 +36,8 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "../d3xp/Game_local.h"
 #include "../extern/imgui-node-editor/imgui_node_editor.h"
+#include "../d3xp/StateGraph.h"
+
 namespace ed = ax::NodeEditor;
 namespace ImGuiTools
 {
@@ -67,13 +69,13 @@ StateGraphEditor::StateGraphEditor()
 
 }
 
-ImGuiTools::StateGraphEditor::Node* StateGraphEditor::SpawnTreeSequenceNode()
+ImGuiTools::GraphNode* StateGraphEditor::SpawnTreeSequenceNode()
 {
-	Node& newNode = nodeList.Alloc() = { nextElementId++, "Sequence" };
+	GraphNode& newNode = nodeList.Alloc() = { nextElementId++, "Sequence" };
 	newNode.Type = NodeType::Tree;
 
-	Pin& newInput = newNode.Inputs.Alloc() = { nextElementId++, "IN", PinType::Flow , PinKind::Input , &newNode };
-	Pin& newOutput = newNode.Outputs.Alloc() = { nextElementId++, "OUT", PinType::Flow , PinKind::Output, &newNode };
+	GraphNodePin& newInput = newNode.Inputs.Alloc() = { nextElementId++, "IN", PinType::Flow , PinKind::Input , &newNode };
+	GraphNodePin& newOutput = newNode.Outputs.Alloc() = { nextElementId++, "OUT", PinType::Flow , PinKind::Output, &newNode };
 
 	//BuildNode(&m_Nodes.back());
 	return &newNode;
@@ -92,6 +94,36 @@ const int StateGraphEditor::GetLinkIndexByID( ed::LinkId& id )
 	}
 	return index;
 }
+
+void StateGraphEditor::ReadGraph(const idStateGraph* graph)
+{
+	for (auto node : graph->nodes)
+	{
+		auto& newNode = nodeList.Alloc() = { nextElementId++, node->GetName(), node };
+		newNode.Type = NodeType::AnimState;
+		for (auto& socket : node->inputSockets)
+		{
+			auto& newPin = newNode.Inputs.Alloc() = { nextElementId++, socket.name, PinType::Flow , PinKind::Input , &newNode };
+		}
+		for (auto& socket : node->outputSockets)
+		{
+			newNode.Outputs.Alloc() = { nextElementId++, socket.name, PinType::Flow , PinKind::Output, &newNode };
+		}
+	}
+	for (idGraphNodeSocket::Link_t& link : graph->links)
+	{
+		auto& outputNode = nodeList[link.start->nodeIndex];
+		auto& inputNode = nodeList[link.end->nodeIndex];
+		Link& newLink = linkList.Alloc() = { ed::LinkId(nextElementId++), outputNode.Outputs[link.start->socketIndex].ID, inputNode.Inputs[link.end->socketIndex].ID };
+	}
+}
+
+void StateGraphEditor::Clear()
+{
+	nodeList.Clear();
+	linkList.Clear();
+}
+
 const ImGuiTools::StateGraphEditor::Link& StateGraphEditor::GetLinkByID( ed::LinkId id )
 {
 	for( auto& link : linkList )
@@ -135,6 +167,7 @@ void StateGraphEditor::Init()
 	config.SettingsFile = "Simple.json";
 	EditorContext = ed::CreateEditor();
 }
+
 void StateGraphEditor::DrawPlayer()
 {
 	auto& io = ImGui::GetIO();
@@ -164,24 +197,7 @@ void StateGraphEditor::DrawPlayer()
 			{
 				graphEnt = static_cast<idGraphedEntity*>( gameLocal.SpawnEntityType( idGraphedEntity::Type, NULL ) );
 				graphEnt->PostEventMS( &EV_Activate, 0, graphEnt );
-
-				for( auto node : graphEnt->graph.nodes )
-				{
-					Node& newNode = nodeList.Alloc() = { nextElementId++, node->GetName(), node };
-					newNode.Type = NodeType::AnimState;
-					for( auto& socket : node->inputSockets )
-					{
-						Pin& newPin = newNode.Inputs.Alloc() = { nextElementId++, socket.name, PinType::Flow , PinKind::Input , &newNode };
-					}
-					for( auto& socket : node->outputSockets )
-					{
-						newNode.Outputs.Alloc() = { nextElementId++, socket.name, PinType::Flow , PinKind::Output, &newNode };
-					}
-				}
-				for (auto& link : graphEnt->graph.links)
-				{
-
-				}
+				ReadGraph(&graphEnt->graph);
 			}
 		}
 		ImGui::SameLine();
@@ -192,6 +208,22 @@ void StateGraphEditor::DrawPlayer()
 				idFileLocal outputFile(fileSystem->OpenFileWrite("graphs/graphBin.bGrph", "fs_basepath"));
 				graphEnt->graph.WriteBinary(outputFile);
 			}
+		}
+		if (ImGui::Button("Load Graph Bin"))
+		{
+			if (!graphEnt)
+			{
+				idDict args;
+				args.Set("graph", "graphBin");
+				graphEnt = static_cast<idGraphedEntity*>(gameLocal.SpawnEntityType(idGraphedEntity::Type, &args));
+				graphEnt->PostEventMS(&EV_Activate, 0, graphEnt);
+				ReadGraph(&graphEnt->graph);
+			}
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Clear Graph"))
+		{
+			Clear();
 		}
 		static float leftPaneWidth = 400.0f;
 		static float rightPaneWidth = 800.0f;
@@ -204,23 +236,7 @@ void StateGraphEditor::DrawPlayer()
 
 		for( auto& node : nodeList )
 		{
-			switch( node.Type )
-			{
-				default:
-					Handle_PlayerNodeDraw( node );
-					break;
-				case NodeType::AnimState:
-					DrawAnimNode( node );
-					break;
-					//case NodeType::Simple:
-					//	break;
-					//case NodeType::Tree:
-					//	break;
-					//case NodeType::Comment:
-					break;
-					//case NodeType::Houdini:
-					//	break;
-			}
+			node.Owner->Draw(&node);
 		}
 
 		for( auto& link : linkList )
@@ -228,7 +244,7 @@ void StateGraphEditor::DrawPlayer()
 			ed::Link( link.ID, link.StartPinID, link.EndPinID, link.Color );
 		}
 
-		Handle_PlayerNodeEvents();
+		Handle_NodeEvents();
 
 		ed::End();
 		ImGui::EndChild();
@@ -525,73 +541,7 @@ void StateGraphEditor::DrawLeftPane( float paneWidth )
 	SameLine();
 }
 
-void StateGraphEditor::DrawAnimNode( Node& node )
-{
-	auto plot_id = nextElementId++;
-
-	ed::BeginNode( plot_id );
-
-	int nodeWidth = 100;
-	ImGui::PushItemWidth( nodeWidth );
-	//ImGui::DragInt("drag int", &nodeWidth, 1);
-
-	ImGui::AlignTextToFramePadding();
-
-	if( auto* owner = node.Owner )
-	{
-		idStr nodeType = owner->GetName();
-
-		ImGui::Text( owner->GetName() );
-
-		int maxInputSockets = owner->inputSockets.Num();
-		int maxOutputSockets = owner->outputSockets.Num();
-		int maxSocket = idMath::Imax( maxInputSockets, maxOutputSockets );
-		int inputSocketIdx = 0, outputSocketIdx = 0;
-
-
-		const char* inputText = nullptr;
-		const char* outputText = nullptr;
-		for( int i = 0; i < maxSocket; i++ )
-		{
-			//check for input;
-
-			if( inputSocketIdx <= maxInputSockets - 1 )
-			{
-				inputText = owner->inputSockets[inputSocketIdx].name.c_str();
-				ed::BeginPin( nextElementId++, ed::PinKind::Input );
-				ImGui::Text( inputText );
-				ed::EndPin();
-				inputSocketIdx++;
-			}
-			else
-			{
-				ImGui::Text( "" );
-				inputText = "";
-			}
-			if( outputSocketIdx <= maxOutputSockets - 1 )
-			{
-				outputText = owner->outputSockets[outputSocketIdx].name.c_str();
-				ImGui::SameLine();
-				ImGui::Dummy( ImVec2( idMath::Imax( nodeWidth - ImGui::CalcTextSize( outputText ).x - ImGui::CalcTextSize( inputText ).x, 0 ), 0 ) );
-				ImGui::SameLine();
-				ed::BeginPin( nextElementId++, ed::PinKind::Output );
-				ImGui::Text( outputText );
-				ed::EndPin();
-				outputSocketIdx++;
-			}
-			else
-			{
-				outputText = nullptr;
-			}
-		}
-		node.FirstDraw = false;
-	}
-
-	ImGui::PopItemWidth();
-	ed::EndNode();
-}
-
-void StateGraphEditor::Handle_PlayerNodeEvents()
+void StateGraphEditor::Handle_NodeEvents()
 {
 	// Handle creation action, returns true if editor want to create new object (node or link)
 	if( ed::BeginCreate() )
@@ -649,51 +599,4 @@ void StateGraphEditor::Handle_PlayerNodeEvents()
 	}
 	ed::EndDelete(); // Wrap up deletion action
 }
-void StateGraphEditor::Handle_PlayerNodeDraw( const Node& node )
-{
-	const float rounding = 5.0f;
-	const float padding = 12.0f;
-
-	const auto pinBackground = ed::GetStyle().Colors[ed::StyleColor_NodeBg];
-
-	ed::PushStyleColor( ed::StyleColor_NodeBg, ImColor( 128, 128, 128, 200 ) );
-	ed::PushStyleColor( ed::StyleColor_NodeBorder, ImColor( 32, 32, 32, 200 ) );
-	ed::PushStyleColor( ed::StyleColor_PinRect, ImColor( 60, 180, 255, 150 ) );
-	ed::PushStyleColor( ed::StyleColor_PinRectBorder, ImColor( 60, 180, 255, 150 ) );
-
-	ed::PushStyleVar( ed::StyleVar_NodePadding, ImVec4( 0, 0, 0, 0 ) );
-	ed::PushStyleVar( ed::StyleVar_NodeRounding, rounding );
-	ed::PushStyleVar( ed::StyleVar_SourceDirection, ImVec2( 0.0f, 1.0f ) );
-	ed::PushStyleVar( ed::StyleVar_TargetDirection, ImVec2( 0.0f, -1.0f ) );
-	ed::PushStyleVar( ed::StyleVar_LinkStrength, 0.0f );
-	ed::PushStyleVar( ed::StyleVar_PinBorderWidth, 1.0f );
-	ed::PushStyleVar( ed::StyleVar_PinRadius, 5.0f );
-
-
-	for( auto& node : nodeList )
-	{
-		auto drawList = ed::GetNodeBackgroundDrawList( node.ID );
-
-		ed::BeginNode( node.ID );
-		ImGui::Text( node.Name );
-
-		for( auto& pin : node.Inputs )
-		{
-			ed::BeginPin( pin.ID, ed::PinKind::Input );
-			ImGui::Text( pin.Name.c_str() );
-			ed::EndPin();
-		}
-
-		ImGui::SameLine();
-		for( auto& pin : node.Outputs )
-		{
-			ed::BeginPin( pin.ID, ed::PinKind::Output );
-			ImGui::Text( pin.Name.c_str() );
-			ed::EndPin();
-		}
-
-		ed::EndNode();
-	}
-}
-
 }
