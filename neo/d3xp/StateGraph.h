@@ -26,8 +26,8 @@ If you have questions concerning this license or the applicable additional terms
 ===========================================================================
 */
 
-#ifndef __SYS_STATE_GRAPH_H__
-#define __SYS_STATE_GRAPH_H__
+#ifndef __GAME_STATE_GRAPH_H__
+#define __GAME_STATE_GRAPH_H__
 
 #include "d3xp/Game_local.h"
 
@@ -67,7 +67,6 @@ class idGraphNode;
 class idGraphNodeSocket
 {
 public:
-
 	//////////////////////////////////////////////////////////////////////////
 	//should only be used in editor
 	typedef struct
@@ -76,9 +75,10 @@ public:
 		idGraphNodeSocket* end;
 	} Link_t;
 	//////////////////////////////////////////////////////////////////////////
-	idGraphNodeSocket() : owner( nullptr ), var( nullptr ), active( false ), name( "" ), socketIndex(-1){}
+	idGraphNodeSocket() : owner( nullptr ), var( nullptr ), active( false ), name( "" ), socketIndex(-1),nodeIndex(-1){}
 	idList<idGraphNodeSocket*> connections;
 	idGraphNode* owner;
+	//HVG_FIXME ; var is leaking!
 	idScriptVariableBase* var;
 	bool active;
 	idStr name;
@@ -101,7 +101,8 @@ public:
 
 	//should only be used in editor.
 	virtual void Draw(const ImGuiTools::GraphNode* node);
-	
+	virtual idVec4 NodeTitleBarColor();
+
 	idGraphNodeSocket& CreateInputSocket();
 	idGraphNodeSocket& CreateOutputSocket();
 	bool HasActiveSocket();
@@ -123,27 +124,9 @@ public:
 
 	CLASS_PROTOTYPE( idStateGraph );
 
-	idStateGraph( idClass* targetClass = nullptr, rvStateThread* targetState = nullptr )
-		: stateThread( ( targetState && targetClass ) ? targetState : new rvStateThread() )
-		, owner( ( targetState && targetClass ) ? targetClass : nullptr )
-	{
-		if( owner )
-		{
-			stateThread->SetOwner( owner );
-		}
-		else if( targetState )
-		{
-			stateThread->SetOwner( this );
-		}
-	};
+	idStateGraph( idClass* targetClass = nullptr, rvStateThread* targetState = nullptr );;
 
-	~idStateGraph()
-	{
-		if( owner )
-		{
-			delete stateThread;
-		}
-	}
+	~idStateGraph();
 	virtual void	SharedThink();
 
 	void			ConvertScriptObject( idScriptObject* scriptObject );
@@ -154,7 +137,7 @@ public:
 	idGraphNodeSocket::Link_t&			AddLink( idGraphNodeSocket& input, idGraphNodeSocket& output );
 	stateResult_t						State_Update( stateParms_t* parms );
 	stateResult_t						State_Exec( stateParms_t* parms );
-
+	void								Clear();
 	idClass* 		owner;
 	rvStateThread*  targetStateThread;
 	idBlackBoard	blackBoard;

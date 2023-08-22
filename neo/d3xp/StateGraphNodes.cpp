@@ -31,6 +31,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "Game_local.h"
 #include "d3xp/StateGraphNodes.h"
+#include "imgui.h"
 
 
 CLASS_DECLARATION(idGraphNode, idStateNode)
@@ -99,8 +100,7 @@ void idStateNode::Setup()
 
 	newInput = &CreateInputSocket();
 	newInput->name = "State";
-	newInput->var = new idScriptString((void*)input_State.c_str());
-
+	newInput->var = new idScriptStrRef((void*)&input_State);
 	idGraphNodeSocket& newOutput = CreateOutputSocket();
 	newOutput.name = "Result";
 	newOutput.var = new idScriptInt((void*)output_Result);
@@ -141,4 +141,9 @@ void idGraphOnInitNode::Setup()
 	newOutput.active = true;
 	newOutput.name = "Initialize";
 	done = false;
+}
+
+idVec4 idGraphOnInitNode::NodeTitleBarColor()
+{
+	return idVec4(1, 0, 1, 1);
 }

@@ -311,6 +311,7 @@ typedef idScriptVariable<float, ev_float, float>			idScriptFloat;
 typedef idScriptVariable<float, ev_float, int>				idScriptInt;
 typedef idScriptVariable<idVec3, ev_vector, idVec3>			idScriptVector;
 typedef idScriptVariable<idStr, ev_string, const char*>		idScriptString;
+typedef idScriptVariable<idStr, ev_string, idStr&&>			idScriptStrRef;
 
 typedef struct
 {

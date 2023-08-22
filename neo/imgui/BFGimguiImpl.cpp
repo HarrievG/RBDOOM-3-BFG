@@ -69,6 +69,33 @@ bool ImGui::DragVec3fitLabel( const char* label, idVec3& v, float v_speed,
 	return ImGui::DragVec3( label, v, v_speed, v_min, v_max, display_format, power, false );
 }
 
+void ImGui::ImScriptVariable(const idScriptVariableInstance_t& scriptVar)
+{
+	etype_t t;
+	scriptVar.scriptVariable->GetType(t);
+	auto& io = ImGui::GetIO();
+
+	switch (t)
+	{
+	case ev_vector:
+		ImGui::DragFloat3(scriptVar.varName, (float*)((idScriptVector*)(scriptVar.scriptVariable))->GetData());
+		break;
+	case ev_string:
+		{ idStr&& txt = *(idScriptStrRef*)(scriptVar.scriptVariable);
+		ImGui::InputText(scriptVar.varName, &txt); }
+		break;
+	case ev_float:
+		ImGui::DragFloat(scriptVar.varName, (float*)((idScriptFloat*)(scriptVar.scriptVariable))->GetData());
+		break;
+	case ev_boolean:
+		ImGui::Checkbox(scriptVar.varName, (bool*)((idScriptBool*)(scriptVar.scriptVariable))->GetData());
+		break;
+	default:
+		ImGui::Text(scriptVar.varName);
+		break;
+	}
+}
+
 // the ImGui hooks to integrate it into the engine
 
 

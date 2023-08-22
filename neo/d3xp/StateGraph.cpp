@@ -30,10 +30,38 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "Game_local.h"
 #include "tools/imgui/stateEditor/StateEditor.h"
+#include "imgui/BFGimgui.h"
 
 CLASS_DECLARATION( idClass, idStateGraph )
 END_CLASS
 
+
+idStateGraph::idStateGraph(idClass* targetClass /*= nullptr*/, rvStateThread* targetState /*= nullptr */) : stateThread((targetState&& targetClass) ? targetState : new rvStateThread())
+, owner((targetState&& targetClass) ? targetClass : nullptr)
+{
+	if (owner)
+	{
+		stateThread->SetOwner(owner);
+	}
+	else if (targetState)
+	{
+		stateThread->SetOwner(this);
+	}
+}
+
+idStateGraph::~idStateGraph()
+{
+	if (owner)
+	{
+		delete stateThread;
+	}
+}
+
+void idStateGraph::Clear()
+{
+	nodes.Clear();
+	links.Clear();
+}
 void idStateGraph::SharedThink()
 {
 	if( !owner )
@@ -65,16 +93,26 @@ void idStateGraph::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL*/ )
 		{
 			node->WriteBinary(file, _timeStamp);
 		}
+
+		file->WriteBig(links.Num());
+		for (idGraphNodeSocket::Link_t& link : links)
+		{
+			file->WriteBig(link.start->nodeIndex);
+			file->WriteBig(link.start->socketIndex);
+			file->WriteBig(link.end->nodeIndex);
+			file->WriteBig(link.end->socketIndex);
+		}
 	}
 }
 
 bool idStateGraph::LoadBinary( idFile* file, const ID_TIME_T _timeStamp)
 {
+	Clear();
 	if( file != nullptr )
 	{
 		int totalNodes;
 		file->ReadBig( totalNodes );
-
+		//create nodes
 		for (int i = 0; i < totalNodes; i++)
 		{
 			int typeNum;
@@ -83,13 +121,25 @@ bool idStateGraph::LoadBinary( idFile* file, const ID_TIME_T _timeStamp)
 			auto* newNode = CreateNode(static_cast<idGraphNode*>(typeInfo->CreateInstance()));
 			newNode->Setup();
 		}
-
+		//load data
 		for (auto* node : nodes)
 		{
 			if (!node->LoadBinary(file, _timeStamp))
 				return false;
 		}
-		
+
+		int totalLinks;
+		file->ReadBig(totalLinks);
+		for (int i = 0; i < totalLinks; i++)
+		{
+			int startIdx, endIdx;
+			int startSocketIdx, endSocketIdx;
+			file->ReadBig(startIdx);
+			file->ReadBig(startSocketIdx);
+			file->ReadBig(endIdx);
+			file->ReadBig(endSocketIdx);
+			links.Alloc() = { &nodes[startIdx]->outputSockets[startSocketIdx],&nodes[endIdx]->inputSockets[endSocketIdx] };
+		}
 		return true;
 	}
 	return false;
@@ -173,6 +223,7 @@ void idGraphNode::WriteBinary(idFile* file, ID_TIME_T* _timeStamp /*= NULL */)
 
 				for (auto* connSocket : socket.connections)
 				{
+					file->WriteString(connSocket->name);
 					assert(connSocket->nodeIndex >= 0);
 					assert(connSocket->socketIndex >= 0);					
 					file->WriteBig(connSocket->nodeIndex);
@@ -204,6 +255,8 @@ bool idGraphNode::LoadBinary(idFile* file, const ID_TIME_T _timeStamp)
 				socket.connections.AssureSize(numConnections);
 				for (auto& connSocket : socket.connections)
 				{
+					idStr name;
+					file->ReadString(name);
 					int nodeIndex;
 					file->ReadBig(nodeIndex);
 					assert(nodeIndex >= 0);
@@ -214,6 +267,7 @@ bool idGraphNode::LoadBinary(idFile* file, const ID_TIME_T _timeStamp)
 						connSocket = &graph->nodes[nodeIndex]->outputSockets[socketIndex];
 					else
 						connSocket = &graph->nodes[nodeIndex]->inputSockets[socketIndex];
+					connSocket->name = name;
 				}
 			}
 		};
@@ -241,7 +295,9 @@ void idGraphNode::Draw(const ImGuiTools::GraphNode* nodePtr)
 	namespace ed = ax::NodeEditor;
 	using namespace ImGuiTools;
 
+
 	ed::BeginNode(node.ID);
+
 
 	int nodeWidth = 100;
 	ImGui::PushItemWidth(nodeWidth);
@@ -253,7 +309,28 @@ void idGraphNode::Draw(const ImGuiTools::GraphNode* nodePtr)
 	{
 		idStr nodeType = owner->GetName();
 
-		ImGui::Text(GetName());
+		ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
+
+#if IMGUI_VERSION_NUM > 18101
+		const auto allRoundCornersFlags = ImDrawFlags_RoundCornersAll;
+		const auto topRoundCornersFlags = ImDrawFlags_RoundCornersTop;
+#else
+		const auto allRoundCornersFlags = 15;
+		const auto topRoundCornersFlags = 3;
+
+#endif
+		idVec4 color = NodeTitleBarColor();
+		ImColor titleBarColor = { color.x,color.y,color.z,color.w };
+		const char* titleText = GetName();
+		ImVec2 textbb = ImGui::CalcTextSize(titleText, NULL, true);
+		float barWidth = idMath::Imax(ImGui::GetStyle().ItemInnerSpacing.x + textbb.x + ImGui::GetStyle().ItemInnerSpacing.x, nodeWidth);
+		ImGui::GetWindowDrawList()->AddRectFilled(
+			ImVec2(cursorScreenPos.x - 4 - ImGui::GetStyle().ItemInnerSpacing.x, cursorScreenPos.y - ImGui::GetStyle().ItemInnerSpacing.y - 4),
+			ImVec2(cursorScreenPos.x + barWidth + 24, cursorScreenPos.y + ImGui::GetTextLineHeight() + 4),
+			titleBarColor, 12, topRoundCornersFlags);
+
+		ImGui::Dummy(ImVec2(barWidth - 4 - ImGui::GetStyle().ItemInnerSpacing.x, 0));
+		ImGui::GetWindowDrawList()->AddText(cursorScreenPos, ImColor(50.0f, 45.0f, 255.0f, 255.0f), titleText);
 
 		int maxInputSockets = inputSockets.Num();
 		int maxOutputSockets = outputSockets.Num();
@@ -266,11 +343,19 @@ void idGraphNode::Draw(const ImGuiTools::GraphNode* nodePtr)
 		{
 			//check for input;
 
+
 			if (inputSocketIdx <= maxInputSockets - 1)
 			{
-				inputText = owner->inputSockets[inputSocketIdx].name.c_str();
+				idGraphNodeSocket& ownerSocket = owner->inputSockets[inputSocketIdx];
 				ed::BeginPin(node.Inputs[inputSocketIdx].ID, ed::PinKind::Input);
-				ImGui::Text(inputText);
+				if (ownerSocket.var)
+				{
+					ImGui::ImScriptVariable({ ownerSocket.name.c_str(),"",ownerSocket.var });
+				}
+				else
+				{
+					ImGui::Text(ownerSocket.name.c_str());
+				}
 				ed::EndPin();
 				inputSocketIdx++;
 			}
@@ -283,7 +368,7 @@ void idGraphNode::Draw(const ImGuiTools::GraphNode* nodePtr)
 			{
 				outputText = owner->outputSockets[outputSocketIdx].name.c_str();
 				ImGui::SameLine();
-				ImGui::Dummy(ImVec2(idMath::Imax(nodeWidth - ImGui::CalcTextSize(outputText).x - ImGui::CalcTextSize(inputText).x, 0), 0));
+				ImGui::Dummy(ImVec2(idMath::Imax(barWidth - ImGui::CalcTextSize(outputText).x - ImGui::CalcTextSize(inputText).x, 0), 0));
 				ImGui::SameLine();
 				ed::BeginPin(node.Outputs[outputSocketIdx].ID, ed::PinKind::Output);
 				ImGui::Text(outputText);
@@ -300,6 +385,13 @@ void idGraphNode::Draw(const ImGuiTools::GraphNode* nodePtr)
 	ImGui::PopItemWidth();
 	ed::EndNode();
 
+}
+
+idVec4 idGraphNode::NodeTitleBarColor()
+{
+	ImVec4 color = ImGui::GetStyle().Colors[ImGuiCol_HeaderActive];
+	return idVec4(color.x, color.y, color.z, color.w);
+	//return idVec4(color.Value.x, color.Value.y, color.Value.z, color.Value.w) / 255.0f;
 }
 
 idGraphNodeSocket& idGraphNode::CreateInputSocket()

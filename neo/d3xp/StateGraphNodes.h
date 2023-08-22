@@ -26,12 +26,11 @@ If you have questions concerning this license or the applicable additional terms
 ===========================================================================
 */
 
-#ifndef __SYS_STATE_GRAPH_NODES_H__
-#define __SYS_STATE_GRAPH_NODES_H__
+#ifndef __GAME_STATE_GRAPH_NODES_H__
+#define __GAME_STATE_GRAPH_NODES_H__
 
 #include "d3xp/Game_local.h"
 #include "d3xp/StateGraph.h"
-
 
 class idStateNode : public idGraphNode
 {
@@ -102,6 +101,9 @@ public:
 	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL ) override;
 	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp) override;
 	void Setup() override;
+
+	idVec4 NodeTitleBarColor() override;
+
 private:
 	bool done;
 };
