@@ -85,12 +85,24 @@ public:
 	int socketIndex;
 	int nodeIndex;
 };
-
 class idStateGraph;
+class GraphState
+{
+	friend class idStateGraph;
+public:
+	idList<idGraphNode*> nodes;
+	idList<idGraphNode*> activeNodes;
+	//should only be used in editor.
+	idList<idGraphNodeSocket::Link_t>  links;
+	idClass* owner;
+	rvStateThread* targetStateThread;
+protected:
+	rvStateThread* stateThread;
+};
+
 class idGraphNode : public idClass
 {
 public:
-
 	ABSTRACT_PROTOTYPE(idGraphNode);
 
 	virtual stateResult_t Exec( stateParms_t* parms ) = 0;
@@ -110,21 +122,23 @@ public:
 	void DeactivateInputs();
 	idList<idGraphNodeSocket> inputSockets;
 	idList<idGraphNodeSocket> outputSockets;
-	idStateGraph* graph;
+	GraphState* graph;
 	int nodeIndex;
 
 private:
 	idGraphNodeSocket& CreateSocket(idList<idGraphNodeSocket>& socketList);
 };
 
+
 class idStateGraph : public idClass
 {
 public:
+
 	friend class idStateEditor;
 
 	CLASS_PROTOTYPE( idStateGraph );
 
-	idStateGraph( idClass* targetClass = nullptr, rvStateThread* targetState = nullptr );;
+	idStateGraph();
 
 	~idStateGraph();
 	virtual void	SharedThink();
@@ -137,19 +151,21 @@ public:
 	idGraphNodeSocket::Link_t&			AddLink( idGraphNodeSocket& input, idGraphNodeSocket& output );
 	stateResult_t						State_Update( stateParms_t* parms );
 	stateResult_t						State_Exec( stateParms_t* parms );
+
+	stateResult_t						State_LocalExec(stateParms_t* parms);
+	int									GetLocalState(const char * newStateName);
+	idGraphNode*						AddLocalStateNode(const char* stateName, idGraphNode* node);
 	void								Clear();
-	idClass* 		owner;
-	rvStateThread*  targetStateThread;
+
 	idBlackBoard	blackBoard;
 
-	idList<idGraphNode*> nodes;
-	idList<idGraphNode*> activeNodes;
-	//should only be used in editor.
-	idList<idGraphNodeSocket::Link_t>  links;
-
+	idStrList						localStates;
+	idHashIndex						localStateHash;
+	idList<GraphState>				localGraphState;
 private:
-	rvStateThread* stateThread;
+	
 };
+
 //Testcase for idStateGraph[editor]
 class idGraphedEntity : public idEntity
 {

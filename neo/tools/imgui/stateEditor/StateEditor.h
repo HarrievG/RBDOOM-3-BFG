@@ -156,12 +156,13 @@ public:
 	GraphNode*						SpawnTreeSequenceNode();
 	const Link&						GetLinkByID( ed::LinkId id );
 	const int						GetLinkIndexByID( ed::LinkId& id );
-	void							ReadGraph(const idStateGraph* graph);
+	void							ReadGraph(const GraphState* graph);
 	void							Clear();
 private:
 
 	void Handle_NodeEvents();
-	void DrawPlayer();
+	void DrawGraphEntityTest();
+	void DrawMapGraph();
 	void GetAllStateThreads();
 
 	void DrawLeftPane( float paneWidth );

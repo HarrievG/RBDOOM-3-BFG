@@ -489,7 +489,8 @@ idEntity::idEntity():
 	predictionKey( INVALID_PREDICTION_KEY ),
 	originDelta( vec3_zero ),
 	axisDelta( mat3_identity ),
-	interpolationBehavior( USE_NO_INTERPOLATION )
+	interpolationBehavior( USE_NO_INTERPOLATION ),
+	graphObject(nullptr)
 {
 
 	entityNumber	= ENTITYNUM_NONE;
@@ -572,6 +573,8 @@ void idEntity::Spawn()
 	const idKeyValue*	networkSync;
 	const char*			classname;
 	const char*			scriptObjectName;
+	const char*			graphObjectName;
+
 
 	gameLocal.RegisterEntity( this, -1, gameLocal.GetSpawnArgs() );
 
@@ -730,6 +733,19 @@ void idEntity::Spawn()
 		}
 
 		ConstructScriptObject();
+	}
+
+	if (spawnArgs.GetString("graphObject", NULL, &graphObjectName))
+	{
+		graphObject = new idStateGraph();
+		graphStateThread.SetOwner(this);
+		graphObject->localGraphState[0].targetStateThread = &graphStateThread;
+		idStr generatedFilename = idStr("graphs/") + graphObjectName + ".bGrph";
+		idFileLocal inputFile(fileSystem->OpenFileRead(generatedFilename, "fs_basepath"));
+		if (inputFile)
+		{
+			graphObject->LoadBinary(inputFile, inputFile->Timestamp());
+		}
 	}
 
 	// determine time group
@@ -1030,6 +1046,10 @@ void idEntity::Think()
 {
 	RunPhysics();
 	Present();
+	if (graphObject)
+	{
+		graphStateThread.Execute();
+	}
 }
 
 /*
@@ -1917,6 +1937,17 @@ renderView_t* idEntity::GetRenderView()
 	renderView->time[1] = gameLocal.fast.time;
 
 	return renderView;
+}
+
+void idEntity::SharedThink()
+{
+	if (thinkFlags & TH_THINK)
+	{
+		if (graphObject)
+		{
+			graphObject->SharedThink();
+		}
+	}
 }
 
 /***********************************************************************
@@ -6467,6 +6498,10 @@ void idAnimatedEntity::Think()
 {
 	RunPhysics();
 	UpdateAnimation();
+	if (graphObject)
+	{
+		graphStateThread.Execute();
+	}
 	Present();
 	UpdateDamageEffects();
 }

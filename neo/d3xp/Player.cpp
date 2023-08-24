@@ -9078,6 +9078,10 @@ void idPlayer::Think()
 		// update player script
 		UpdateScript();
 
+		if (graphObject)
+		{
+			graphStateThread.Execute();
+		}
 		// service animations
 		if( !spectating && !af.IsActive() && !gameLocal.inCinematic )
 		{

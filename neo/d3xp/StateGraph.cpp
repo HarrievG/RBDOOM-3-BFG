@@ -36,47 +36,46 @@ CLASS_DECLARATION( idClass, idStateGraph )
 END_CLASS
 
 
-idStateGraph::idStateGraph(idClass* targetClass /*= nullptr*/, rvStateThread* targetState /*= nullptr */) : stateThread((targetState&& targetClass) ? targetState : new rvStateThread())
-, owner((targetState&& targetClass) ? targetClass : nullptr)
-{
-	if (owner)
-	{
-		stateThread->SetOwner(owner);
-	}
-	else if (targetState)
-	{
-		stateThread->SetOwner(this);
-	}
+idStateGraph::idStateGraph() 
+{	
+	GetLocalState("GRAPH_MAIN");
+	localGraphState[0].stateThread = new rvStateThread();
+	localGraphState[0].owner = nullptr;
 }
 
 idStateGraph::~idStateGraph()
 {
-	if (owner)
+	if (!localGraphState[0].owner)
 	{
-		delete stateThread;
+		delete localGraphState[0].stateThread;
 	}
 }
 
 void idStateGraph::Clear()
 {
-	nodes.Clear();
-	links.Clear();
+	//nodes.Clear();
+	//links.Clear();
 }
 void idStateGraph::SharedThink()
 {
-	if( !owner )
+	auto& graph = localGraphState[0];
+	if( !graph.owner)
 	{
-		stateThread->SetOwner( this );
-		if( stateThread->IsIdle() )
+		graph.stateThread->SetOwner( this );
+		if(	graph.stateThread->IsIdle() )
 		{
-			stateThread->SetState( "State_Update" );
+			graph.stateThread->SetState( "State_Update" );
 		}
-		stateThread->Execute();
+		graph.stateThread->Execute();
 	}
 }
 
 void idStateGraph::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL*/ )
 {
+	auto& currentGraphState = localGraphState[0];
+	auto& nodes = currentGraphState.nodes;
+	auto& links = currentGraphState.links;
+
 	//First write all nodes and sockets.
 	//as last all socket connections;
 	if( file != nullptr)
@@ -110,6 +109,10 @@ bool idStateGraph::LoadBinary( idFile* file, const ID_TIME_T _timeStamp)
 	Clear();
 	if( file != nullptr )
 	{
+		auto& currentGraphState = localGraphState[0];
+		auto& nodes = currentGraphState.nodes;
+		auto& links = currentGraphState.links;
+
 		int totalNodes;
 		file->ReadBig( totalNodes );
 		//create nodes
@@ -147,15 +150,19 @@ bool idStateGraph::LoadBinary( idFile* file, const ID_TIME_T _timeStamp)
 
 idGraphNode* idStateGraph::CreateNode(idGraphNode* node)
 {
-	node->graph = this;
-	auto * retNode = nodes.Alloc() = node;
-	node->nodeIndex = nodes.Num() - 1;
-	return retNode;
+	return AddLocalStateNode("GRAPH_MAIN", node);
+	//
+	//node->graph = this;
+	//auto * retNode = nodes.Alloc() = node;
+	//node->nodeIndex = nodes.Num() - 1;
+	//return retNode;
 }
 
 idGraphNodeSocket::Link_t& idStateGraph::AddLink( idGraphNodeSocket& input, idGraphNodeSocket& output )
 {
-	return links.Alloc() = {
+	auto& currentGraphState = localGraphState[0];
+
+	return currentGraphState.links.Alloc() = {
 		output.connections.Alloc() = &input,
 		input.connections.Alloc() = &output
 	};
@@ -163,17 +170,22 @@ idGraphNodeSocket::Link_t& idStateGraph::AddLink( idGraphNodeSocket& input, idGr
 
 stateResult_t idStateGraph::State_Update( stateParms_t* parms )
 {
-	for( idGraphNode* node : nodes )
+	auto& currentGraphState = localGraphState[parms->stage];
+
+	auto& currentNodes = currentGraphState.nodes;
+	auto& currentActiveNodes = currentGraphState.activeNodes;
+
+	for( idGraphNode* node : currentNodes)
 	{
 		if( node->HasActiveSocket() )
 		{
-			activeNodes.Alloc() = node;
+			currentActiveNodes.Alloc() = node;
 		}
 	}
 
-	if( activeNodes.Num() )
+	if(currentActiveNodes.Num() )
 	{
-		stateThread->PostState( "State_Exec" );
+		currentGraphState.stateThread->PostState( "State_Exec" );
 		return SRESULT_DONE;
 	}
 
@@ -182,10 +194,13 @@ stateResult_t idStateGraph::State_Update( stateParms_t* parms )
 
 stateResult_t idStateGraph::State_Exec( stateParms_t* parms )
 {
+	auto& currentGraphState = localGraphState[parms->stage];
+	auto& currentActiveNodes = currentGraphState.activeNodes;
+
 	stateResult_t result = SRESULT_DONE;
 	idList<idGraphNode*> waitingNodes;
 
-	for( idGraphNode* node : activeNodes )
+	for( idGraphNode* node : currentActiveNodes)
 	{
 		stateResult_t nodeResult = node->Exec( parms );
 		if( nodeResult == SRESULT_WAIT )
@@ -196,16 +211,54 @@ stateResult_t idStateGraph::State_Exec( stateParms_t* parms )
 		node->DeactivateInputs();
 	}
 
-	activeNodes = waitingNodes;
+	currentActiveNodes = waitingNodes;
 
-	if( !activeNodes.Num() )
+	if( !currentActiveNodes.Num() )
 	{
-		stateThread->PostState("State_Update");
+		currentGraphState.stateThread->PostState("State_Update");
 		return SRESULT_DONE;
 	}
 
 	return SRESULT_WAIT;
 }
+
+stateResult_t idStateGraph::State_LocalExec(stateParms_t* parms)
+{
+	return SRESULT_ERROR;
+}
+
+int idStateGraph::GetLocalState(const char* newStateName)
+{
+	 int i, hash;
+
+	 hash = localStateHash.GenerateKey(newStateName);
+	 for (i = localStateHash.First(hash); i != -1; i = localStateHash.Next(i))
+	 {
+		 if (localStates[i].Cmp(newStateName) == 0)
+		 {
+			 return i;
+		 }
+	 }
+
+	 i = localStates.Append(newStateName);
+	 localStateHash.Add(hash, i);
+	 localGraphState.Alloc();
+
+	 return i;
+
+}
+
+idGraphNode* idStateGraph::AddLocalStateNode(const char* stateName, idGraphNode* node)
+{
+	int stateIndex = GetLocalState(stateName);
+	GraphState& stateNodes = localGraphState[stateIndex];
+
+	node->graph = &stateNodes;
+	auto* retNode = stateNodes.nodes.Alloc() = node;
+	node->nodeIndex = stateNodes.nodes.Num() - 1;
+	return retNode;
+}
+
 
 void idGraphNode::WriteBinary(idFile* file, ID_TIME_T* _timeStamp /*= NULL */)
 {
@@ -213,8 +266,8 @@ void idGraphNode::WriteBinary(idFile* file, ID_TIME_T* _timeStamp /*= NULL */)
 	{
 		assert(graph);
 
-		static auto writeSockets =
-			[file](idList<idGraphNodeSocket>& socketList)
+		auto writeSockets =
+			[](idFile* file,idList<idGraphNodeSocket>& socketList)
 		{
 			file->WriteBig(socketList.Num());
 			for (auto& socket : socketList)
@@ -232,8 +285,8 @@ void idGraphNode::WriteBinary(idFile* file, ID_TIME_T* _timeStamp /*= NULL */)
 			}
 		};
 
-		writeSockets(inputSockets);
-		writeSockets(outputSockets);
+		writeSockets(file,inputSockets);
+		writeSockets(file,outputSockets);
 	}	
 }
 
@@ -242,8 +295,8 @@ bool idGraphNode::LoadBinary(idFile* file, const ID_TIME_T _timeStamp)
 	if (file)
 	{
 		assert(graph);
-		static auto readSockets =
-			[file,this](idList<idGraphNodeSocket>& socketList,bool isInput)
+		auto readSockets =
+			[this](idFile* file,idList<idGraphNodeSocket>& socketList,bool isInput)
 		{
 			int numSockets;
 			file->ReadBig(numSockets);
@@ -272,8 +325,8 @@ bool idGraphNode::LoadBinary(idFile* file, const ID_TIME_T _timeStamp)
 			}
 		};
 
-		readSockets(inputSockets, true);
-		readSockets(outputSockets, false);
+		readSockets(file,inputSockets, true);
+		readSockets(file,outputSockets, false);
 	}
 	return true;
 }
@@ -471,7 +524,7 @@ void idGraphedEntity::Spawn()
 	idStr graphFile = spawnArgs.GetString("graph", "");
 
 	stateThread.SetOwner( this );
-	graph.targetStateThread = &stateThread;
+	graph.localGraphState[0].targetStateThread = &stateThread;
 
 	if (graphFile.IsEmpty())
 	{
@@ -522,7 +575,7 @@ void idGraphedEntity::Think()
 
 stateResult_t idGraphedEntity::State_Idle( stateParms_t* parms )
 {
-	common->Printf( "Im Idling! %i\n ", gameLocal.GetTime() );
+	common->Printf( "%s Im Idling! %i\n ", name.c_str(),gameLocal.GetTime() );
 	return SRESULT_WAIT;
 }
 

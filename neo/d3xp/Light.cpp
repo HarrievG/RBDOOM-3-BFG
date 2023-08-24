@@ -955,6 +955,8 @@ idLight::SharedThink
 // jmarshall
 void idLight::SharedThink()
 {
+	idEntity::SharedThink();
+
 	float lightval;
 	int stringlength;
 	float offset;

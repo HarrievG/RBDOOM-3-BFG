@@ -95,7 +95,7 @@ const int StateGraphEditor::GetLinkIndexByID( ed::LinkId& id )
 	return index;
 }
 
-void StateGraphEditor::ReadGraph(const idStateGraph* graph)
+void StateGraphEditor::ReadGraph(const GraphState* graph)
 {
 	for (auto node : graph->nodes)
 	{
@@ -142,7 +142,7 @@ void StateGraphEditor::Init()
 	EditorContext = ed::CreateEditor();
 }
 
-void StateGraphEditor::DrawPlayer()
+void StateGraphEditor::DrawGraphEntityTest()
 {
 	auto& io = ImGui::GetIO();
 	{
@@ -165,13 +165,13 @@ void StateGraphEditor::DrawPlayer()
 		}
 
 		ImGui::SameLine();
-		if( ImGui::Button( "Test Anim Node" ) )
+		if( ImGui::Button( "SpawnGraphEntity" ) )
 		{
 			if( !graphEnt )
 			{
 				graphEnt = static_cast<idGraphedEntity*>( gameLocal.SpawnEntityType( idGraphedEntity::Type, NULL ) );
 				graphEnt->PostEventMS( &EV_Activate, 0, graphEnt );
-				ReadGraph(&graphEnt->graph);
+				ReadGraph(&graphEnt->graph.localGraphState[0]);
 			}
 		}
 		ImGui::SameLine();
@@ -191,7 +191,7 @@ void StateGraphEditor::DrawPlayer()
 				args.Set("graph", "graphBin");
 				graphEnt = static_cast<idGraphedEntity*>(gameLocal.SpawnEntityType(idGraphedEntity::Type, &args));
 				graphEnt->PostEventMS(&EV_Activate, 0, graphEnt);
-				ReadGraph(&graphEnt->graph);
+				ReadGraph(&graphEnt->graph.localGraphState[0]);
 			}
 		}
 		ImGui::SameLine();
@@ -224,34 +224,15 @@ void StateGraphEditor::DrawPlayer()
 		ImGui::EndChild();
 		ed::SetCurrentEditor( nullptr );
 	}
-	//blackboard test
-	{
-		idScriptBool& A = *bb.Alloc<idScriptBool>();
-		idScriptBool& B = *bb.Alloc<idScriptBool>();
-		A = false;
-		B = true;
-
-		idScriptInt& iA = *bb.Alloc<idScriptInt>();
-		idScriptInt& iB = *bb.Alloc<idScriptInt>();
-		iA = MAXINT;
-		iB = -MAXINT;
-
-		idScriptFloat& fA = *bb.Alloc<idScriptFloat>();
-		idScriptFloat& fB = *bb.Alloc<idScriptFloat>();
-		fA = FLT_MAX;
-		fB = -FLT_MAX;
-
-		//const idScriptString& sA = *bb.Alloc("ScriptString!!!");;
-
-		//gameLocal.Printf("%s", (const char*)(sA));
-
-		bb.Free( &A );
-		bb.Free( &fA );
-		//bb.Free(&sA);
-	}
 
 
 }
+
+void StateGraphEditor::DrawMapGraph()
+{
+
+}
+
 void StateGraphEditor::Draw()
 {
 	bool showTool = isShown;
@@ -269,11 +250,15 @@ void StateGraphEditor::Draw()
 		{
 			if (ImGui::BeginTabItem("idGraphedEntity [ TEST ]"))
 			{
-				DrawPlayer();
+				DrawGraphEntityTest();
 
 				ImGui::EndTabItem();
 			}
+			if (ImGui::BeginTabItem("MapGraph"))
+			{
 
+				ImGui::EndTabItem();
+			}
 			if( ImGui::BeginTabItem( "idPlayer" ) )
 			{
 				ImGui::Text("Should create 4 idGraph's; 1 for the actor rvStateThread and 1 for each animState rvStateThread");

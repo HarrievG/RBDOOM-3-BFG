@@ -174,7 +174,7 @@ inline void	ReadFromBitMsg( netBoolEvent_t& netEvent, const idBitMsg& msg )
 	assert( netEvent.count <= netBoolEvent_t::Maximum );
 }
 
-
+class idStateGraph;
 class idEntity : public idClass
 {
 public:
@@ -196,6 +196,12 @@ public:
 	idStr					name;					// name of entity
 	idDict					spawnArgs;				// key/value pairs used to spawn and initialize entity
 	idScriptObject			scriptObject;			// contains all script defined data for this entity
+	
+	
+	///HvG
+	idStateGraph*			graphObject;
+	rvStateThread			graphStateThread;
+	///
 
 	int						thinkFlags;				// TH_? flags
 	int						dormantStart;			// time that the entity was first closed off from player
@@ -263,6 +269,7 @@ public:
 	// cameras have custom code, and everything else just uses the axis orientation
 	virtual renderView_t* 	GetRenderView();
 
+	virtual void			SharedThink();
 	// thinking
 	virtual void			Think();
 	bool					CheckDormant();	// dormant == on the active list, but out of PVS

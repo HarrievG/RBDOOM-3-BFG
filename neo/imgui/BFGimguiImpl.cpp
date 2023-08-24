@@ -82,13 +82,13 @@ void ImGui::ImScriptVariable(const idScriptVariableInstance_t& scriptVar)
 		break;
 	case ev_string:
 		{ idStr&& txt = *(idScriptStrRef*)(scriptVar.scriptVariable);
-		ImGui::InputText(scriptVar.varName, &txt); }
+		ImGui::InputText((idStr("##")+scriptVar.varName).c_str(), &txt); }
 		break;
 	case ev_float:
-		ImGui::DragFloat(scriptVar.varName, (float*)((idScriptFloat*)(scriptVar.scriptVariable))->GetData());
+		ImGui::InputFloat((idStr("##") + scriptVar.varName).c_str(), (float*)((idScriptFloat*)(scriptVar.scriptVariable))->GetData());
 		break;
 	case ev_boolean:
-		ImGui::Checkbox(scriptVar.varName, (bool*)((idScriptBool*)(scriptVar.scriptVariable))->GetData());
+		ImGui::Checkbox((idStr("##") + scriptVar.varName).c_str(), (bool*)((idScriptBool*)(scriptVar.scriptVariable))->GetData());
 		break;
 	default:
 		ImGui::Text(scriptVar.varName);
