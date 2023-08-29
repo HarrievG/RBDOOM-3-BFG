@@ -40,8 +40,8 @@ If you have questions concerning this license or the applicable additional terms
 
 namespace ImGuiTools
 {
-	struct GraphNode;
-	class StateGraphEditor;
+struct GraphNode;
+class StateGraphEditor;
 
 // things in impl need to be used in at least one other file, but should generally not be touched
 namespace impl

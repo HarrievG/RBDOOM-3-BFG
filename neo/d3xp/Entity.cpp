@@ -490,7 +490,7 @@ idEntity::idEntity():
 	originDelta( vec3_zero ),
 	axisDelta( mat3_identity ),
 	interpolationBehavior( USE_NO_INTERPOLATION ),
-	graphObject(nullptr)
+	graphObject( nullptr )
 {
 
 	entityNumber	= ENTITYNUM_NONE;
@@ -735,16 +735,16 @@ void idEntity::Spawn()
 		ConstructScriptObject();
 	}
 
-	if (spawnArgs.GetString("graphObject", NULL, &graphObjectName))
+	if( spawnArgs.GetString( "graphObject", NULL, &graphObjectName ) )
 	{
 		graphObject = new idStateGraph();
-		graphStateThread.SetOwner(this);
+		graphStateThread.SetOwner( this );
 		graphObject->localGraphState[0].targetStateThread = &graphStateThread;
-		idStr generatedFilename = idStr("graphs/") + graphObjectName + ".bGrph";
-		idFileLocal inputFile(fileSystem->OpenFileRead(generatedFilename, "fs_basepath"));
-		if (inputFile)
+		idStr generatedFilename = idStr( "graphs/" ) + graphObjectName + ".bGrph";
+		idFileLocal inputFile( fileSystem->OpenFileRead( generatedFilename, "fs_basepath" ) );
+		if( inputFile )
 		{
-			graphObject->LoadBinary(inputFile, inputFile->Timestamp());
+			graphObject->LoadBinary( inputFile, inputFile->Timestamp() );
 		}
 	}
 
@@ -1046,7 +1046,7 @@ void idEntity::Think()
 {
 	RunPhysics();
 	Present();
-	if (graphObject)
+	if( graphObject )
 	{
 		graphStateThread.Execute();
 	}
@@ -1941,9 +1941,9 @@ renderView_t* idEntity::GetRenderView()
 
 void idEntity::SharedThink()
 {
-	if (thinkFlags & TH_THINK)
+	if( thinkFlags & TH_THINK )
 	{
-		if (graphObject)
+		if( graphObject )
 		{
 			graphObject->SharedThink();
 		}
@@ -6498,7 +6498,7 @@ void idAnimatedEntity::Think()
 {
 	RunPhysics();
 	UpdateAnimation();
-	if (graphObject)
+	if( graphObject )
 	{
 		graphStateThread.Execute();
 	}

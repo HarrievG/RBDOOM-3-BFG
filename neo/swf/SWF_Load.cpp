@@ -634,8 +634,8 @@ bool idSWF::LoadBinary( const char* bfilename, ID_TIME_T sourceTimeStamp )
 			f->ReadString( symbolClasses.symbols[i].name );
 		}
 
-		if ( abcFile.AbcTagData.Length() )
-		{		
+		if( abcFile.AbcTagData.Length() )
+		{
 			DoABC( abcFile.AbcTagData );
 		}
 	}

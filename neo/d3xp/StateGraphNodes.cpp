@@ -30,11 +30,12 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "Game_local.h"
-#include "d3xp/StateGraphNodes.h"
-#include "imgui.h"
+#include "tools/imgui/stateEditor/StateEditor.h"
+#include "imgui/BFGimgui.h"
+#include "tools/imgui/util/Imgui_IdWidgets.h"
+#include "../imgui/imgui_internal.h"
 
-
-CLASS_DECLARATION(idGraphNode, idStateNode)
+CLASS_DECLARATION( idGraphNode, idStateNode )
 END_CLASS
 
 idStateNode::idStateNode()
@@ -72,22 +73,23 @@ stateResult_t idStateNode::Exec( stateParms_t* parms )
 
 void idStateNode::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL*/ )
 {
-	if ( file ) 
+	if( file )
 	{
-		file->WriteBig(type);
-		file->WriteString(input_State);
-		idGraphNode::WriteBinary(file, _timeStamp);
+		file->WriteBig( type );
+		file->WriteString( input_State );
+		idGraphNode::WriteBinary( file, _timeStamp );
 	}
 }
 
-bool idStateNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp)
+bool idStateNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp )
 {
-	if (file)
+	if( file )
 	{
-		file->ReadBig(type);
-		file->ReadString(input_State);
-		return idGraphNode::LoadBinary(file, _timeStamp);
+		file->ReadBig( type );
+		file->ReadString( input_State );
+		return idGraphNode::LoadBinary( file, _timeStamp );
 	}
+	return false;
 }
 
 void idStateNode::Setup()
@@ -96,18 +98,18 @@ void idStateNode::Setup()
 	stateThread = graph->targetStateThread;
 
 	idGraphNodeSocket* newInput = &CreateInputSocket();
-	newInput->name = idTypeInfo::GetEnumTypeInfo("idStateNode::NodeType", type);
+	newInput->name = idTypeInfo::GetEnumTypeInfo( "idStateNode::NodeType", type );
 
 	newInput = &CreateInputSocket();
 	newInput->name = "State";
-	newInput->var = new idScriptStrRef((void*)&input_State);
+	newInput->var = new idScriptStr( ( void* )&input_State );
 	idGraphNodeSocket& newOutput = CreateOutputSocket();
 	newOutput.name = "Result";
-	newOutput.var = new idScriptInt((void*)output_Result);
+	newOutput.var = new idScriptInt( ( void* )&output_Result );
 }
 
 //////////////////////////////////////////////////////////////////////////
-CLASS_DECLARATION(idGraphNode, idGraphOnInitNode)
+CLASS_DECLARATION( idGraphNode, idGraphOnInitNode )
 END_CLASS
 
 idGraphOnInitNode::idGraphOnInitNode()
@@ -123,16 +125,17 @@ void idGraphOnInitNode::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NUL
 {
 	if( file != NULL )
 	{
-		idGraphNode::WriteBinary(file, _timeStamp);
+		idGraphNode::WriteBinary( file, _timeStamp );
 	}
 }
 
-bool idGraphOnInitNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp)
+bool idGraphOnInitNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp )
 {
-	if (file != NULL)
+	if( file != NULL )
 	{
-		return idGraphNode::LoadBinary(file, _timeStamp);
+		return idGraphNode::LoadBinary( file, _timeStamp );
 	}
+	return false;
 }
 
 void idGraphOnInitNode::Setup()
@@ -145,5 +148,508 @@ void idGraphOnInitNode::Setup()
 
 idVec4 idGraphOnInitNode::NodeTitleBarColor()
 {
-	return idVec4(1, 0, 1, 1);
+	return idVec4( 1, 0, 1, 1 );
+}
+
+//////////////////////////////////////////////////////////////////////////
+CLASS_DECLARATION( idGraphNode, idGraphInputOutputNode )
+END_CLASS
+
+idGraphInputOutputNode::idGraphInputOutputNode() : nodeType( Input )
+{
+}
+
+stateResult_t idGraphInputOutputNode::Exec( stateParms_t* parms )
+{
+	return SRESULT_DONE;
+}
+
+void idGraphInputOutputNode::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL*/ )
+{
+	if( file != NULL )
+	{
+		idGraphNode::WriteBinary( file, _timeStamp );
+	}
+}
+
+bool idGraphInputOutputNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp )
+{
+	if( file != NULL )
+	{
+		return idGraphNode::LoadBinary( file, _timeStamp );
+	}
+	return false;
+}
+
+void idGraphInputOutputNode::Setup()
+{
+	common->Printf( "idGraphInputOutputNode::Setup() Not Implemented! \n" );
+	//cannot be set
+	//idGraphNodeSocket& newOutput = CreateOutputSocket();
+	//newOutput.active = true;
+	//newOutput.name = "Initialize";
+}
+
+idVec4 idGraphInputOutputNode::NodeTitleBarColor()
+{
+	return idVec4( 0.5, 1, 0.5, 1 );
+}
+
+//////////////////////////////////////////////////////////////////////////
+CLASS_DECLARATION( idGraphNode, idClassNode )
+END_CLASS
+
+idClassNode::idClassNode()
+{
+	targetEvent = nullptr;
+	targetVariable = nullptr;
+}
+
+stateResult_t idClassNode::Exec( stateParms_t* parms )
+{
+	if( type == Call )
+	{
+		intptr_t			eventData[D_EVENT_MAXARGS];
+
+		auto socketVar =
+			[]( idGraphNodeSocket * inp, const idEventDef * targetEvent, GraphState * graph, const char spec, intptr_t& dataPtr ) -> bool
+		{
+			switch( spec )
+			{
+				case D_EVENT_FLOAT:
+				{
+					( *( float* )&dataPtr ) = *( ( idScriptFloat* )inp->var )->GetData();
+				}
+				break;
+				case D_EVENT_INTEGER:
+				{
+					( *( int* )&dataPtr ) = *( ( idScriptInt* )inp->var )->GetData();
+				}
+				break;
+
+				case D_EVENT_VECTOR:
+				{
+					( *( idVec3* )&dataPtr ) = *( ( idScriptVector* )inp->var )->GetData();
+				}
+				break;
+
+				case D_EVENT_STRING:
+					dataPtr = ( uintptr_t )( ( ( idScriptString* )( inp->var ) )->GetData() )->c_str();
+					break;
+
+				case D_EVENT_ENTITY:
+				case D_EVENT_ENTITY_NULL:
+					//hvg_todo : check validity of this.
+					dataPtr = ( uintptr_t ) * ( ( idScriptEntity* )inp->var )->GetData();
+					break;
+
+				default:
+					gameLocal.Warning( "idClassNode::Exec : Invalid arg format '%s' string for '%s' event.", spec, targetEvent->GetName() );
+					return false;
+			}
+			return true;
+		};
+
+		const char* formatspec = targetEvent->GetArgFormat();
+		for( int i = 1; i <= targetEvent->GetNumArgs(); i++ )
+		{
+			idGraphNodeSocket* inp = &inputSockets[i];
+			if( !socketVar( inp, targetEvent, graph, formatspec[i - 1], eventData[i - 1] ) )
+			{
+				return SRESULT_ERROR;
+			}
+		}
+
+		ownerClass->ProcessEventArgPtr( targetEvent, eventData );
+
+		//Handle return var , if any!
+		auto retSocketVar =
+			[]( idGraphNodeSocket * inp, const idEventDef * targetEvent, GraphState * graph, const char spec ) -> bool
+		{
+			switch( spec )
+			{
+				case D_EVENT_FLOAT:
+				{
+					*( idScriptFloat* )( inp->var ) = *gameLocal.program.returnDef->value.floatPtr;
+				}
+				break;
+				case D_EVENT_INTEGER:
+				{
+					*( idScriptInt* )( inp->var ) = *gameLocal.program.returnDef->value.intPtr;
+				}
+				break;
+
+				case D_EVENT_VECTOR:
+				{
+					*( idScriptVector* )( inp->var ) = *gameLocal.program.returnDef->value.vectorPtr;
+				}
+				break;
+
+				case D_EVENT_STRING:
+					*( ( idScriptStr* )inp->var )->GetData() = gameLocal.program.returnStringDef->value.stringPtr;
+					break;
+
+				case D_EVENT_ENTITY:
+				case D_EVENT_ENTITY_NULL:
+				{
+					int entKey = ( *gameLocal.program.returnDef->value.entityNumberPtr ) - 1;
+					if( entKey >= 0 )
+					{
+						*( ( idScriptEntity* )inp->var )->GetData() = gameLocal.entities[entKey];
+					}
+				}
+				break;
+				default:
+					gameLocal.Warning( "idClassNode::Setup : Invalid arg format '%s' string for '%s' event.", spec, targetEvent->GetName() );
+					return false;
+			}
+			return true;
+		};
+
+		if( targetEvent->GetReturnType() != 0 )
+		{
+			retSocketVar( &outputSockets[0], targetEvent, graph, targetEvent->GetReturnType() );
+		}
+
+		return SRESULT_DONE;
+	}
+	else if( type == Set )
+	{
+		return SRESULT_DONE;
+	}
+	else
+	{
+		return SRESULT_DONE;
+	}
+	return SRESULT_ERROR;
+}
+
+void idClassNode::Setup()
+{
+	inputSockets.Clear();
+	outputSockets.Clear();
+	idGraphNodeSocket* newInput = &CreateInputSocket();
+	newInput->name = "Call"; // hidden ; used as button with event or var name , alt click to activate this input
+
+	if( targetEvent )
+	{
+		int numargs = targetEvent->GetNumArgs();
+		const char* formatspec = targetEvent->GetArgFormat();
+
+		auto socketVar =
+			[]( idGraphNodeSocket * inp, const idEventDef * targetEvent, GraphState * graph, const char spec ) -> bool
+		{
+			switch( spec )
+			{
+				case D_EVENT_FLOAT:
+				{
+					inp->var = graph->blackBoard.Alloc<idScriptFloat>( 8 );
+				}
+				break;
+				case D_EVENT_INTEGER:
+				{
+					inp->var = graph->blackBoard.Alloc<idScriptInt>( 8 );
+				}
+				break;
+
+				case D_EVENT_VECTOR:
+				{
+					inp->var = graph->blackBoard.Alloc<idScriptVector>( 3 * 8 );
+				}
+				break;
+
+				case D_EVENT_STRING:
+					inp->var = graph->blackBoard.Alloc( "" );
+					break;
+
+				case D_EVENT_ENTITY:
+				case D_EVENT_ENTITY_NULL:
+					inp->var = graph->blackBoard.Alloc<idScriptEntity>( 16 );
+					break;
+
+				default:
+					gameLocal.Warning( "idClassNode::Setup : Invalid arg format '%s' string for event.", spec, targetEvent->GetName() );
+					return false;
+			}
+			return true;
+		};
+
+		for( int i = 0; i < numargs; i++ )
+		{
+			idGraphNodeSocket* inp = &CreateInputSocket();
+			if( !socketVar( inp, targetEvent, graph, formatspec[i] ) )
+			{
+				inputSockets.RemoveIndexFast( inputSockets.Num() - 1 );
+			}
+		}
+
+		idGraphNodeSocket* out = &CreateOutputSocket();
+		if( !socketVar( out, targetEvent, graph, targetEvent->GetReturnType() ) )
+		{
+			outputSockets.RemoveIndexFast( outputSockets.Num() - 1 );
+		}
+	}
+	else if( targetVariable )
+	{
+		if( type == NodeType::Get )
+		{
+			idGraphNodeSocket* out = &CreateOutputSocket();
+			out->var = targetVariable;
+			out->freeData = false;
+		}
+		else
+		{
+			idGraphNodeSocket* inp = &CreateInputSocket();
+			inp->var = targetVariable;
+			inp->freeData = false;
+		}
+	}
+}
+
+void idClassNode::OnChangeDef( const idEventDef* eventDef )
+{
+	targetEvent = eventDef;
+	Setup();
+}
+
+void idClassNode::OnChangeVar( idScriptVariableInstance_t& varInstance )
+{
+	targetVariable = varInstance.scriptVariable;
+	Setup();
+}
+
+void idClassNode::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL */ )
+{
+	file->WriteBig( type );
+
+	const char* className = "";
+	const char* eventName = "";
+	if( ownerClass && targetEvent )
+	{
+		className = ownerClass->GetType()->classname;
+		eventName = targetEvent->GetName();
+	}
+	file->WriteString( idStr( className ) + "::" + eventName );
+	idGraphNode::WriteBinary( file, _timeStamp );
+}
+
+void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
+{
+	auto& node = *nodePtr;
+	namespace ed = ax::NodeEditor;
+	using namespace ImGuiTools;
+
+	ed::BeginNode( node.ID );
+
+	static idList<bool> varPopupList;
+	static idList<bool> defPopupList;
+	static idList<idStr> buttonText;
+	static idHashIndex popupHashIdx;
+	int nodeHashIdx = popupHashIdx.GenerateKey( nodePtr->ID.Get() );
+	if( popupHashIdx.First( nodeHashIdx ) == -1 )
+	{
+		varPopupList.Alloc() = false;
+		defPopupList.Alloc() = false;
+		buttonText.Alloc() = type == NodeType::Call ? "EventDef" : "Variable";
+		popupHashIdx.Add( nodeHashIdx, defPopupList.Num() - 1 );
+	}
+	int popupIndex = popupHashIdx.First( nodeHashIdx );
+
+	bool& do_defPopup = defPopupList[popupIndex];
+	bool& do_varPopup = varPopupList[popupIndex];
+	idStr& popup_text = buttonText[popupIndex];
+
+	ImGui::PushID( nodeHashIdx );
+
+	idList<const idEventDef*> eventDefs;
+	idList<idScriptVariableInstance_t> scriptVars;
+
+	int nodeWidth = 100;
+	ImGui::PushItemWidth( nodeWidth );
+	//ImGui::DragInt("drag int", &nodeWidth, 1);
+
+	ImGui::AlignTextToFramePadding();
+
+	if( auto* nodeOwner = node.Owner )
+	{
+		if( type == NodeType::Call )
+		{
+			eventDefs = ( ( idClassNode* )nodeOwner )->ownerClass->GetType()->GetEventDefs();
+		}
+		else
+		{
+			scriptVars = ( ( idClassNode* )nodeOwner )->ownerClass->GetType()->GetScriptVariables( ( ( idClassNode* )nodeOwner )->ownerClass );
+		}
+
+		idStr nodeType = nodeOwner->GetName();
+
+		ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
+
+#if IMGUI_VERSION_NUM > 18101
+		const auto allRoundCornersFlags = ImDrawFlags_RoundCornersAll;
+		const auto topRoundCornersFlags = ImDrawFlags_RoundCornersTop;
+#else
+		const auto allRoundCornersFlags = 15;
+		const auto topRoundCornersFlags = 3;
+
+#endif
+		idVec4 color = NodeTitleBarColor();
+		ImColor titleBarColor = { color.x, color.y, color.z, color.w };
+		const char* titleText = GetName();
+		ImVec2 textbb = ImGui::CalcTextSize( titleText, NULL, true );
+		float barWidth = idMath::Imin( ImGui::GetStyle().ItemInnerSpacing.x + textbb.x + ImGui::GetStyle().ItemInnerSpacing.x, nodeWidth );
+		ImGui::GetWindowDrawList()->AddRectFilled(
+			ImVec2( cursorScreenPos.x - 4 - ImGui::GetStyle().ItemInnerSpacing.x, cursorScreenPos.y - ImGui::GetStyle().ItemInnerSpacing.y - 4 ),
+			ImVec2( cursorScreenPos.x + barWidth + 24, cursorScreenPos.y + ImGui::GetTextLineHeight() + 4 ),
+			titleBarColor, 12, topRoundCornersFlags );
+
+		ImGui::Dummy( ImVec2( barWidth - 4 - ImGui::GetStyle().ItemInnerSpacing.x, 0 ) );
+		ImGui::GetWindowDrawList()->AddText( cursorScreenPos, ImColor( 50.0f, 45.0f, 255.0f, 255.0f ), titleText );
+
+		ed::BeginPin( node.Inputs[0].ID, ed::PinKind::Input );
+
+		if( ImGui::Button( popup_text ) )
+		{
+			if( ImGui::GetIO().KeyAlt && !inputSockets[0].active )
+			{
+				inputSockets[0].active = true;
+			}
+			else
+			{
+				if( type == NodeType::Call )
+				{
+					do_defPopup = true;    // Instead of saying OpenPopup() here, we set this bool, which is used later in the Deferred Pop-up Section
+				}
+				else
+				{
+					do_varPopup = true;
+				}
+			}
+
+		}
+		ed::EndPin();
+		int maxInputSockets = inputSockets.Num() ;
+		int maxOutputSockets = outputSockets.Num();
+		int maxSocket = idMath::Imax( maxInputSockets, maxOutputSockets );
+		int inputSocketIdx = 1, outputSocketIdx = 0;
+
+		for( int i = 1; i <= maxSocket; i++ )
+		{
+			if( inputSocketIdx < maxInputSockets )
+			{
+				idGraphNodeSocket& ownerSocket = nodeOwner->inputSockets[inputSocketIdx];
+				ed::BeginPin( node.Inputs[inputSocketIdx].ID, ed::PinKind::Input );
+				if( ownerSocket.var )
+				{
+					ImGui::ImScriptVariable( idStr( reinterpret_cast<unsigned int>( node.Inputs[inputSocketIdx].ID.AsPointer() ) ), {ownerSocket.name.c_str(), "", ownerSocket.var} );
+				}
+				else
+				{
+					ImGui::Text( ownerSocket.name.c_str() );
+				}
+				ed::EndPin();
+				inputSocketIdx++;
+			}
+			else
+			{
+				ImGui::Text( "" );
+			}
+			if( outputSocketIdx < maxOutputSockets )
+			{
+				idGraphNodeSocket& ownerSocket = nodeOwner->outputSockets[outputSocketIdx];
+				ImGui::SameLine();
+				ImGui::Dummy( ImVec2( 0, 0 ) );
+				ImGui::SameLine();
+				ed::BeginPin( node.Outputs[outputSocketIdx].ID, ed::PinKind::Output );
+				if( ownerSocket.var )
+				{
+					ImGui::ImScriptVariable(
+						idStr( reinterpret_cast<unsigned int>(
+								   node.Outputs[outputSocketIdx].ID.AsPointer() ) ),
+					{ ownerSocket.name.c_str(), "", ownerSocket.var },
+					false
+					);
+				}
+				else
+				{
+					ImGui::Text( ownerSocket.name.c_str() );
+				}
+				ed::EndPin();
+				outputSocketIdx++;
+			}
+		}
+	}
+
+	ImGui::PopItemWidth();
+	ed::EndNode();
+
+	// --------------------------------------------------------------------------------------------------
+	// Deferred Pop-up Section
+
+	// This entire section needs to be bounded by Suspend/Resume!  These calls pop us out of "node canvas coordinates"
+	// and draw the popups in a reasonable screen location.
+	ed::Suspend();
+	// There is some stately stuff happening here.  You call "open popup" exactly once, and this
+	// causes it to stick open for many frames until the user makes a selection in the popup, or clicks off to dismiss.
+	// More importantly, this is done inside Suspend(), so it loads the popup with the correct screen coordinates!
+	if( do_defPopup )
+	{
+		ImGui::OpenPopup( "popup_defpicker" ); // Cause openpopup to stick open.
+		do_defPopup = false; // disable bool so that if we click off the popup, it doesn't open the next frame.
+	}
+	if( do_varPopup )
+	{
+		ImGui::OpenPopup( "popup_varpicker" );
+		do_varPopup = false;
+	}
+	ImGui::PushItemWidth( 100 );
+
+	// This is the actual popup Gui drawing section.
+	if( ImGui::BeginPopup( "popup_defpicker" ) )
+	{
+
+		ImGuiContext& g = *GImGui;
+		// Note: if it weren't for the child window, we would have to PushItemWidth() here to avoid a crash!
+		ImGui::TextDisabled( "Pick One:" );
+		ImGui::BeginChild( "popup_scroller", ImVec2( 200, 200 ), true, ImGuiWindowFlags_AlwaysVerticalScrollbar );
+
+		for( auto def : eventDefs )
+		{
+			if( ImGui::Button( def->GetName(), ImVec2( 180, 20 ) ) )
+			{
+				nodePtr->dirty = true;
+				OnChangeDef( def );
+				popup_text = def->GetName();
+				ImGui::CloseCurrentPopup();  // These calls revoke the popup open state, which was set by OpenPopup above.
+			}
+		}
+
+		ImGui::EndChild();
+		ImGui::EndPopup(); // Note this does not do anything to the popup open/close state. It just terminates the content declaration.
+
+	}
+
+	if( ImGui::BeginPopup( "popup_varpicker" ) )
+	{
+		// Note: if it weren't for the child window, we would have to PushItemWidth() here to avoid a crash!
+		ImGui::TextDisabled( "Pick One:" );
+		ImGui::BeginChild( "popup_scroller", ImVec2( 200, 200 ), true, ImGuiWindowFlags_AlwaysVerticalScrollbar );
+
+		for( auto& var : scriptVars )
+		{
+			if( ImGui::Button( var.varName, ImVec2( 180, 20 ) ) )
+			{
+				nodePtr->dirty = true;
+				OnChangeVar( var );
+				popup_text = var.varName;
+				ImGui::CloseCurrentPopup();  // These calls revoke the popup open state, which was set by OpenPopup above.
+			}
+		}
+
+		ImGui::EndChild();
+		ImGui::EndPopup(); // Note this does not do anything to the popup open/close state. It just terminates the content declaration.
+	}
+	ImGui::PopItemWidth();
+	ImGui::PopID();
+	ed::Resume();
 }

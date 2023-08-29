@@ -50,7 +50,7 @@ class idRestoreGame;
 
 typedef enum
 {
-	ev_error = -1, ev_void, ev_scriptevent, ev_namespace, ev_string, ev_float, ev_vector, ev_entity, ev_field, ev_function, ev_virtualfunction, ev_pointer, ev_object, ev_jumpoffset, ev_argsize, ev_boolean
+	ev_error = -1, ev_void, ev_scriptevent, ev_namespace, ev_string, ev_float, ev_vector, ev_entity, ev_field, ev_function, ev_virtualfunction, ev_pointer, ev_object, ev_jumpoffset, ev_argsize, ev_boolean, ev_int
 } etype_t;
 
 class function_t
@@ -199,6 +199,7 @@ class idScriptVariableBase
 {
 public:
 	virtual	void GetType( etype_t& classType ) = 0;
+	virtual	byte* GetRawData() = 0;
 };
 
 
@@ -225,6 +226,10 @@ public:
 	type* GetData() const
 	{
 		return data;
+	}
+	byte* GetRawData() override
+	{
+		return ( byte* )data;
 	}
 };
 
@@ -311,7 +316,9 @@ typedef idScriptVariable<float, ev_float, float>			idScriptFloat;
 typedef idScriptVariable<float, ev_float, int>				idScriptInt;
 typedef idScriptVariable<idVec3, ev_vector, idVec3>			idScriptVector;
 typedef idScriptVariable<idStr, ev_string, const char*>		idScriptString;
-typedef idScriptVariable<idStr, ev_string, idStr&&>			idScriptStrRef;
+typedef idScriptVariable < idStr, ev_string, idStr&& >			idScriptStr;
+typedef idScriptVariable < idEntity*, ev_entity, idEntity&& >	idScriptEntity;
+typedef idScriptVariable<int, ev_int, int>					idScriptInteger;
 
 typedef struct
 {
@@ -328,6 +335,9 @@ static idStr idScriptVariableTypes[] =
 	"idScriptInt",
 	"idScriptVector",
 	"idScriptString",
+	"idScriptStr",
+	"idScriptEntity",
+	"idScriptInteger",
 	NULL
 };
 

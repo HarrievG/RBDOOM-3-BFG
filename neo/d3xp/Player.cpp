@@ -5149,7 +5149,7 @@ void idPlayer::NextWeapon()
 		if( w >= MAX_WEAPONS )
 		{
 			w = 0;
-			if ( !wrapped )
+			if( !wrapped )
 			{
 				wrapped = true;
 			}
@@ -5649,7 +5649,7 @@ void idPlayer::Weapon_Combat()
 		idealWeapon = currentWeapon;
 	}
 
-	if( idealWeapon != currentWeapon &&  ( idealWeapon.Get() < MAX_WEAPONS  && idealWeapon.Get() >= 0 ) )
+	if( idealWeapon != currentWeapon && ( idealWeapon.Get() < MAX_WEAPONS  && idealWeapon.Get() >= 0 ) )
 	{
 		if( weaponCatchup )
 		{
@@ -9078,7 +9078,7 @@ void idPlayer::Think()
 		// update player script
 		UpdateScript();
 
-		if (graphObject)
+		if( graphObject )
 		{
 			graphStateThread.Execute();
 		}
@@ -12788,4 +12788,311 @@ float idPlayer::GetViewHeight()
 	}
 
 	return newEyeOffset;
+}
+//
+///*
+//================
+//idPlayer::State_Torso_Idle
+//================
+//*/
+//stateResult_t idPlayer::Torso_Idle(stateParms_t* parms) {
+//	if ( ! parms->stage )
+//		Event_PlayCycle(ANIMCHANNEL_TORSO, "idle");
+//
+//	if (AI_TELEPORT) {
+//		SetAnimState(ANIMCHANNEL_TORSO, "Torso_Teleport", 0);
+//		return SRESULT_DONE;
+//	}
+//	if (AI_WEAPON_FIRED ) {
+//		SetAnimState(ANIMCHANNEL_TORSO, "Torso_Fire", 2);
+//		return SRESULT_DONE;
+//	}
+//	if (AI_ATTACK_HELD) {
+//		SetAnimState(ANIMCHANNEL_TORSO, "Torso_Fire_StartFire", 2);
+//		return SRESULT_DONE;
+//	}
+//	if (AI_PAIN) {
+//		SetAnimState(ANIMCHANNEL_TORSO, "Torso_Pain", 0);
+//		return SRESULT_DONE;
+//	}
+//	parms->stage = 1;
+//	return SRESULT_WAIT;
+//}
+
+
+stateResult_t idPlayer::State_Idle( stateParms_t* parms )
+{
+	common->Printf( "%s is Idling! %i\n ", name.c_str(), gameLocal.GetTime() );
+	return SRESULT_WAIT;
+}
+
+
+stateResult_t idPlayer::Legs_Idle( stateParms_t* parms )
+{
+	typedef enum
+	{
+		STAGE_START = 0,
+		STAGE_IDLING
+	} state_Idle_t;
+
+	switch( parms->stage )
+	{
+		default:
+			return SRESULT_ERROR;
+			break;
+		case STAGE_START:
+		{
+			//weapon_changed = false;
+			Event_IdleAnim( ANIMCHANNEL_LEGS, "idle" );
+			parms->stage = STAGE_IDLING;
+			return SRESULT_WAIT;
+		}
+		break;
+		case STAGE_IDLING:
+		{
+
+			if( AI_FORWARD || AI_BACKWARD || AI_STRAFE_LEFT || AI_STRAFE_RIGHT )
+			{
+				if( AI_JUMP )
+				{
+					SetAnimState( ANIMCHANNEL_LEGS, "Legs_Jump", 4 );
+					return SRESULT_WAIT;
+				}
+				if( AI_RUN )
+				{
+					SetAnimState( ANIMCHANNEL_LEGS, "Legs_Run", 4 );
+					return SRESULT_WAIT;
+				}
+				if( !AI_ONGROUND )
+				{
+					SetAnimState( ANIMCHANNEL_LEGS, "Legs_Fall", 4 );
+					return SRESULT_WAIT;
+				}
+				if( AI_FORWARD && !AI_BACKWARD )
+				{
+					SetAnimState( ANIMCHANNEL_LEGS, "Legs_Walk_Forward", 4 );
+					return SRESULT_WAIT;
+				}
+				if( AI_BACKWARD && !AI_FORWARD )
+				{
+					SetAnimState( ANIMCHANNEL_LEGS, "Legs_Walk_Backward", 4 );
+					return SRESULT_WAIT;
+				}
+				if( AI_STRAFE_LEFT && !AI_STRAFE_RIGHT )
+				{
+					SetAnimState( ANIMCHANNEL_LEGS, "Legs_Walk_Left", 2 );
+					return SRESULT_WAIT;
+				}
+				if( AI_STRAFE_RIGHT && !AI_STRAFE_LEFT )
+				{
+					SetAnimState( ANIMCHANNEL_LEGS, "Legs_Walk_Right", 2 );
+					return SRESULT_WAIT;
+				}
+				return SRESULT_WAIT;
+			}
+
+			if( AI_JUMP )
+			{
+				SetAnimState( ANIMCHANNEL_LEGS, "Legs_Jump", 4 );
+				return SRESULT_WAIT;
+			}
+			if( !AI_ONGROUND )
+			{
+				SetAnimState( ANIMCHANNEL_LEGS, "Legs_Fall", 4 );
+				return SRESULT_WAIT;
+			}
+
+			if( AI_TURN_LEFT )
+			{
+				SetAnimState( ANIMCHANNEL_LEGS, "Legs_Turn_Left", 4 );
+				return SRESULT_WAIT;
+			}
+			if( AI_TURN_RIGHT )
+			{
+				SetAnimState( ANIMCHANNEL_LEGS, "Legs_Turn_Right", 4 );
+				return SRESULT_WAIT;
+			}
+			if( AI_CROUCH )
+			{
+				SetAnimState( ANIMCHANNEL_LEGS, "Legs_Crouch", 4 );
+				return SRESULT_WAIT;
+			}
+			return SRESULT_WAIT;
+		}
+		break;
+	}
+
+	return SRESULT_ERROR;
+}
+
+stateResult_t idPlayer::Legs_Jump( stateParms_t* parms )
+{
+	typedef enum
+	{
+		STAGE_JUMP = 0,
+		STAGE_JUMPING
+	} state_Jump_t;
+
+	switch( parms->stage )
+	{
+		default:
+			return SRESULT_ERROR;
+			break;
+		case STAGE_JUMP:
+		{
+			if( AI_RUN )
+			{
+				Event_PlayAnim( ANIMCHANNEL_LEGS, "run_jump" );
+			}
+			else
+			{
+				Event_PlayAnim( ANIMCHANNEL_LEGS, "jump" );
+			}
+			parms->stage = STAGE_JUMPING;
+			return SRESULT_WAIT;
+		}
+		break;
+		case STAGE_JUMPING:
+		{
+			if( !AnimDone( ANIMCHANNEL_LEGS, 4 ) )
+			{
+				if( AI_JUMP )
+				{
+					SetAnimState( ANIMCHANNEL_LEGS, "Legs_Jump", 4 );
+				}
+				if( AI_ONGROUND )
+				{
+					if( AI_HARDLANDING )
+					{
+						SetAnimState( ANIMCHANNEL_LEGS, "Legs_Land_Hard", 2 );
+					}
+					if( AI_SOFTLANDING )
+					{
+						SetAnimState( ANIMCHANNEL_LEGS, "Legs_Land_Soft", 2 );
+					}
+					SetAnimState( ANIMCHANNEL_LEGS, "Legs_Idle", 4 );
+				}
+				return SRESULT_WAIT;
+			}
+			SetAnimState( ANIMCHANNEL_LEGS, "Legs_Fall", 4 );
+			return SRESULT_DONE;
+		}
+		break;
+	}
+}
+
+stateResult_t idPlayer::Legs_Walk_Forward( stateParms_t* parms )
+{
+	if( !parms->stage )
+	{
+		Event_PlayCycle( ANIMCHANNEL_LEGS, "walk" );
+		parms->stage++;
+		return SRESULT_WAIT;
+	}
+
+	if( AI_JUMP )
+	{
+		SetAnimState( ANIMCHANNEL_LEGS, "Legs_Jump", 4 );
+		return SRESULT_DONE;
+	}
+	if( !AI_ONGROUND )
+	{
+		SetAnimState( ANIMCHANNEL_LEGS, "Legs_Fall", 4 );
+		return SRESULT_DONE;
+	}
+	if( AI_RUN )
+	{
+		SetAnimState( ANIMCHANNEL_LEGS, "Legs_Run", 4 );
+		return SRESULT_DONE;
+	}
+	if( AI_CROUCH )
+	{
+		SetAnimState( ANIMCHANNEL_LEGS, "Legs_CrouchWalk", 4 );
+		return SRESULT_DONE;
+	}
+	if( AI_BACKWARD || !AI_FORWARD )
+	{
+		if( AI_JUMP )
+		{
+			SetAnimState( ANIMCHANNEL_LEGS, "Legs_Jump", 4 );
+			return SRESULT_DONE;
+		}
+		if( AI_RUN )
+		{
+			SetAnimState( ANIMCHANNEL_LEGS, "Legs_Run", 4 );
+			return SRESULT_DONE;
+		}
+		if( !AI_ONGROUND )
+		{
+			SetAnimState( ANIMCHANNEL_LEGS, "Legs_Fall", 4 );
+			return SRESULT_DONE;
+		}
+		if( AI_FORWARD && !AI_BACKWARD )
+		{
+			SetAnimState( ANIMCHANNEL_LEGS, "Legs_Walk_Forward", 4 );
+			return SRESULT_DONE;
+		}
+		if( AI_BACKWARD && !AI_FORWARD )
+		{
+			SetAnimState( ANIMCHANNEL_LEGS, "Legs_Walk_Backward", 4 );
+			return SRESULT_DONE;
+		}
+		if( AI_STRAFE_LEFT && !AI_STRAFE_RIGHT )
+		{
+			SetAnimState( ANIMCHANNEL_LEGS, "Legs_Walk_Left", 2 );
+			return SRESULT_DONE;
+		}
+		if( AI_STRAFE_RIGHT && !AI_STRAFE_LEFT )
+		{
+			SetAnimState( ANIMCHANNEL_LEGS, "Legs_Walk_Right", 2 );
+			return SRESULT_DONE;
+		}
+
+		SetAnimState( ANIMCHANNEL_LEGS, "Legs_Idle", 4 );
+		return SRESULT_DONE;
+	}
+
+	return SRESULT_WAIT;
+}
+
+stateResult_t idPlayer::Legs_Fall( stateParms_t* parms )
+{
+	typedef enum
+	{
+		STAGE_START = 0,
+		STAGE_FALING
+	} state_Fall_t;
+
+	switch( parms->stage )
+	{
+		case STAGE_START:
+		{
+			Event_PlayCycle( ANIMCHANNEL_LEGS, "fall" );
+			parms->stage = STAGE_FALING;
+			return SRESULT_WAIT;
+		}
+		break;
+		case STAGE_FALING:
+		{
+			if( AI_ONGROUND )
+			{
+				if( AI_HARDLANDING )
+				{
+					SetAnimState( ANIMCHANNEL_LEGS, "Legs_Land_Hard", 2 );
+				}
+				if( AI_SOFTLANDING )
+				{
+					SetAnimState( ANIMCHANNEL_LEGS, "Legs_Land_Soft", 2 );
+				}
+				SetAnimState( ANIMCHANNEL_LEGS, "Legs_Idle", 4 );
+			}
+			return SRESULT_WAIT;
+		}
+		break;
+
+		default:
+			return SRESULT_ERROR;
+			break;
+	}
+	return SRESULT_ERROR;
 }

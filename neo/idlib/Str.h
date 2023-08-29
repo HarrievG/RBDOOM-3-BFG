@@ -138,8 +138,10 @@ public:
 	explicit idStr( const bool b );
 	explicit idStr( const char c );
 	explicit idStr( const int i );
+	explicit idStr( const uintptr_t );
 	explicit idStr( const unsigned u );
 	explicit idStr( const float f );
+
 	~idStr();
 
 	size_t				Size() const;
@@ -610,6 +612,18 @@ ID_INLINE idStr::idStr( const char c )
 	data[ 0 ] = c;
 	data[ 1 ] = '\0';
 	len = 1;
+}
+
+ID_INLINE idStr::idStr( const uintptr_t i )
+{
+	Construct();
+	char text[64];
+	int l;
+
+	l = sprintf( text, "%tu", i );
+	EnsureAlloced( l + 1 );
+	strcpy( data, text );
+	len = l;
 }
 
 ID_INLINE idStr::idStr( const int i )

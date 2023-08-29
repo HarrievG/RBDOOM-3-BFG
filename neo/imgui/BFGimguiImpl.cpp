@@ -15,7 +15,7 @@
 #include "BFGimgui.h"
 #include "renderer/RenderCommon.h"
 #include "renderer/RenderBackend.h"
-
+#include "d3xp/Game_local.h"
 
 static idCVar imgui_showDemoWindow( "imgui_showDemoWindow", "0", CVAR_GUI | CVAR_BOOL, "show big ImGui demo window" );
 static idCVar imgui_showSimpleNodeEditorExample( "imgui_showSimpleNodeEditorExample", "0", CVAR_GUI | CVAR_BOOL, "" );
@@ -69,30 +69,60 @@ bool ImGui::DragVec3fitLabel( const char* label, idVec3& v, float v_speed,
 	return ImGui::DragVec3( label, v, v_speed, v_min, v_max, display_format, power, false );
 }
 
-void ImGui::ImScriptVariable(const idScriptVariableInstance_t& scriptVar)
+void ImGui::ImScriptVariable( const char* strId, const idScriptVariableInstance_t& scriptVar, bool enabled /*= true*/ )
 {
 	etype_t t;
-	scriptVar.scriptVariable->GetType(t);
+	scriptVar.scriptVariable->GetType( t );
 	auto& io = ImGui::GetIO();
 
-	switch (t)
+	if( enabled )
 	{
-	case ev_vector:
-		ImGui::DragFloat3(scriptVar.varName, (float*)((idScriptVector*)(scriptVar.scriptVariable))->GetData());
-		break;
-	case ev_string:
-		{ idStr&& txt = *(idScriptStrRef*)(scriptVar.scriptVariable);
-		ImGui::InputText((idStr("##")+scriptVar.varName).c_str(), &txt); }
-		break;
-	case ev_float:
-		ImGui::InputFloat((idStr("##") + scriptVar.varName).c_str(), (float*)((idScriptFloat*)(scriptVar.scriptVariable))->GetData());
-		break;
-	case ev_boolean:
-		ImGui::Checkbox((idStr("##") + scriptVar.varName).c_str(), (bool*)((idScriptBool*)(scriptVar.scriptVariable))->GetData());
-		break;
-	default:
-		ImGui::Text(scriptVar.varName);
-		break;
+		switch( t )
+		{
+			case ev_vector:
+				ImGui::DragFloat3( idStr( "##" ) + strId, ( float* )( ( idScriptVector* )( scriptVar.scriptVariable ) )->GetData() );
+				break;
+			case ev_string:
+			{
+				idStr* txt = ( ( idScriptStr* )( scriptVar.scriptVariable ) )->GetData();
+				ImGui::InputText( idStr( "##" ) + strId, txt );
+			}
+			break;
+			case ev_float:
+				ImGui::InputFloat( idStr( "##" ) + strId, ( float* )( ( idScriptFloat* )( scriptVar.scriptVariable ) )->GetData() );
+				break;
+			case ev_boolean:
+				ImGui::Checkbox( idStr( "##" ) + strId, ( bool* )( ( idScriptBool* )( scriptVar.scriptVariable ) )->GetData() );
+				break;
+			case ev_entity:
+			{
+				if( *( idScriptEntity** )( scriptVar.scriptVariable )->GetRawData() )
+				{
+
+					idStr txt = ( *( ( idScriptEntity* )scriptVar.scriptVariable )->GetData() )->GetName();
+					ImGui::Text( txt );
+				}
+				else
+				{
+					ImGui::PushItemWidth( ImGui::CalcTextSize( "->", NULL, true ).x + ( ImGui::GetStyle().ItemInnerSpacing.x * 2 ) );
+					ImGui::LabelText( idStr( "##" ) + strId, "->" );
+					ImGui::PopItemWidth();
+				}
+
+			}
+			break;
+			default:
+				ImGui::PushItemWidth( ImGui::CalcTextSize( "->", NULL, true ).x + ( ImGui::GetStyle().ItemInnerSpacing.x * 2 ) );
+				ImGui::LabelText( idStr( "##" ) + strId, "->" );
+				ImGui::PopItemWidth();
+				break;
+		}
+	}
+	else
+	{
+		ImGui::PushItemWidth( ImGui::CalcTextSize( "->", NULL, true ).x + ( ImGui::GetStyle().ItemInnerSpacing.x * 2 ) );
+		ImGui::LabelText( idStr( "##" ) + strId, "->" );
+		ImGui::PopItemWidth();
 	}
 }
 
@@ -193,6 +223,10 @@ bool HandleKeyEvent( const sysEvent_t& keyEvent )
 		g_MousePressed[buttonIdx] = pressed;
 
 		return true; // let's pretend we also handle mouse up events
+	}
+	else if( keyNum >= K_MWHEELDOWN && keyNum <= K_MWHEELUP )
+	{
+		return InjectMouseWheel( keyNum == K_MWHEELUP ? 1 : -1 );
 	}
 
 	return false;

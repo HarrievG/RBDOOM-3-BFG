@@ -81,12 +81,12 @@ struct GraphNodePin
 	PinKind     Kind;
 
 	GraphNodePin() :
-		ID(-1), NodePtr(nullptr), Name("newPin"), Type(PinType::Flow), Kind(PinKind::Input)
+		ID( -1 ), NodePtr( nullptr ), Name( "newPin" ), Type( PinType::Flow ), Kind( PinKind::Input )
 	{
 	}
 
-	GraphNodePin(int id, const char* name, PinType type, PinKind kind, GraphNode* parent) :
-		ID(id), NodePtr(parent), Name(name), Type(type), Kind(kind)
+	GraphNodePin( int id, const char* name, PinType type, PinKind kind, GraphNode* parent ) :
+		ID( id ), NodePtr( parent ), Name( name ), Type( type ), Kind( kind )
 	{
 	}
 };
@@ -94,6 +94,7 @@ struct GraphNodePin
 struct GraphNode
 {
 public:
+	bool dirty;
 	ed::NodeId ID;
 	idStr Name;
 	idList<GraphNodePin> Inputs;
@@ -109,11 +110,11 @@ public:
 
 	bool FirstDraw;
 	GraphNode() :
-		ID(-1), Name("newNode"), Inputs(), Outputs(), Color(ImColor(255, 255, 255)), Type(NodeType::Tree), Size(0, 0), FirstDraw(true)
+		dirty( false ), ID( -1 ), Name( "newNode" ), Inputs(), Outputs(), Color( ImColor( 255, 255, 255 ) ), Type( NodeType::Tree ), Size( 0, 0 ), FirstDraw( true )
 	{
 	}
-	GraphNode(int id, const char* name, idGraphNode* owner = nullptr, ImColor color = ImColor(255, 255, 255)) :
-		ID(id), Name(name), Owner(owner), Color(color), Type(NodeType::Tree), Size(0, 0), FirstDraw(true)
+	GraphNode( int id, const char* name, idGraphNode* owner = nullptr, ImColor color = ImColor( 255, 255, 255 ) ) :
+		dirty( false ), ID( id ), Name( name ), Owner( owner ), Color( color ), Type( NodeType::Tree ), Size( 0, 0 ), FirstDraw( true )
 	{
 	}
 };
@@ -152,11 +153,12 @@ public:
 	void							Draw();
 	static StateGraphEditor&		Instance();
 	static void						Enable( const idCmdArgs& args );
-	
+
 	GraphNode*						SpawnTreeSequenceNode();
 	const Link&						GetLinkByID( ed::LinkId id );
 	const int						GetLinkIndexByID( ed::LinkId& id );
-	void							ReadGraph(const GraphState* graph);
+	void							ReadNode( idGraphNode* node, GraphNode& newNode );
+	void							ReadGraph( const GraphState* graph );
 	void							Clear();
 private:
 

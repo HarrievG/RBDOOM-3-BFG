@@ -95,26 +95,35 @@ const int StateGraphEditor::GetLinkIndexByID( ed::LinkId& id )
 	return index;
 }
 
-void StateGraphEditor::ReadGraph(const GraphState* graph)
+void StateGraphEditor::ReadNode( idGraphNode* node, GraphNode& newNode )
 {
-	for (auto node : graph->nodes)
+	idList< ed::NodeId > inputIDs;
+	idList< ed::NodeId > outputIDs;
+	newNode.Inputs.Clear();
+	newNode.Outputs.Clear();
+	newNode.Type = NodeType::AnimState;
+	for( auto& socket : node->inputSockets )
+	{
+		auto& newPin = newNode.Inputs.Alloc() = { nextElementId++, socket.name, PinType::Flow , PinKind::Input , &newNode };
+	}
+	for( auto& socket : node->outputSockets )
+	{
+		newNode.Outputs.Alloc() = { nextElementId++, socket.name, PinType::Flow , PinKind::Output, &newNode };
+	}
+}
+
+void StateGraphEditor::ReadGraph( const GraphState* graph )
+{
+	for( auto node : graph->nodes )
 	{
 		auto& newNode = nodeList.Alloc() = { nextElementId++, node->GetName(), node };
-		newNode.Type = NodeType::AnimState;
-		for (auto& socket : node->inputSockets)
-		{
-			auto& newPin = newNode.Inputs.Alloc() = { nextElementId++, socket.name, PinType::Flow , PinKind::Input , &newNode };
-		}
-		for (auto& socket : node->outputSockets)
-		{
-			newNode.Outputs.Alloc() = { nextElementId++, socket.name, PinType::Flow , PinKind::Output, &newNode };
-		}
+		ReadNode( node, newNode );
 	}
-	for (idGraphNodeSocket::Link_t& link : graph->links)
+	for( idGraphNodeSocket::Link_t& link : graph->links )
 	{
 		auto& outputNode = nodeList[link.start->nodeIndex];
 		auto& inputNode = nodeList[link.end->nodeIndex];
-		Link& newLink = linkList.Alloc() = { ed::LinkId(nextElementId++), outputNode.Outputs[link.start->socketIndex].ID, inputNode.Inputs[link.end->socketIndex].ID };
+		Link& newLink = linkList.Alloc() = { ed::LinkId( nextElementId++ ), outputNode.Outputs[link.start->socketIndex].ID, inputNode.Inputs[link.end->socketIndex].ID };
 	}
 }
 
@@ -169,33 +178,36 @@ void StateGraphEditor::DrawGraphEntityTest()
 		{
 			if( !graphEnt )
 			{
-				graphEnt = static_cast<idGraphedEntity*>( gameLocal.SpawnEntityType( idGraphedEntity::Type, NULL ) );
+				idDict	args;
+				args.Set( "entkey", "idGraphedEntity__80" );
+
+				graphEnt = static_cast<idGraphedEntity*>( gameLocal.SpawnEntityType( idGraphedEntity::Type, &args ) );
 				graphEnt->PostEventMS( &EV_Activate, 0, graphEnt );
-				ReadGraph(&graphEnt->graph.localGraphState[0]);
+				ReadGraph( &graphEnt->graph.localGraphState[0] );
 			}
 		}
 		ImGui::SameLine();
-		if (ImGui::Button("Write Graph Bin"))
+		if( ImGui::Button( "Write Graph Bin" ) )
 		{
-			if ( graphEnt )
+			if( graphEnt )
 			{
-				idFileLocal outputFile(fileSystem->OpenFileWrite("graphs/graphBin.bGrph", "fs_basepath"));
-				graphEnt->graph.WriteBinary(outputFile);
+				idFileLocal outputFile( fileSystem->OpenFileWrite( "graphs/graphBin.bGrph", "fs_basepath" ) );
+				graphEnt->graph.WriteBinary( outputFile );
 			}
 		}
-		if (ImGui::Button("Load Graph Bin"))
+		if( ImGui::Button( "Load Graph Bin" ) )
 		{
-			if (!graphEnt)
+			if( !graphEnt )
 			{
 				idDict args;
-				args.Set("graph", "graphBin");
-				graphEnt = static_cast<idGraphedEntity*>(gameLocal.SpawnEntityType(idGraphedEntity::Type, &args));
-				graphEnt->PostEventMS(&EV_Activate, 0, graphEnt);
-				ReadGraph(&graphEnt->graph.localGraphState[0]);
+				args.Set( "graph", "graphBin" );
+				graphEnt = static_cast<idGraphedEntity*>( gameLocal.SpawnEntityType( idGraphedEntity::Type, &args ) );
+				graphEnt->PostEventMS( &EV_Activate, 0, graphEnt );
+				ReadGraph( &graphEnt->graph.localGraphState[0] );
 			}
 		}
 		ImGui::SameLine();
-		if (ImGui::Button("Clear Graph"))
+		if( ImGui::Button( "Clear Graph" ) )
 		{
 			Clear();
 		}
@@ -210,7 +222,12 @@ void StateGraphEditor::DrawGraphEntityTest()
 
 		for( auto& node : nodeList )
 		{
-			node.Owner->Draw(&node);
+			if( node.dirty )
+			{
+				ReadNode( node.Owner, node );
+				node.dirty = false;
+			}
+			node.Owner->Draw( &node );
 		}
 
 		for( auto& link : linkList )
@@ -219,6 +236,28 @@ void StateGraphEditor::DrawGraphEntityTest()
 		}
 
 		Handle_NodeEvents();
+
+		static ed::NodeId contextNodeId = 0;
+		static ed::LinkId contextLinkId = 0;
+		static ed::PinId  contextPinId = 0;
+		static bool createNewNode = false;
+		static GraphNodePin* newNodeLinkPin = nullptr;
+		static GraphNodePin* newLinkPin = nullptr;
+
+		//auto openPopupPosition = ImGui::GetMousePos();
+		//ed::Suspend();
+		//if (ed::ShowNodeContextMenu(&contextNodeId))
+		//	ImGui::OpenPopup("Node Context Menu");
+		//else if (ed::ShowPinContextMenu(&contextPinId))
+		//	ImGui::OpenPopup("Pin Context Menu");
+		//else if (ed::ShowLinkContextMenu(&contextLinkId))
+		//	ImGui::OpenPopup("Link Context Menu");
+		//else if (ed::ShowBackgroundContextMenu())
+		//{
+		//	ImGui::OpenPopup("Create New Node");
+		//	newNodeLinkPin = nullptr;
+		//}
+		//ed::Resume();
 
 		ed::End();
 		ImGui::EndChild();
@@ -244,24 +283,23 @@ void StateGraphEditor::Draw()
 
 	if( ImGui::Begin( "State Editor", &showTool, ImGuiWindowFlags_MenuBar ) )
 	{
-		nextElementId = 1;
 		ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
 		if( ImGui::BeginTabBar( "StateEditors", tab_bar_flags ) )
 		{
-			if (ImGui::BeginTabItem("idGraphedEntity [ TEST ]"))
+			if( ImGui::BeginTabItem( "idGraphedEntity [ TEST ]" ) )
 			{
 				DrawGraphEntityTest();
 
 				ImGui::EndTabItem();
 			}
-			if (ImGui::BeginTabItem("MapGraph"))
+			if( ImGui::BeginTabItem( "MapGraph" ) )
 			{
 
 				ImGui::EndTabItem();
 			}
 			if( ImGui::BeginTabItem( "idPlayer" ) )
 			{
-				ImGui::Text("Should create 4 idGraph's; 1 for the actor rvStateThread and 1 for each animState rvStateThread");
+				ImGui::Text( "Should create 4 idGraph's; 1 for the actor rvStateThread and 1 for each animState rvStateThread" );
 				//DrawPlayer();
 
 				ImGui::EndTabItem();
@@ -273,7 +311,7 @@ void StateGraphEditor::Draw()
 			}
 			if( ImGui::BeginTabItem( "idAI" ) )
 			{
-				ImGui::Text("Should create 4 idGraph's; 1 for the actor rvStateThread and 1 for each animState rvStateThread");
+				ImGui::Text( "Should create 4 idGraph's; 1 for the actor rvStateThread and 1 for each animState rvStateThread" );
 				ImGui::Text( "This is the Cucumber tab!\nblah blah blah blah blah" );
 				ImGui::EndTabItem();
 			}
@@ -487,15 +525,33 @@ void StateGraphEditor::DrawLeftPane( float paneWidth )
 	}
 
 	ImGui::Separator();
-	idPlayer* player = gameLocal.GetLocalPlayer();
-	if( player )
+
+	if( ImGui::CollapsingHeader( "Functions" ) )
 	{
-		auto ret = idClass::GetClass( "idPlayer" )->GetScriptVariables( ( void* )player );
-		for( auto& scriptVar : ret )
+		if( ImGui::Button( "Create New" ) )
 		{
-			ImScriptVariable( scriptVar );
+			graphEnt->graph.CreateSubState( "New Function", {}, {} );
+		}
+		auto& graphState = graphEnt->graph.localGraphState;
+		auto& graphNames = graphEnt->graph.localStates;
+		if( graphState.Num() > 1 )
+		{
+			for( int i = 1; i < graphState.Num(); i++ )
+			{
+				ImGui::Text( graphNames[i] );
+			}
 		}
 	}
+
+	//idPlayer* player = gameLocal.GetLocalPlayer();
+	//if( player )
+	//{
+	//	auto ret = idClass::GetClass( "idPlayer" )->GetScriptVariables( ( void* )player );
+	//	for( auto& scriptVar : ret )
+	//	{
+	//		ImScriptVariable( scriptVar );
+	//	}
+	//}
 	ImGui::EndChild();
 	SameLine();
 }

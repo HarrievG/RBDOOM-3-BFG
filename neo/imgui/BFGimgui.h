@@ -21,7 +21,7 @@ bool DragVec3fitLabel( const char* label, idVec3& v, float v_speed = 1.0f,
 					   const char* display_format = "%.1f", float power = 1.0f );
 
 
-void ImScriptVariable(const idScriptVariableInstance_t& scriptVar);
+void ImScriptVariable( const char* label, const idScriptVariableInstance_t& scriptVar, bool enabled = true );
 
 
 }

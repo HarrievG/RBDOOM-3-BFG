@@ -35,7 +35,7 @@ If you have questions concerning this license or the applicable additional terms
 class idStateNode : public idGraphNode
 {
 public:
-	CLASS_PROTOTYPE(idStateNode);
+	CLASS_PROTOTYPE( idStateNode );
 
 	enum NodeType
 	{
@@ -53,7 +53,7 @@ public:
 		return "idStateNode";
 	}
 	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL ) override;
-	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp) override;
+	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp ) override;
 	void Setup() override;
 
 	idStr			input_State;
@@ -62,29 +62,38 @@ public:
 	stateResult_t	output_Result;
 };
 
-class idClassNode : public idStateNode
+class idClassNode : public idGraphNode
 {
 public:
+	CLASS_PROTOTYPE( idClassNode );
+
 	enum NodeType
 	{
 		Call,//Event
 		Set,//Scriptvariable
 		Get//Scriptvariable
 	};
+	idClassNode();;
 	idClassNode( idClass* owner, NodeType type );
+	void Draw( ImGuiTools::GraphNode* nodePtr ) override;
 	stateResult_t Exec( stateParms_t* parms ) override;
+	void OnChangeDef( const idEventDef* eventDef );
+	void OnChangeVar( idScriptVariableInstance_t& varInstance );
 	const char* GetName() override
 	{
 		return "idClassNode";
 	}
-	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL ) override {}
-	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp) override
+	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL ) override;
+	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp ) override
 	{
-		return true;
+		return false;
 	}
-	void Setup() override {}
-private:
-	idBlackBoard blackBoard;
+	void Setup() override;
+
+	idClass* ownerClass;
+	NodeType type;
+	const idEventDef* targetEvent;
+	idScriptVariableBase* targetVariable;
 };
 
 class idGraphOnInitNode : public idGraphNode
@@ -99,13 +108,38 @@ public:
 		return "idGraphOnInitNode";
 	}
 	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL ) override;
-	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp) override;
+	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp ) override;
 	void Setup() override;
 
 	idVec4 NodeTitleBarColor() override;
 
 private:
 	bool done;
+};
+
+class idGraphInputOutputNode : public idGraphNode
+{
+public:
+	CLASS_PROTOTYPE( idGraphInputOutputNode );
+	enum NodeType
+	{
+		Input,
+		Output
+	};
+
+	idGraphInputOutputNode();
+	stateResult_t Exec( stateParms_t* parms ) override;
+	const char* GetName() override
+	{
+		return nodeType == Input ? "idGraphInput" : "idGraphOutput";
+	}
+	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL ) override;
+	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp ) override;
+	void Setup() override;
+
+	idVec4 NodeTitleBarColor() override;
+
+	NodeType nodeType;
 };
 
 

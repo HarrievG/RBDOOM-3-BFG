@@ -807,7 +807,15 @@ public:
 	{
 		return previousWeapon;
 	}
+
 private:
+
+	stateResult_t Legs_Jump( stateParms_t* parms );
+	//stateResult_t Torso_Idle(stateParms_t* parms);
+	stateResult_t Legs_Idle( stateParms_t* parms );
+	stateResult_t State_Idle( stateParms_t* parms );
+	stateResult_t Legs_Fall( stateParms_t* parms );
+	stateResult_t Legs_Walk_Forward( stateParms_t* parms );
 	// Stats & achievements
 	idAchievementManager	achievementManager;
 

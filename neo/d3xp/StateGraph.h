@@ -34,33 +34,43 @@ If you have questions concerning this license or the applicable additional terms
 class idBlackBoard
 {
 public:
-	template<class scriptType>
-	scriptType* Alloc()
-	{
-		return  new scriptType( data.Alloc() );
-	}
 
 	template<class scriptType>
-	void Free( scriptType* var )
+	scriptType* Alloc( int size )
 	{
-		data.Free( ( byte* )var );
+		byte* b = data.Alloc( size );
+		memset( b, 0, size );
+		return  new scriptType( b );
 	}
 
-	const idScriptString* Alloc( const char* str )
+	void Free( byte* var )
 	{
-		return  new idScriptString( ( void* )strPool.AllocString( str ) );
+		data.Free( var );
 	}
 
-	template<>
-	void Free( const idScriptString* var )
+	//const for a reason!
+	//const idScriptString* Alloc( const char* str )
+	//{
+	//	return  new idScriptString( ( void* )strPool.AllocString( str ) );
+	//}
+
+	idScriptStr* Alloc( const char* str )
 	{
-		strPool.FreeString( ( idPoolStr* )( var->GetData() ) );
+		strList.Alloc() = idStr( str );
+		return new idScriptStr( ( void* )&strList[strList.Num() - 1] );
+	}
+
+	void Free( idScriptStr* var )
+	{
+		strList.Remove( *var->GetData() );
 	}
 
 private:
-	//BLOCK_ALLOC_ALIGNMENT == 16b
-	idBlockAlloc<byte, 4, TAG_BLACKBOARD> data;
-	idStrPool	strPool;
+	idDynamicBlockAlloc< byte , 100 * 1024, 256 , TAG_BLACKBOARD> data;
+
+	//use for static node strings
+	//idStrPool		strPool;
+	idStrList		strList;
 };
 
 class idGraphNode;
@@ -75,15 +85,16 @@ public:
 		idGraphNodeSocket* end;
 	} Link_t;
 	//////////////////////////////////////////////////////////////////////////
-	idGraphNodeSocket() : owner( nullptr ), var( nullptr ), active( false ), name( "" ), socketIndex(-1),nodeIndex(-1){}
+	~idGraphNodeSocket();
+	idGraphNodeSocket() : owner( nullptr ), var( nullptr ), active( false ), name( "" ), socketIndex( -1 ), nodeIndex( -1 ), freeData( true ) {}
 	idList<idGraphNodeSocket*> connections;
 	idGraphNode* owner;
-	//HVG_FIXME ; var is leaking!
 	idScriptVariableBase* var;
 	bool active;
 	idStr name;
 	int socketIndex;
 	int nodeIndex;
+	bool freeData;
 };
 class idStateGraph;
 class GraphState
@@ -96,6 +107,7 @@ public:
 	idList<idGraphNodeSocket::Link_t>  links;
 	idClass* owner;
 	rvStateThread* targetStateThread;
+	idBlackBoard blackBoard;
 protected:
 	rvStateThread* stateThread;
 };
@@ -103,16 +115,16 @@ protected:
 class idGraphNode : public idClass
 {
 public:
-	ABSTRACT_PROTOTYPE(idGraphNode);
+	ABSTRACT_PROTOTYPE( idGraphNode );
 
 	virtual stateResult_t Exec( stateParms_t* parms ) = 0;
 	virtual	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL );
-	virtual	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp);
+	virtual	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp );
 	virtual const char* GetName() = 0;
 	virtual void Setup() = 0;
 
 	//should only be used in editor.
-	virtual void Draw(const ImGuiTools::GraphNode* node);
+	virtual void Draw( ImGuiTools::GraphNode* nodePtr );
 	virtual idVec4 NodeTitleBarColor();
 
 	idGraphNodeSocket& CreateInputSocket();
@@ -126,7 +138,7 @@ public:
 	int nodeIndex;
 
 private:
-	idGraphNodeSocket& CreateSocket(idList<idGraphNodeSocket>& socketList);
+	idGraphNodeSocket& CreateSocket( idList<idGraphNodeSocket>& socketList );
 };
 
 
@@ -141,29 +153,36 @@ public:
 	idStateGraph();
 
 	~idStateGraph();
-	virtual void	SharedThink();
+	virtual void						SharedThink();
 
-	void			ConvertScriptObject( idScriptObject* scriptObject );
-	void			WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL );
-	bool			LoadBinary( idFile* file, const ID_TIME_T _timeStamp);
+	void								ConvertScriptObject( idScriptObject* scriptObject );
+	void								WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL );
+	bool								LoadBinary( idFile* file, const ID_TIME_T _timeStamp );
 
 	idGraphNode*						CreateNode( idGraphNode* node );
 	idGraphNodeSocket::Link_t&			AddLink( idGraphNodeSocket& input, idGraphNodeSocket& output );
 	stateResult_t						State_Update( stateParms_t* parms );
 	stateResult_t						State_Exec( stateParms_t* parms );
 
-	stateResult_t						State_LocalExec(stateParms_t* parms);
-	int									GetLocalState(const char * newStateName);
-	idGraphNode*						AddLocalStateNode(const char* stateName, idGraphNode* node);
+	stateResult_t						State_LocalExec( stateParms_t* parms );
+	int									GetLocalState( const char* newStateName );
+
+	template<class T>
+	T* CreateStateNode( int stateIndex, T* node );
+	template<class T>
+	T* CreateNode( int stateIndex );
+
+	idGraphNode*						CreateLocalStateNode( int stateIndex, idGraphNode* node );
+	idGraphNode*						CreateLocalStateNode( const char* stateName, idGraphNode* node );
 	void								Clear();
 
-	idBlackBoard	blackBoard;
+	int									CreateSubState( const char* name, idList<idScriptVariableInstance_t> inputs, idList< idScriptVariableInstance_t> ouputs );
 
 	idStrList						localStates;
 	idHashIndex						localStateHash;
 	idList<GraphState>				localGraphState;
 private:
-	
+
 };
 
 //Testcase for idStateGraph[editor]
@@ -179,10 +198,18 @@ public:
 	void			Spawn();
 
 	stateResult_t	State_Idle( stateParms_t* parms );
+
+
 	void			Event_Activate( idEntity* activator );
 
 	idStateGraph	graph;
 	rvStateThread	stateThread;
+
+	idScriptBool	varBoolTest;
+	idScriptInt		varIntTest;
+	idScriptFloat	varFloatTest;
+	idScriptStr		varStringTest;
+
 private:
 	virtual void	SharedThink();
 	virtual void	Think();
