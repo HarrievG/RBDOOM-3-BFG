@@ -300,8 +300,8 @@ idList<idScriptVariableInstance_t> idTypeInfo::GetScriptVariables( void* owner )
 			if( !idStr::Cmp( infoPtr->classname, current.typeName ) )
 			{
 				const classVariableInfo_t* variables = current.variables;
-				
-				int varIdx = 0;				
+
+				int varIdx = 0;
 				bool found = false;
 				while( variables[varIdx].name )
 				{
@@ -326,6 +326,31 @@ idList<idScriptVariableInstance_t> idTypeInfo::GetScriptVariables( void* owner )
 		infoPtr = infoPtr->super;
 	}
 
+	return ret;
+}
+
+idList<const idEventDef*> idTypeInfo::GetEventDefs()
+{
+	idList<const idEventDef*> ret;
+
+	idTypeInfo* infoPtr = this;
+
+	while( infoPtr )
+	{
+		idEventFunc<idClass>* def = infoPtr->eventCallbacks;
+		if( !def || !def[0].event )
+		{
+			// no new events or overrides
+			continue;
+		}
+
+		// go through each entry until we hit the NULL terminator
+		for( int j = 0; def[j].event != NULL; j++ )
+		{
+			ret.Alloc() = def[j].event;
+		}
+		infoPtr = infoPtr->super;
+	}
 	return ret;
 }
 
