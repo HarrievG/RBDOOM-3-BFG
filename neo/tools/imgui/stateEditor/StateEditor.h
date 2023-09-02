@@ -74,21 +74,46 @@ enum class NodeType
 
 struct GraphNodePin
 {
-	ed::PinId   ID;
-	GraphNode* NodePtr;
-	std::string Name;
-	PinType     Type;
-	PinKind     Kind;
+	ed::PinId			ID;
+	GraphNode*			ParentNode;
+	std::string			Name;
+	PinType				Type;
+	PinKind				Kind;
+
+
 
 	GraphNodePin() :
-		ID( -1 ), NodePtr( nullptr ), Name( "newPin" ), Type( PinType::Flow ), Kind( PinKind::Input )
+		ID( -1 ), ParentNode( nullptr ), Name( "newPin" ), Type( PinType::Flow ), Kind( PinKind::Input )
 	{
 	}
 
-	GraphNodePin( int id, const char* name, PinType type, PinKind kind, GraphNode* parent ) :
-		ID( id ), NodePtr( parent ), Name( name ), Type( type ), Kind( kind )
+	GraphNodePin( int id, const char* name, PinType type, PinKind kind, idGraphNodeSocket* ownerSocket, GraphNode* parentNode ) :
+		ID( id ), ParentNode( parentNode ), Name( name ), Type( type ), Kind( kind )
 	{
+		idGraphNodeSocket** value;
+		if( socketHashIdx.Get( id, &value ) && *value != NULL )
+		{
+			assert( 1 );
+		}
+		else
+		{
+			socketHashIdx.Set( id, ownerSocket );
+		}
 	}
+	~GraphNodePin()
+	{
+		idGraphNodeSocket** value;
+		if( socketHashIdx.Get( ID.Get(), &value ) )
+		{
+			socketHashIdx.Remove( ID.Get() );
+		}
+		else
+		{
+			assert( 1 );
+		}
+
+	}
+	static idHashTableT<int, idGraphNodeSocket*> socketHashIdx;
 };
 
 struct GraphNode
@@ -97,8 +122,9 @@ public:
 	bool dirty;
 	ed::NodeId ID;
 	idStr Name;
-	idList<GraphNodePin> Inputs;
-	idList<GraphNodePin> Outputs;
+	idList<GraphNodePin*> Inputs;
+	idList<GraphNodePin*> Outputs;
+
 	ImColor Color;
 	NodeType Type;
 	ImVec2 Size;
@@ -155,8 +181,11 @@ public:
 	static void						Enable( const idCmdArgs& args );
 
 	GraphNode*						SpawnTreeSequenceNode();
-	const Link&						GetLinkByID( ed::LinkId id );
+	const Link&						GetLinkByID( ed::LinkId& id );
 	const int						GetLinkIndexByID( ed::LinkId& id );
+	idList<Link*>					GetAllLinks( const GraphNode& target );
+	void							DeleteAllPinsAndLinks( GraphNode& target );
+	void							DeleteLink( StateGraphEditor::Link& id );
 	void							ReadNode( idGraphNode* node, GraphNode& newNode );
 	void							ReadGraph( const GraphState* graph );
 	void							Clear();

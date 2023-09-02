@@ -32,10 +32,11 @@ If you have questions concerning this license or the applicable additional terms
 #include "tools/imgui/stateEditor/StateEditor.h"
 #include "imgui/BFGimgui.h"
 #include "script/Script_Program.h"
+# define IMGUI_DEFINE_MATH_OPERATORS
+#include "imgui_internal.h"
 
 CLASS_DECLARATION( idClass, idStateGraph )
 END_CLASS
-
 
 idStateGraph::idStateGraph()
 {
@@ -188,14 +189,46 @@ idGraphNode* idStateGraph::CreateNode( idGraphNode* node )
 	//return retNode;
 }
 
-idGraphNodeSocket::Link_t& idStateGraph::AddLink( idGraphNodeSocket& input, idGraphNodeSocket& output )
+void idStateGraph::RemoveLink( idGraphNodeSocket* start, idGraphNodeSocket* end )
+{
+	auto& currentGraphState = localGraphState[0];
+	int idx = 0;
+	for( auto& link : currentGraphState.links )
+	{
+		if( link.start == start && link.end == end )
+		{
+			int lastIndex = start->connections.Num() - 1;
+			for( int i = 0; i < start->connections.Num(); i++ )
+			{
+				if( start->connections[i] == end )
+				{
+					start->connections[lastIndex]->socketIndex = i;
+					start->connections.RemoveIndexFast( i );
+				}
+			}
+			lastIndex = end->connections.Num() - 1;
+			for( int i = 0; i < end->connections.Num(); i++ )
+			{
+				if( end->connections[i] == start )
+				{
+					end->connections[lastIndex]->socketIndex = i;
+					end->connections.RemoveIndexFast( i );
+				}
+			}
+			currentGraphState.links.RemoveIndexFast( idx );
+		}
+		idx++;
+	}
+}
+
+idGraphNodeSocket::Link_t& idStateGraph::AddLink( idGraphNodeSocket& start, idGraphNodeSocket& end )
 {
 	auto& currentGraphState = localGraphState[0];
 
 	return currentGraphState.links.Alloc() =
 	{
-		output.connections.Alloc() = &input,
-		input.connections.Alloc() = &output
+		end.connections.Alloc() = &start,
+		start.connections.Alloc() = &end
 	};
 }
 
@@ -391,20 +424,14 @@ idGraphNodeSocket& idGraphNode::CreateSocket( idList<idGraphNodeSocket>& socketL
 	return ret;
 }
 
-
 //Move out of this file and only compile with editor tools.
 void idGraphNode::Draw( ImGuiTools::GraphNode* nodePtr )
 {
 	auto& node = *nodePtr;
 	namespace ed = ax::NodeEditor;
 	using namespace ImGuiTools;
-
 	ed::BeginNode( node.ID );
-
-	int nodeWidth = 100;
-	ImGui::PushItemWidth( nodeWidth );
-	//ImGui::DragInt("drag int", &nodeWidth, 1);
-
+	ImGui::PushID( node.ID.Get() );
 	ImGui::AlignTextToFramePadding();
 
 	if( auto* owner = node.Owner )
@@ -421,76 +448,158 @@ void idGraphNode::Draw( ImGuiTools::GraphNode* nodePtr )
 		const auto topRoundCornersFlags = 3;
 
 #endif
-		idVec4 color = NodeTitleBarColor();
-		ImColor titleBarColor = { color.x, color.y, color.z, color.w };
-		const char* titleText = GetName();
-		ImVec2 textbb = ImGui::CalcTextSize( titleText, NULL, true );
-		float barWidth = idMath::Imax( ImGui::GetStyle().ItemInnerSpacing.x + textbb.x + ImGui::GetStyle().ItemInnerSpacing.x, nodeWidth );
-		ImGui::GetWindowDrawList()->AddRectFilled(
-			ImVec2( cursorScreenPos.x - 4 - ImGui::GetStyle().ItemInnerSpacing.x, cursorScreenPos.y - ImGui::GetStyle().ItemInnerSpacing.y - 4 ),
-			ImVec2( cursorScreenPos.x + barWidth + 24, cursorScreenPos.y + ImGui::GetTextLineHeight() + 4 ),
-			titleBarColor, 12, topRoundCornersFlags );
-
-		ImGui::Dummy( ImVec2( barWidth - 4 - ImGui::GetStyle().ItemInnerSpacing.x, 0 ) );
-		ImGui::GetWindowDrawList()->AddText( cursorScreenPos, ImColor( 50.0f, 45.0f, 255.0f, 255.0f ), titleText );
+		const float TEXT_BASE_WIDTH = ImGui::CalcTextSize( "A" ).x;
+		const float TEXT_BASE_HEIGHT = ImGui::GetTextLineHeightWithSpacing();
 
 		int maxInputSockets = inputSockets.Num();
 		int maxOutputSockets = outputSockets.Num();
 		int maxSocket = idMath::Imax( maxInputSockets, maxOutputSockets );
 		int inputSocketIdx = 0, outputSocketIdx = 0;
 
-		const char* inputText = nullptr;
-		const char* outputText = nullptr;
+		auto getVarWidth =
+			[]( idScriptVariableBase * var ) -> int
+		{
+			etype_t type = var->GetType();
+			switch( type )
+			{
+				default:
+					return 1;
+					break;
+				case ev_string:
+					return 20;
+					break;
+				case ev_float:
+					return 10;
+					break;
+				case ev_vector:
+					return 18;
+					break;
+				case ev_entity:
+					return 20;
+					break;
+				case ev_boolean:
+					return 5;
+					break;
+				case ev_int:
+					return 10;
+					break;
+			}
+		};
+
+		int maxLengthIn = 1;
+		int maxLengthOut = 1;
 		for( int i = 0; i < maxSocket; i++ )
 		{
-			if( inputSocketIdx <= maxInputSockets - 1 )
+			if( i < maxInputSockets )
 			{
-				idGraphNodeSocket& ownerSocket = owner->inputSockets[inputSocketIdx];
-				ed::BeginPin( node.Inputs[inputSocketIdx].ID, ed::PinKind::Input );
-				if( ownerSocket.var )
-				{
+				auto& inpSocket = inputSockets[i];
+				if( inpSocket.var )
 
-					ImGui::ImScriptVariable( idStr( reinterpret_cast<uintptr_t>( node.Inputs[inputSocketIdx].ID.AsPointer() ) ), { ownerSocket.name.c_str(), "", ownerSocket.var } );
+				{
+					maxLengthIn = idMath::Imax( maxLengthIn, getVarWidth( inpSocket.var ) );
 				}
 				else
 				{
-					ImGui::Text( ownerSocket.name.c_str() );
+					maxLengthIn = idMath::Imax( maxLengthIn, inpSocket.name.Length() );
 				}
-				ed::EndPin();
-				inputSocketIdx++;
 			}
-			else
+			if( i < maxOutputSockets )
 			{
-				ImGui::Text( "" );
-				inputText = "";
-			}
-			if( outputSocketIdx <= maxOutputSockets - 1 )
-			{
-				idGraphNodeSocket& ownerSocket = owner->outputSockets[outputSocketIdx];
-				outputText = owner->outputSockets[outputSocketIdx].name.c_str();
-				ImGui::SameLine();
-				ImGui::Dummy( ImVec2( idMath::Imax( barWidth - ImGui::CalcTextSize( outputText ).x - ImGui::CalcTextSize( inputText ).x, 0 ), 0 ) );
-				ImGui::SameLine();
-				ed::BeginPin( node.Outputs[outputSocketIdx].ID, ed::PinKind::Output );
-				if( ownerSocket.var )
+				auto& outSocket = outputSockets[i];
+				if( outSocket.var )
 				{
-					ImGui::ImScriptVariable( idStr( reinterpret_cast<uintptr_t>( node.Outputs[outputSocketIdx].ID.AsPointer() ) ), { ownerSocket.name.c_str(), "", ownerSocket.var }, false );
+					maxLengthOut = idMath::Imax( maxLengthOut, getVarWidth( outSocket.var ) );
 				}
 				else
 				{
-					ImGui::Text( ownerSocket.name.c_str() );
+					maxLengthOut = idMath::Imax( maxLengthOut, outSocket.name.Length() );
 				}
-				ed::EndPin();
-				outputSocketIdx++;
-			}
-			else
-			{
-				outputText = nullptr;
 			}
 		}
+		ImGui::Dummy( ImVec2( 0, TEXT_BASE_HEIGHT ) );
+		static ImGuiTableFlags flags = ImGuiTableFlags_NoHostExtendX | ImGuiTableFlags_SizingStretchProp ;
+		if( ImGui::BeginTable( "NodeContent", 4, flags ) )
+		{
+			ImGui::TableSetupColumn( "", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_IndentDisable, 25 );
+			ImGui::TableSetupColumn( "", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_IndentDisable, TEXT_BASE_WIDTH * maxLengthIn );
+			ImGui::TableSetupColumn( "", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_IndentDisable, TEXT_BASE_WIDTH * maxLengthOut );
+			ImGui::TableSetupColumn( "", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_IndentDisable, 25 );
+
+			for( int i = 0; i < maxSocket; i++ )
+			{
+				ImGui::TableNextRow( 0 );
+				ImGui::PushID( i );
+				if( inputSocketIdx <= maxInputSockets - 1 )
+				{
+					ImGui::TableSetColumnIndex( 1 );
+					idGraphNodeSocket& ownerSocket = owner->inputSockets[inputSocketIdx];
+					ImGui::IconItem icon = { ImGui::IconType::Flow , ownerSocket.connections.Num() > 0, ImColor( 255, 255, 255 ), ImColor( 0, 0, 0, 0 ) };
+					if( ownerSocket.var )
+					{
+						icon = ImGui::ImScriptVariable( idStr( reinterpret_cast<uintptr_t>( node.Inputs[inputSocketIdx]->ID.AsPointer() ) ), { ownerSocket.name.c_str(), "", ownerSocket.var } );
+						icon.filled = ownerSocket.connections.Num() > 0;
+					}
+					else
+					{
+						ImGui::GetWindowDrawList()->AddText( ImGui::GetCursorScreenPos() + ImVec2( 0, ImGui::GetStyle().ItemInnerSpacing.y ),
+															 ImColor( 50.0f, 45.0f, 255.0f, 255.0f ), ownerSocket.name.c_str() );
+					}
+
+					ImGui::TableSetColumnIndex( 0 );
+					ed::BeginPin( node.Inputs[inputSocketIdx]->ID, ed::PinKind::Input );
+					auto cursorPos = ImGui::GetCursorScreenPos();
+					auto drawList = ImGui::GetWindowDrawList();
+					ed::PinPivotAlignment( ImVec2( 0.25, 0.5f ) );
+					ed::PinPivotSize( ImVec2( 0, 0 ) );
+					ImGui::DrawIcon( ImGui::GetWindowDrawList(), cursorPos, cursorPos + ImVec2( 25, 25 ), icon.type, icon.filled, icon.color, icon.innerColor );
+					ImGui::Dummy( ImVec2( 25, 25 ) );
+					ed::EndPin();
+					inputSocketIdx++;
+				}
+				if( outputSocketIdx <= maxOutputSockets - 1 )
+				{
+					ImGui::TableSetColumnIndex( 2 );
+					idGraphNodeSocket& ownerSocket = owner->outputSockets[outputSocketIdx];
+					ImGui::IconItem icon = { ImGui::IconType::Flow , ownerSocket.connections.Num() > 0, ImColor( 255, 255, 255 ), ImColor( 0, 0, 0, 0 ) };
+					if( ownerSocket.var )
+					{
+						icon = ImGui::ImScriptVariable( idStr( reinterpret_cast<uintptr_t>( node.Outputs[outputSocketIdx]->ID.AsPointer() ) ), { ownerSocket.name.c_str(), "", ownerSocket.var } );
+						icon.filled = ownerSocket.connections.Num() > 0;
+					}
+					else
+					{
+						ImGui::GetWindowDrawList()->AddText( ImGui::GetCursorScreenPos() + ImVec2( 0, ImGui::GetStyle().ItemInnerSpacing.y ),
+															 ImColor( 50.0f, 45.0f, 255.0f, 255.0f ), ownerSocket.name.c_str() );
+					}
+
+					ImGui::TableSetColumnIndex( 3 );
+					ed::BeginPin( node.Outputs[outputSocketIdx]->ID, ed::PinKind::Output );
+					auto cursorPos = ImGui::GetCursorScreenPos();
+					auto drawList = ImGui::GetWindowDrawList();
+					ed::PinPivotAlignment( ImVec2( 1.0f, 0.5f ) );
+					ed::PinPivotSize( ImVec2( 0, 0 ) );
+					ImGui::DrawIcon( ImGui::GetWindowDrawList(), cursorPos, cursorPos + ImVec2( 25, 25 ), icon.type, icon.filled, icon.color, icon.innerColor );
+					ImGui::Dummy( ImVec2( 25, 25 ) );
+					ed::EndPin();
+					outputSocketIdx++;
+				}
+				ImGui::PopID();
+			}
+			ImGui::EndTable();
+		}
+
+		float width = ( ImGui::GetItemRectMax() - ImGui::GetItemRectMin() ).x;
+		idVec4 color = NodeTitleBarColor();
+		ImColor titleBarColor = { color.x, color.y, color.z, color.w };
+		ImGui::GetWindowDrawList()->AddRectFilled(
+			ImVec2( cursorScreenPos.x - 4 - ImGui::GetStyle().ItemInnerSpacing.x, cursorScreenPos.y - ImGui::GetStyle().ItemInnerSpacing.y - 4 ),
+			ImVec2( cursorScreenPos.x + width + ImGui::GetStyle().ItemInnerSpacing.x, cursorScreenPos.y + TEXT_BASE_HEIGHT ),
+			titleBarColor, 12, topRoundCornersFlags );
+		ImGui::Dummy( ImVec2( 0, TEXT_BASE_HEIGHT ) );
+		ImGui::GetWindowDrawList()->AddText( cursorScreenPos, ImColor( 50.0f, 45.0f, 255.0f, 255.0f ), GetName() );
 	}
 
-	ImGui::PopItemWidth();
+	ImGui::PopID();
 	ed::EndNode();
 
 }
@@ -509,7 +618,9 @@ idGraphNodeSocket& idGraphNode::CreateInputSocket()
 
 idGraphNodeSocket& idGraphNode::CreateOutputSocket()
 {
-	return CreateSocket( outputSockets );
+	auto& ret = CreateSocket( outputSockets );
+	ret.isOutput = true;
+	return ret;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -518,10 +629,6 @@ idGraphNodeSocket& idGraphNode::CreateOutputSocket()
 ABSTRACT_DECLARATION( idClass, idGraphNode )
 END_CLASS
 
-/// <summary>
-/// idGraphNode
-/// </summary>
-/// <returns>bool</returns>
 bool idGraphNode::HasActiveSocket()
 {
 	for( idGraphNodeSocket& input : inputSockets )
@@ -668,8 +775,8 @@ idGraphNodeSocket::~idGraphNodeSocket()
 	{
 		if( freeData )
 		{
-			etype_t t;
-			var->GetType( t );
+			etype_t t = var->GetType();
+
 			if( t == ev_string )
 			{
 				owner->graph->blackBoard.Free( ( idScriptStr* )var );

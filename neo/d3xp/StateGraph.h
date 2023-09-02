@@ -86,7 +86,7 @@ public:
 	} Link_t;
 	//////////////////////////////////////////////////////////////////////////
 	~idGraphNodeSocket();
-	idGraphNodeSocket() : owner( nullptr ), var( nullptr ), active( false ), name( "" ), socketIndex( -1 ), nodeIndex( -1 ), freeData( true ) {}
+	idGraphNodeSocket() : owner( nullptr ), var( nullptr ), active( false ), name( "" ), socketIndex( -1 ), nodeIndex( -1 ), freeData( true ), isOutput( false ) {}
 	idList<idGraphNodeSocket*> connections;
 	idGraphNode* owner;
 	idScriptVariableBase* var;
@@ -95,6 +95,7 @@ public:
 	int socketIndex;
 	int nodeIndex;
 	bool freeData;
+	bool isOutput;
 };
 class idStateGraph;
 class GraphState
@@ -160,7 +161,8 @@ public:
 	bool								LoadBinary( idFile* file, const ID_TIME_T _timeStamp );
 
 	idGraphNode*						CreateNode( idGraphNode* node );
-	idGraphNodeSocket::Link_t&			AddLink( idGraphNodeSocket& input, idGraphNodeSocket& output );
+	void								RemoveLink( idGraphNodeSocket* start, idGraphNodeSocket* end );
+	idGraphNodeSocket::Link_t&			AddLink( idGraphNodeSocket& start, idGraphNodeSocket& end );
 	stateResult_t						State_Update( stateParms_t* parms );
 	stateResult_t						State_Exec( stateParms_t* parms );
 
@@ -206,7 +208,7 @@ public:
 	rvStateThread	stateThread;
 
 	idScriptBool	varBoolTest;
-	idScriptInt		varIntTest;
+	idScriptInteger	varIntTest;
 	idScriptFloat	varFloatTest;
 	idScriptStr		varStringTest;
 

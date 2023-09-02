@@ -43,6 +43,9 @@ namespace ImGuiTools
 {
 using namespace ImGui;
 
+
+idHashTableT<int, idGraphNodeSocket*> GraphNodePin::socketHashIdx;
+
 static bool Splitter( bool split_vertically, float thickness, float* size1, float* size2, float min_size1, float min_size2, float splitter_long_axis_size = -1.0f )
 {
 	using namespace ImGui;
@@ -74,8 +77,8 @@ ImGuiTools::GraphNode* StateGraphEditor::SpawnTreeSequenceNode()
 	GraphNode& newNode = nodeList.Alloc() = { nextElementId++, "Sequence" };
 	newNode.Type = NodeType::Tree;
 
-	GraphNodePin& newInput = newNode.Inputs.Alloc() = { nextElementId++, "IN", PinType::Flow , PinKind::Input , &newNode };
-	GraphNodePin& newOutput = newNode.Outputs.Alloc() = { nextElementId++, "OUT", PinType::Flow , PinKind::Output, &newNode };
+	//GraphNodePin& newInput = newNode.Inputs.Alloc() = { nextElementId++, "IN", PinType::Flow , PinKind::Input , &newNode };
+	//GraphNodePin& newOutput = newNode.Outputs.Alloc() = { nextElementId++, "OUT", PinType::Flow , PinKind::Output, &newNode };
 
 	//BuildNode(&m_Nodes.back());
 	return &newNode;
@@ -95,20 +98,84 @@ const int StateGraphEditor::GetLinkIndexByID( ed::LinkId& id )
 	return index;
 }
 
+idList<StateGraphEditor::Link*> StateGraphEditor::GetAllLinks( const GraphNode& target )
+{
+	idList<StateGraphEditor::Link*> result;
+
+	if( !linkList.Num() )
+	{
+		return result;
+	}
+
+	int foundLinks = 0;
+	int linkIdx = 0;
+	while( linkIdx < linkList.Num() )
+	{
+		auto& link = linkList[linkIdx];
+
+		for( GraphNodePin* pin : target.Inputs )
+		{
+			if( pin->ID == link.EndPinID )
+			{
+				result.Alloc() = &link;
+				foundLinks++;
+				break;
+			}
+		}
+
+		for( GraphNodePin* pin : target.Outputs )
+		{
+			if( pin->ID == link.EndPinID )
+			{
+				result.Alloc() = &link;
+				foundLinks++;
+				break;
+			}
+		}
+		linkIdx++;
+	}
+
+	return result;
+}
+
+void StateGraphEditor::DeleteAllPinsAndLinks( GraphNode& target )
+{
+	auto links = GetAllLinks( target );
+	for( auto* link : links )
+	{
+		DeleteLink( *link );
+	}
+	target.Inputs.DeleteContents();
+	target.Outputs.DeleteContents();
+}
+
+void StateGraphEditor::DeleteLink( StateGraphEditor::Link& link )
+{
+	int idx = GetLinkIndexByID( link.ID );
+
+	idGraphNodeSocket** inputSocketPtr;
+	idGraphNodeSocket** outputSocketPtr;
+	GraphNodePin::socketHashIdx.Get( linkList[idx].StartPinID.Get(), &outputSocketPtr );
+	GraphNodePin::socketHashIdx.Get( linkList[idx].EndPinID.Get(), &inputSocketPtr );
+
+	idGraphNodeSocket* inputSocket = *inputSocketPtr;
+	idGraphNodeSocket* outputSocket = *outputSocketPtr;
+	graphEnt->graph.RemoveLink( outputSocket, inputSocket );
+	linkList.RemoveIndexFast( idx );
+}
+
 void StateGraphEditor::ReadNode( idGraphNode* node, GraphNode& newNode )
 {
-	idList< ed::NodeId > inputIDs;
-	idList< ed::NodeId > outputIDs;
-	newNode.Inputs.Clear();
-	newNode.Outputs.Clear();
-	newNode.Type = NodeType::AnimState;
+	DeleteAllPinsAndLinks( newNode );
+
 	for( auto& socket : node->inputSockets )
 	{
-		auto& newPin = newNode.Inputs.Alloc() = { nextElementId++, socket.name, PinType::Flow , PinKind::Input , &newNode };
+		newNode.Inputs.Alloc() = new GraphNodePin( nextElementId++, socket.name, PinType::Flow, PinKind::Input, &socket, &newNode );
 	}
+
 	for( auto& socket : node->outputSockets )
 	{
-		newNode.Outputs.Alloc() = { nextElementId++, socket.name, PinType::Flow , PinKind::Output, &newNode };
+		newNode.Outputs.Alloc() = new GraphNodePin( nextElementId++, socket.name, PinType::Flow, PinKind::Output, &socket, &newNode );
 	}
 }
 
@@ -121,9 +188,9 @@ void StateGraphEditor::ReadGraph( const GraphState* graph )
 	}
 	for( idGraphNodeSocket::Link_t& link : graph->links )
 	{
-		auto& outputNode = nodeList[link.start->nodeIndex];
 		auto& inputNode = nodeList[link.end->nodeIndex];
-		Link& newLink = linkList.Alloc() = { ed::LinkId( nextElementId++ ), outputNode.Outputs[link.start->socketIndex].ID, inputNode.Inputs[link.end->socketIndex].ID };
+		auto& outputNode = nodeList[link.start->nodeIndex];
+		Link& newLink = linkList.Alloc() = { ed::LinkId( nextElementId++ ), outputNode.Outputs[link.start->socketIndex]->ID, inputNode.Inputs[link.end->socketIndex]->ID };
 	}
 }
 
@@ -133,7 +200,7 @@ void StateGraphEditor::Clear()
 	linkList.Clear();
 }
 
-const ImGuiTools::StateGraphEditor::Link& StateGraphEditor::GetLinkByID( ed::LinkId id )
+const ImGuiTools::StateGraphEditor::Link& StateGraphEditor::GetLinkByID( ed::LinkId& id )
 {
 	for( auto& link : linkList )
 	{
@@ -241,8 +308,6 @@ void StateGraphEditor::DrawGraphEntityTest()
 		static ed::LinkId contextLinkId = 0;
 		static ed::PinId  contextPinId = 0;
 		static bool createNewNode = false;
-		static GraphNodePin* newNodeLinkPin = nullptr;
-		static GraphNodePin* newLinkPin = nullptr;
 
 		//auto openPopupPosition = ImGui::GetMousePos();
 		//ed::Suspend();
@@ -561,8 +626,8 @@ void StateGraphEditor::Handle_NodeEvents()
 	// Handle creation action, returns true if editor want to create new object (node or link)
 	if( ed::BeginCreate() )
 	{
-		ed::PinId inputPinId, outputPinId;
-		if( ed::QueryNewLink( &inputPinId, &outputPinId ) )
+		ed::PinId startPinId, endPinId;
+		if( ed::QueryNewLink( &startPinId, &endPinId ) )
 		{
 			// QueryNewLink returns true if editor want to create new link between pins.
 			//
@@ -576,18 +641,45 @@ void StateGraphEditor::Handle_NodeEvents()
 			//   * input invalid, output valid - user started to drag new ling from output pin
 			//   * input valid, output valid   - user dragged link over other pin, can be validated
 
-			if( inputPinId && outputPinId ) // both are valid, let's accept link
+			if( startPinId && endPinId ) // both are valid, let's accept link
 			{
+				idGraphNodeSocket** inputSocketPtr;
+				idGraphNodeSocket** outputSocketPtr;
+				GraphNodePin::socketHashIdx.Get( startPinId.Get(), &outputSocketPtr );
+				GraphNodePin::socketHashIdx.Get( endPinId.Get(), &inputSocketPtr );
+
+				idGraphNodeSocket* inputSocket = *inputSocketPtr;
+				idGraphNodeSocket* outputSocket = *outputSocketPtr;
+
 				// ed::AcceptNewItem() return true when user release mouse button.
 				if( ed::AcceptNewItem() )
 				{
-					// Since we accepted new link, lets add one to our list of links.
-					Link& newLink = linkList.Alloc() = { ed::LinkId( nextElementId++ ), inputPinId, outputPinId };
+					graphEnt->graph.AddLink( *outputSocket, *inputSocket );
+					Link& newLink = linkList.Alloc() = { ed::LinkId( nextElementId++ ), startPinId , endPinId };
+
+					if( inputSocket->var )
+					{
+						ImGui::IconItem icon = ImGui::ImScriptVariable( idStr(), { "", "", inputSocket->var }, false );
+						newLink.Color = icon.color;
+					}
+
 				}
 
-				// You may choose to reject connection between these nodes
-				// by calling ed::RejectNewItem(). This will allow editor to give
-				// visual feedback by changing link thickness and color.
+				if( startPinId != endPinId )
+				{
+					if( inputSocket->isOutput == outputSocket->isOutput )
+					{
+						ed::RejectNewItem( ImColor( 255, 0, 0 ), 2.0f );
+					}
+					else if( !( inputSocket->var == nullptr && outputSocket->var == nullptr ) )
+					{
+						if( ( inputSocket->var && !outputSocket->var || !inputSocket->var && outputSocket->var )
+								|| inputSocket->var->GetType() != outputSocket->var->GetType() )
+						{
+							ed::RejectNewItem( ImColor( 255, 0, 0 ), 2.0f );
+						}
+					}
+				}
 			}
 		}
 	}
@@ -604,8 +696,11 @@ void StateGraphEditor::Handle_NodeEvents()
 			// If you agree that link can be deleted, accept deletion.
 			if( ed::AcceptDeletedItem() )
 			{
-				// Then remove link from your data.
-				linkList.RemoveIndexFast( GetLinkIndexByID( deletedLinkId ) );
+				int idx = GetLinkIndexByID( deletedLinkId );
+				if( idx >= 0 )
+				{
+					DeleteLink( linkList[idx] );
+				}
 			}
 
 			// You may reject link deletion by calling:

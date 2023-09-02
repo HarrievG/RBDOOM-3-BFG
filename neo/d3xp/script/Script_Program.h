@@ -198,7 +198,7 @@ will cause an error.
 class idScriptVariableBase
 {
 public:
-	virtual	void GetType( etype_t& classType ) = 0;
+	virtual	etype_t GetType( ) = 0;
 	virtual	byte* GetRawData() = 0;
 };
 
@@ -211,9 +211,9 @@ private:
 
 public:
 
-	void GetType( etype_t& classType ) override
+	etype_t GetType( ) override
 	{
-		classType = etype;
+		return etype;
 	}
 
 	idScriptVariable( void* bytes );
