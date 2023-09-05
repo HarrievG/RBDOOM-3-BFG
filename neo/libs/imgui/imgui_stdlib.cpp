@@ -39,7 +39,14 @@ static int InputTextCallback( ImGuiInputTextCallbackData* data )
 		// If for some reason we refuse the new length (BufTextLen) and/or capacity (BufSize) we need to set them back to what we want.
 		idStr* str = user_data->Str;
 		IM_ASSERT( data->Buf == str->c_str() );
-		str->ReAllocate( data->BufTextLen, true );
+		if (data->BufTextLen)
+		{
+			str->ReAllocate( data->BufTextLen, true );
+		}
+		else
+		{
+			str->Clear();
+		}
 		data->Buf = ( char* )str->c_str();
 	}
 	else if( user_data->ChainCallback )
