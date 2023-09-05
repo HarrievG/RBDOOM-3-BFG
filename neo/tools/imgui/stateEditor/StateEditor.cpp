@@ -729,6 +729,27 @@ void StateGraphEditor::Handle_NodeEvents()
 								|| inputSocket->var->GetType() != outputSocket->var->GetType() )
 						{
 							ed::RejectNewItem( ImColor( 255, 0, 0 ), 2.0f );
+						}else
+						{
+							for ( auto* connection : outputSocket->connections )
+							{
+								if ( connection == inputSocket )
+								{
+									ed::RejectNewItem( ImColor (255, 0, 0 ), 2.0f );
+									break;
+								}
+							}
+						}
+					}
+					else
+					{
+						for ( auto* connection : outputSocket->connections )
+						{
+							if ( connection == inputSocket )
+							{
+								ed::RejectNewItem( ImColor( 255, 0, 0 ), 2.0f );
+								break;
+							}
 						}
 					}
 				}

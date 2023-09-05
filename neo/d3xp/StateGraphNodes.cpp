@@ -536,7 +536,6 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 	}
 	ImGui::PushID( nodeHashIdx );
 
-
 	ImGui::AlignTextToFramePadding();
 
 	idList<const idEventDef*> eventDefs;
@@ -834,6 +833,7 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 			if( ImGui::Button( var.varName, ImVec2( 180, 20 ) ) )
 			{
 				nodePtr->dirty = true;
+				nodePtr->Graph->DeleteAllPinsAndLinks(*nodePtr);
 				OnChangeVar( var );
 				popup_text = var.varName;
 				ImGui::CloseCurrentPopup();  // These calls revoke the popup open state, which was set by OpenPopup above.
