@@ -112,7 +112,7 @@ void idStateGraph::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL*/ )
 		for( idGraphNode* node : nodes )
 		{
 			idTypeInfo* c = node->GetType();
-			file->WriteBig( c->typeNum );
+			file->WriteString( c->classname );
 		}
 
 		for( idGraphNode* node : nodes )
@@ -131,7 +131,7 @@ void idStateGraph::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL*/ )
 	}
 }
 
-bool idStateGraph::LoadBinary( idFile* file, const ID_TIME_T _timeStamp )
+bool idStateGraph::LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass* owner )
 {
 	Clear();
 	if( file != nullptr )
@@ -145,18 +145,15 @@ bool idStateGraph::LoadBinary( idFile* file, const ID_TIME_T _timeStamp )
 		//create nodes
 		for( int i = 0; i < totalNodes; i++ )
 		{
-			//HVG_TODO
-			//storing typenum is not a good idea since it can change during dev, store string representation instead.
-			int typeNum;
-			file->ReadBig( typeNum );
-			auto* typeInfo = idClass::GetType( typeNum );
+			idStr className;
+			file->ReadString( className );
+			auto* typeInfo = idClass::GetClass( className );
 			auto* newNode = CreateNode( static_cast<idGraphNode*>( typeInfo->CreateInstance() ) );
-			newNode->Setup();
 		}
 		//load data
 		for( auto* node : nodes )
 		{
-			if( !node->LoadBinary( file, _timeStamp ) )
+			if( !node->LoadBinary( file, _timeStamp, owner ) )
 			{
 				return false;
 			}
@@ -172,7 +169,7 @@ bool idStateGraph::LoadBinary( idFile* file, const ID_TIME_T _timeStamp )
 			file->ReadBig( startSocketIdx );
 			file->ReadBig( endIdx );
 			file->ReadBig( endSocketIdx );
-			links.Alloc() = { &nodes[startIdx]->outputSockets[startSocketIdx], &nodes[endIdx]->inputSockets[endSocketIdx] };
+			AddLink( nodes[startIdx]->outputSockets[startSocketIdx], nodes[endIdx]->inputSockets[endSocketIdx] );
 		}
 		return true;
 	}
@@ -353,15 +350,6 @@ void idGraphNode::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL */ )
 			for( auto& socket : socketList )
 			{
 				file->WriteBig( socket.connections.Num() );
-
-				for( auto* connSocket : socket.connections )
-				{
-					file->WriteString( connSocket->name );
-					assert( connSocket->nodeIndex >= 0 );
-					assert( connSocket->socketIndex >= 0 );
-					file->WriteBig( connSocket->nodeIndex );
-					file->WriteBig( connSocket->socketIndex );
-				}
 			}
 		};
 
@@ -370,7 +358,7 @@ void idGraphNode::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL */ )
 	}
 }
 
-bool idGraphNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp )
+bool idGraphNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass* owner )
 {
 	if( file )
 	{
@@ -385,27 +373,6 @@ bool idGraphNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp )
 				socket.owner = this;
 				int numConnections;
 				file->ReadBig( numConnections );
-				socket.connections.AssureSize( numConnections );
-				for( auto& connSocket : socket.connections )
-				{
-					idStr name;
-					file->ReadString( name );
-					int nodeIndex;
-					file->ReadBig( nodeIndex );
-					assert( nodeIndex >= 0 );
-					int socketIndex;
-					file->ReadBig( socketIndex );
-					assert( socketIndex >= 0 );
-					if( isInput )
-					{
-						connSocket = &graph->nodes[nodeIndex]->outputSockets[socketIndex];
-					}
-					else
-					{
-						connSocket = &graph->nodes[nodeIndex]->inputSockets[socketIndex];
-					}
-					connSocket->name = name;
-				}
 			}
 		};
 
@@ -699,7 +666,7 @@ void idGraphedEntity::Spawn()
 	if( graphFile.IsEmpty() )
 	{
 		auto* initNode = graph.CreateNode( new idGraphOnInitNode() );
-		initNode->Setup();
+		initNode->Setup( this );
 
 		//auto* bbStr			= graph.blackBoard.Alloc("State_Idle");
 		//auto * stateNode		= graph.AddNode(new idStateNode(this, (const char*)(bbStr)));
@@ -708,24 +675,21 @@ void idGraphedEntity::Spawn()
 		stateNode->stateThread = &stateThread;
 		stateNode->input_State = "State_Idle";
 		stateNode->type = idStateNode::NodeType::Set;
-		stateNode->Setup();
+		stateNode->Setup( this );
 
 		auto* classNode = static_cast<idClassNode*>( graph.CreateNode( new idClassNode() ) );
-		classNode->ownerClass = this;
 		classNode->type = idClassNode::Call;
-		classNode->Setup();
+		classNode->Setup( this );
 
 		auto* classNodeVarSet = static_cast<idClassNode*>( graph.CreateNode( new idClassNode() ) );
-		classNodeVarSet->ownerClass = this;
 		classNodeVarSet->type = idClassNode::Set;
-		classNodeVarSet->Setup();
+		classNodeVarSet->Setup( this );
 
 		auto* classNodeVarGet = static_cast<idClassNode*>( graph.CreateNode( new idClassNode() ) );
-		classNodeVarGet->ownerClass = this;
 		classNodeVarGet->type = idClassNode::Get;
-		classNodeVarGet->Setup();
+		classNodeVarGet->Setup( this );
 
-		graph.AddLink( initNode->outputSockets[0], stateNode->inputSockets[0] );
+		//graph.AddLink( initNode->outputSockets[0], stateNode->inputSockets[0] );
 	}
 	else
 	{
@@ -733,7 +697,7 @@ void idGraphedEntity::Spawn()
 		idFileLocal inputFile( fileSystem->OpenFileRead( generatedFilename, "fs_basepath" ) );
 		if( inputFile )
 		{
-			graph.LoadBinary( inputFile, inputFile->Timestamp() );
+			graph.LoadBinary( inputFile, inputFile->Timestamp(), this );
 		}
 
 	}

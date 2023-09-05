@@ -284,12 +284,14 @@ Recursively searches up class hierarchy for every item with the same type in idS
 ================
 */
 
-idList<idScriptVariableInstance_t> idTypeInfo::GetScriptVariables( void* owner ) /*const classVariableInfo_t& classInfo*/
+//If filled with only a single instance , that varName will be searched and returned when result[0].scriptVariable is nullptr.
+void idTypeInfo::GetScriptVariables( void* owner , idList<idScriptVariableInstance_t>& result )
 {
 	//HVG TODO/WARNING
 	//make sure each variable from a super is resolved correctly,offset is not taken into account atm!
-	idList<idScriptVariableInstance_t> ret;
+
 	idTypeInfo* infoPtr = this;
+	bool searching = result.Num() == 1 && result[0].scriptVariable == nullptr;
 
 	while( infoPtr )
 	{
@@ -302,18 +304,42 @@ idList<idScriptVariableInstance_t> idTypeInfo::GetScriptVariables( void* owner )
 				const classVariableInfo_t* variables = current.variables;
 
 				int varIdx = 0;
-				bool found = false;
+
 				while( variables[varIdx].name )
 				{
 					const classVariableInfo_t& currentVar = variables[varIdx];
-
+					idScriptVariableInstance_t* instance = nullptr;
+					if( searching )
+					{
+						assert( idStr::Length( result[0].varName ) );
+						if( idStr::Cmp( currentVar.name, result[0].varName ) )
+						{
+							varIdx++;
+							continue;
+						}
+						instance = &result[0];
+					}
 					int scriptVarIdx = 0;
 					while( const char* scriptVarName = idScriptVariableTypes[scriptVarIdx] )
 					{
-						if( !idStr::Cmp( scriptVarName, variables[varIdx].type ) )
+						if( !idStr::Cmp( scriptVarName, currentVar.type ) )
 						{
-							//gameLocal.Printf("found %s \t %s in %s \n", scriptVarName, variables[varIdx].name,infoPtr->classname);
-							ret.Alloc() = { variables[varIdx].name , variables[varIdx].type , ( idScriptVariableBase* )( ( uintptr_t )owner + currentVar.offset ) };
+
+							if( !searching )
+							{
+								result.Alloc();
+								instance = &result[result.Num() - 1];
+							}
+
+							instance->varName = currentVar.name;
+							instance->typeName = currentVar.type;
+							instance->scriptVariable = ( idScriptVariableBase* )( ( uintptr_t )owner + currentVar.offset );
+
+							if( searching )
+							{
+								return;
+							}
+
 							break;
 						}
 						scriptVarIdx++;
@@ -325,11 +351,9 @@ idList<idScriptVariableInstance_t> idTypeInfo::GetScriptVariables( void* owner )
 		}
 		infoPtr = infoPtr->super;
 	}
-
-	return ret;
 }
 
-idList<const idEventDef*> idTypeInfo::GetEventDefs()
+idList<const idEventDef*> idTypeInfo::GetEventDefs( bool checkSuper/* = true*/ )
 {
 	idList<const idEventDef*> ret;
 
@@ -349,7 +373,14 @@ idList<const idEventDef*> idTypeInfo::GetEventDefs()
 		{
 			ret.Alloc() = def[j].event;
 		}
-		infoPtr = infoPtr->super;
+		if( checkSuper )
+		{
+			infoPtr = infoPtr->super;
+		}
+		else
+		{
+			infoPtr = nullptr;
+		}
 	}
 	return ret;
 }

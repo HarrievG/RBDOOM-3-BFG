@@ -447,7 +447,7 @@ void idEvent::Schedule( idClass* obj, const idTypeInfo* type, int time )
 	object = obj;
 	typeinfo = type;
 
-	// wraps after 24 days...like I care. ;)
+	// wraps after 24 days...like I care. ;) ... ded server cares.
 	this->time = gameLocal.time + time;
 
 	eventNode.Remove();

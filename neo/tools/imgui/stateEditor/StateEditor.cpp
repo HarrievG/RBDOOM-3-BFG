@@ -115,7 +115,7 @@ idList<StateGraphEditor::Link*> StateGraphEditor::GetAllLinks( const GraphNode& 
 
 		for( GraphNodePin* pin : target.Inputs )
 		{
-			if( pin->ID == link.EndPinID )
+			if( pin->ID == link.StartPinID )
 			{
 				result.Alloc() = &link;
 				foundLinks++;
@@ -328,8 +328,6 @@ void StateGraphEditor::DrawGraphEntityTest()
 		ImGui::EndChild();
 		ed::SetCurrentEditor( nullptr );
 	}
-
-
 }
 
 void StateGraphEditor::DrawMapGraph()
@@ -591,7 +589,7 @@ void StateGraphEditor::DrawLeftPane( float paneWidth )
 
 	ImGui::Separator();
 
-	if( ImGui::CollapsingHeader( "Functions" ) )
+	if( ImGui::CollapsingHeader( "States" ) )
 	{
 		if( ImGui::Button( "Create New" ) )
 		{
@@ -607,6 +605,31 @@ void StateGraphEditor::DrawLeftPane( float paneWidth )
 			}
 		}
 	}
+	if( ImGui::CollapsingHeader( "Events" ) )
+	{
+		if( ImGui::Button( "Create New" ) )
+		{
+			graphEnt->graph.CreateSubState( "New Function", {}, {} );
+		}
+		auto& graphState = graphEnt->graph.localGraphState;
+		auto& graphNames = graphEnt->graph.localStates;
+		if( graphState.Num() > 1 )
+		{
+			for( int i = 1; i < graphState.Num(); i++ )
+			{
+				ImGui::Text( graphNames[i] );
+			}
+		}
+	}
+
+	if( ImGui::CollapsingHeader( "Variables" ) )
+	{
+		if( ImGui::Button( "Create New" ) )
+		{
+			//graphEnt->graph.CreateSubState("New Function", {}, {});
+		}
+	}
+
 
 	//idPlayer* player = gameLocal.GetLocalPlayer();
 	//if( player )

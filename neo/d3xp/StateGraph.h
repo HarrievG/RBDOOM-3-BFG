@@ -120,9 +120,9 @@ public:
 
 	virtual stateResult_t Exec( stateParms_t* parms ) = 0;
 	virtual	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL );
-	virtual	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp );
+	virtual	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass* owner = nullptr );
 	virtual const char* GetName() = 0;
-	virtual void Setup() = 0;
+	virtual void Setup( idClass* graphOwner ) = 0;
 
 	//should only be used in editor.
 	virtual void Draw( ImGuiTools::GraphNode* nodePtr );
@@ -158,7 +158,7 @@ public:
 
 	void								ConvertScriptObject( idScriptObject* scriptObject );
 	void								WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL );
-	bool								LoadBinary( idFile* file, const ID_TIME_T _timeStamp );
+	bool								LoadBinary( idFile* file, const ID_TIME_T _timeStamp , idClass* owner = nullptr );
 
 	idGraphNode*						CreateNode( idGraphNode* node );
 	void								RemoveLink( idGraphNodeSocket* start, idGraphNodeSocket* end );

@@ -82,18 +82,19 @@ void idStateNode::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL*/ )
 	}
 }
 
-bool idStateNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp )
+bool idStateNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass* owner )
 {
 	if( file )
 	{
 		file->ReadBig( type );
 		file->ReadString( input_State );
+		Setup( owner );
 		return idGraphNode::LoadBinary( file, _timeStamp );
 	}
 	return false;
 }
 
-void idStateNode::Setup()
+void idStateNode::Setup( idClass* graphOwner )
 {
 	output_Result = SRESULT_ERROR;
 	stateThread = graph->targetStateThread;
@@ -130,20 +131,21 @@ void idGraphOnInitNode::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NUL
 	}
 }
 
-bool idGraphOnInitNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp )
+bool idGraphOnInitNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass* owner )
 {
 	if( file != NULL )
 	{
+		Setup( owner );
 		return idGraphNode::LoadBinary( file, _timeStamp );
 	}
 	return false;
 }
 
-void idGraphOnInitNode::Setup()
+void idGraphOnInitNode::Setup( idClass* graphOwner )
 {
 	idGraphNodeSocket& newOutput = CreateOutputSocket();
 	newOutput.active = true;
-	newOutput.name = "Initialize";
+	newOutput.name = "";
 	done = false;
 }
 
@@ -173,16 +175,17 @@ void idGraphInputOutputNode::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*
 	}
 }
 
-bool idGraphInputOutputNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp )
+bool idGraphInputOutputNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp , idClass* owner )
 {
 	if( file != NULL )
 	{
+		Setup( owner );
 		return idGraphNode::LoadBinary( file, _timeStamp );
 	}
 	return false;
 }
 
-void idGraphInputOutputNode::Setup()
+void idGraphInputOutputNode::Setup( idClass* graphOwner )
 {
 	common->Printf( "idGraphInputOutputNode::Setup() Not Implemented! \n" );
 	//cannot be set
@@ -196,6 +199,12 @@ idVec4 idGraphInputOutputNode::NodeTitleBarColor()
 	return idVec4( 0.5, 1, 0.5, 1 );
 }
 
+idClassNode::~idClassNode()
+{
+	delete scriptThread;
+	scriptThread = nullptr;
+}
+
 //////////////////////////////////////////////////////////////////////////
 CLASS_DECLARATION( idGraphNode, idClassNode )
 END_CLASS
@@ -204,12 +213,22 @@ idClassNode::idClassNode()
 {
 	targetEvent = nullptr;
 	targetVariable = nullptr;
+	scriptThread = nullptr;
+
+	ownerClass = nullptr;
+	nodeOwnerClass = nullptr;
+
+	NodeType type;
+	const idEventDef* targetEvent = nullptr;
+	idScriptVariableBase* targetVariable = nullptr;
+	idThread* scriptThread = nullptr;//for sys events;
 }
 
 stateResult_t idClassNode::Exec( stateParms_t* parms )
 {
 	if( type == Call )
 	{
+		assert( targetEvent );
 		intptr_t			eventData[D_EVENT_MAXARGS];
 
 		auto socketVar =
@@ -230,7 +249,7 @@ stateResult_t idClassNode::Exec( stateParms_t* parms )
 
 				case D_EVENT_VECTOR:
 				{
-					( *( idVec3* )&dataPtr ) = *( ( idScriptVector* )inp->var )->GetData();
+					dataPtr = ( uintptr_t )( ( ( idScriptVector* )inp->var )->GetData() )->ToFloatPtr();
 				}
 				break;
 
@@ -261,7 +280,7 @@ stateResult_t idClassNode::Exec( stateParms_t* parms )
 			}
 		}
 
-		ownerClass->ProcessEventArgPtr( targetEvent, eventData );
+		( *nodeOwnerClass )->ProcessEventArgPtr( targetEvent, eventData );
 
 		//Handle return var , if any!
 		auto retSocketVar =
@@ -325,10 +344,13 @@ stateResult_t idClassNode::Exec( stateParms_t* parms )
 	return SRESULT_ERROR;
 }
 
-void idClassNode::Setup()
+void idClassNode::Setup( idClass* graphOwner )
 {
 	inputSockets.Clear();
 	outputSockets.Clear();
+	ownerClass = graphOwner;
+	nodeOwnerClass = &ownerClass;
+
 	idGraphNodeSocket* newInput = &CreateInputSocket();
 	newInput->name = "Call"; // hidden ; used as button with event or var name , alt click to activate this input
 
@@ -405,33 +427,78 @@ void idClassNode::Setup()
 			inp->freeData = false;
 		}
 	}
+
+	if( !scriptThread )
+	{
+		scriptThread = new idThread();
+		scriptThread->ManualDelete();
+	}
+	scriptThread->EndThread();
+	scriptThread->ManualControl();
+
+	if( targetEvent )
+	{
+		idTypeInfo* c = scriptThread->GetType();
+		int	num = targetEvent->GetEventNum();
+		if( c->eventMap[num] )
+		{
+			nodeOwnerClass = ( ( idClass** )&scriptThread );
+		}
+	}
+
 }
 
 void idClassNode::OnChangeDef( const idEventDef* eventDef )
 {
 	targetEvent = eventDef;
-	Setup();
+	targetEventName = targetEvent->GetName();
+	Setup( ownerClass );
 }
 
 void idClassNode::OnChangeVar( idScriptVariableInstance_t& varInstance )
 {
+	targetVariableName = varInstance.varName;
 	targetVariable = varInstance.scriptVariable;
-	Setup();
+	Setup( ownerClass );
 }
 
 void idClassNode::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL */ )
 {
 	file->WriteBig( type );
+	file->WriteString( targetEventName );
+	file->WriteString( targetVariableName );
 
-	const char* className = "";
-	const char* eventName = "";
-	if( ownerClass && targetEvent )
-	{
-		className = ownerClass->GetType()->classname;
-		eventName = targetEvent->GetName();
-	}
-	file->WriteString( idStr( className ) + "::" + eventName );
 	idGraphNode::WriteBinary( file, _timeStamp );
+}
+
+bool idClassNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass* owner )
+{
+	if( file != NULL )
+	{
+		file->ReadBig( type );
+
+		file->ReadString( targetEventName );
+		if( !targetEventName.IsEmpty() )
+		{
+			targetEvent = idEventDef::FindEvent( targetEventName );
+		}
+
+		file->ReadString( targetVariableName );
+		if( !targetVariableName.IsEmpty() )
+		{
+			idList<idScriptVariableInstance_t> searchVar;
+			idScriptVariableInstance_t& var = searchVar.Alloc();
+			var.varName = targetVariableName.c_str();
+			var.scriptVariable = nullptr;
+			owner->GetType()->GetScriptVariables( owner, searchVar );
+			targetVariable = var.scriptVariable;
+		}
+
+
+		Setup( owner );
+		return idGraphNode::LoadBinary( file, _timeStamp, owner );
+	}
+	return false;
 }
 
 void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
@@ -459,13 +526,21 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 	bool& do_defPopup = defPopupList[popupIndex];
 	bool& do_varPopup = varPopupList[popupIndex];
 	idStr& popup_text = buttonText[popupIndex];
-
+	if( targetVariable )
+	{
+		popup_text = targetVariableName;
+	}
+	else if( targetEvent )
+	{
+		popup_text = targetEventName;
+	}
 	ImGui::PushID( nodeHashIdx );
 
 
 	ImGui::AlignTextToFramePadding();
 
 	idList<const idEventDef*> eventDefs;
+	idList<const idEventDef*> threadEventDefs;
 	idList<idScriptVariableInstance_t> scriptVars;
 
 	if( auto* nodeOwner = node.Owner )
@@ -473,10 +548,11 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 		if( type == NodeType::Call )
 		{
 			eventDefs = ( ( idClassNode* )nodeOwner )->ownerClass->GetType()->GetEventDefs();
+			threadEventDefs = ( ( idClassNode* )nodeOwner )->scriptThread->GetType()->GetEventDefs( false );
 		}
 		else
 		{
-			scriptVars = ( ( idClassNode* )nodeOwner )->ownerClass->GetType()->GetScriptVariables( ( ( idClassNode* )nodeOwner )->ownerClass );
+			( ( idClassNode* )nodeOwner )->ownerClass->GetType()->GetScriptVariables( ( ( idClassNode* )nodeOwner )->ownerClass, scriptVars );
 		}
 		idStr nodeType = nodeOwner->GetName();
 
@@ -713,10 +789,23 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 		{
 			if( ImGui::Button( def->GetName(), ImVec2( 180, 20 ) ) )
 			{
+				nodeOwnerClass = &ownerClass;
 				nodePtr->dirty = true;
 				OnChangeDef( def );
 				popup_text = def->GetName();
-				ImGui::CloseCurrentPopup();  // These calls revoke the popup open state, which was set by OpenPopup above.
+				ImGui::CloseCurrentPopup();
+			}
+		}
+
+		for( auto def : threadEventDefs )
+		{
+			if( ImGui::Button( def->GetName(), ImVec2( 180, 20 ) ) )
+			{
+				nodeOwnerClass = ( idClass** )&scriptThread;
+				nodePtr->dirty = true;
+				OnChangeDef( def );
+				popup_text = def->GetName();
+				ImGui::CloseCurrentPopup();
 			}
 		}
 

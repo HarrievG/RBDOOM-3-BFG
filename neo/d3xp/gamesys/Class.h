@@ -388,8 +388,8 @@ public:
 
 	bool								IsType( const idTypeInfo& superclass ) const;
 	bool								RespondsTo( const idEventDef& ev ) const;
-	idList<idScriptVariableInstance_t>	GetScriptVariables( void* owner );
-	idList<const idEventDef*>			GetEventDefs();
+	void								GetScriptVariables( void* owner , idList<idScriptVariableInstance_t>& result );
+	idList<const idEventDef*>			GetEventDefs( bool checkSuper = true );
 	static const char*					GetEnumTypeInfo( const char* enumTypeName, int value ) ;
 };
 

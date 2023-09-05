@@ -196,8 +196,8 @@ public:
 	idStr					name;					// name of entity
 	idDict					spawnArgs;				// key/value pairs used to spawn and initialize entity
 	idScriptObject			scriptObject;			// contains all script defined data for this entity
-	
-	
+
+
 	///HvG
 	idStateGraph*			graphObject;
 	rvStateThread			graphStateThread;
