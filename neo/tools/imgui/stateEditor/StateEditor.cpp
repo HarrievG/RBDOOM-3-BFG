@@ -115,7 +115,7 @@ idList<StateGraphEditor::Link*> StateGraphEditor::GetAllLinks( const GraphNode& 
 
 		for( GraphNodePin* pin : target.Inputs )
 		{
-			if( pin->ID == link.StartPinID )
+			if( pin->ID == link.EndPinID )
 			{
 				result.Alloc() = &link;
 				foundLinks++;
@@ -125,7 +125,7 @@ idList<StateGraphEditor::Link*> StateGraphEditor::GetAllLinks( const GraphNode& 
 
 		for( GraphNodePin* pin : target.Outputs )
 		{
-			if( pin->ID == link.EndPinID )
+			if( pin->ID == link.StartPinID )
 			{
 				result.Alloc() = &link;
 				foundLinks++;
@@ -155,8 +155,8 @@ void StateGraphEditor::DeleteLink( StateGraphEditor::Link& link )
 
 	idGraphNodeSocket** inputSocketPtr;
 	idGraphNodeSocket** outputSocketPtr;
-	GraphNodePin::socketHashIdx.Get( linkList[idx].StartPinID.Get(), &outputSocketPtr );
-	GraphNodePin::socketHashIdx.Get( linkList[idx].EndPinID.Get(), &inputSocketPtr );
+	GraphNodePin::socketHashIdx.Get( link.StartPinID.Get(), &outputSocketPtr );
+	GraphNodePin::socketHashIdx.Get( link.EndPinID.Get(), &inputSocketPtr );
 
 	idGraphNodeSocket* inputSocket = *inputSocketPtr;
 	idGraphNodeSocket* outputSocket = *outputSocketPtr;
@@ -177,6 +177,8 @@ void StateGraphEditor::ReadNode( idGraphNode* node, GraphNode& newNode )
 	{
 		newNode.Outputs.Alloc() = new GraphNodePin( nextElementId++, socket.name, PinType::Flow, PinKind::Output, &socket, &newNode );
 	}
+
+	newNode.Graph = this;
 }
 
 void StateGraphEditor::ReadGraph( const GraphState* graph )

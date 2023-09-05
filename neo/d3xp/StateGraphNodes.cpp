@@ -798,6 +798,7 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 			{
 				nodeOwnerClass = &ownerClass;
 				nodePtr->dirty = true;
+				nodePtr->Graph->DeleteAllPinsAndLinks( *nodePtr );
 				OnChangeDef( def );
 				popup_text = def->GetName();
 				ImGui::CloseCurrentPopup();
@@ -810,6 +811,7 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 			{
 				nodeOwnerClass = ( idClass** )&scriptThread;
 				nodePtr->dirty = true;
+				nodePtr->Graph->DeleteAllPinsAndLinks( *nodePtr );
 				OnChangeDef( def );
 				popup_text = def->GetName();
 				ImGui::CloseCurrentPopup();
