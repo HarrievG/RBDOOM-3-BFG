@@ -211,6 +211,7 @@ public:
 	idScriptInteger	varIntTest;
 	idScriptFloat	varFloatTest;
 	idScriptStr		varStringTest;
+	idScriptVector	varVectorTest;
 
 private:
 	virtual void	SharedThink();

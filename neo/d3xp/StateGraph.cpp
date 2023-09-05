@@ -662,7 +662,7 @@ void idGraphedEntity::Spawn()
 	( varBoolTest =	localBlackboard.Alloc<idScriptInt>( 8 ) ) = 1;
 	( varIntTest =	localBlackboard.Alloc<idScriptInt>( 8 ) ) = 31427;
 	varStringTest = ( idScriptStr ) * localBlackboard.Alloc( "StringVariableTest" );
-
+	( varVectorTest = localBlackboard.Alloc<idScriptVector>( 24 ) ) = idVec3( 1.1, 2.3, 3.3 );
 	if( graphFile.IsEmpty() )
 	{
 		auto* initNode = graph.CreateNode( new idGraphOnInitNode() );

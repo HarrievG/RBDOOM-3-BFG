@@ -591,7 +591,7 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 					return 10;
 					break;
 				case ev_vector:
-					return 18;
+					return 20;
 					break;
 				case ev_entity:
 					return 20;
@@ -637,20 +637,21 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 		}
 
 		ImGui::Dummy( ImVec2( 0, TEXT_BASE_HEIGHT ) );
-		static ImGuiTableFlags flags = ImGuiTableFlags_NoHostExtendX | ImGuiTableFlags_SizingStretchProp;
+		static ImGuiTableFlags flags = ImGuiTableFlags_NoHostExtendX | ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_NoPadOuterX;
 		if( ImGui::BeginTable( "NodeContent", 4, flags ) )
 		{
 			ImGui::TableSetupColumn( "", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_IndentDisable, 25 );
-			ImGui::TableSetupColumn( "", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_IndentDisable, TEXT_BASE_WIDTH * maxLengthIn );
+			ImGui::TableSetupColumn( "", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_IndentDisable, TEXT_BASE_WIDTH * ( maxLengthIn + 1 ) );
 			ImGui::TableSetupColumn( "", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_IndentDisable, TEXT_BASE_WIDTH * maxLengthOut );
 			ImGui::TableSetupColumn( "", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_IndentDisable, 25 );
 
+			ImGui::AlignTextToFramePadding();
 			ImGui::TableNextRow( 0 );
 			ImGui::PushID( maxSocket + 1 );
 			ImGui::TableSetColumnIndex( 1 );
+			ImGui::Dummy( ImVec2( 0.0f, 0.0f ) );
 			if( ImGui::Button( popup_text ) )
 			{
-
 				if( ImGui::GetIO().KeyAlt && !inputSockets[0].active )
 				{
 					inputSockets[0].active = true;
@@ -680,39 +681,12 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 
 			for( int i = 1; i <= maxSocket; i++ )
 			{
-				ImGui::TableNextRow( 0 );
 				ImGui::PushID( i );
-				if( inputSocketIdx < maxInputSockets )
-				{
-
-					ImGui::TableSetColumnIndex( 1 );
-					idGraphNodeSocket& ownerSocket = nodeOwner->inputSockets[inputSocketIdx];
-					ImGui::IconItem icon = { ImGui::IconType::Flow , ownerSocket.connections.Num() > 0, ImColor( 255, 255, 255 ), ImColor( 0, 0, 0, 0 ) };
-					if( ownerSocket.var )
-					{
-						icon = ImGui::ImScriptVariable( idStr( reinterpret_cast<uintptr_t>( node.Inputs[inputSocketIdx]->ID.AsPointer() ) ), { ownerSocket.name.c_str(), "", ownerSocket.var } );
-						icon.filled = ownerSocket.connections.Num() > 0;
-					}
-					else
-					{
-						ImGui::GetWindowDrawList()->AddText( ImGui::GetCursorScreenPos() + ImVec2( 0, ImGui::GetStyle().ItemInnerSpacing.y ),
-															 ImColor( 50.0f, 45.0f, 255.0f, 255.0f ), ownerSocket.name.c_str() );
-					}
-
-					ImGui::TableSetColumnIndex( 0 );
-					ed::BeginPin( node.Inputs[inputSocketIdx]->ID, ed::PinKind::Input );
-					auto cursorPos = ImGui::GetCursorScreenPos();
-					auto drawList = ImGui::GetWindowDrawList();
-					ed::PinPivotAlignment( ImVec2( 0.25, 0.5f ) );
-					ed::PinPivotSize( ImVec2( 0, 0 ) );
-					ImGui::DrawIcon( ImGui::GetWindowDrawList(), cursorPos, cursorPos + ImVec2( 25, 25 ), icon.type, icon.filled, icon.color, icon.innerColor );
-					ImGui::Dummy( ImVec2( 25, 25 ) );
-					ed::EndPin();
-					inputSocketIdx++;
-				}
 				if( outputSocketIdx < maxOutputSockets )
 				{
 					ImGui::TableSetColumnIndex( 2 );
+					ImGui::Dummy( ImVec2( 0.0f, 0.0f ) );
+					ImGui::PushItemWidth( TEXT_BASE_WIDTH * maxLengthOut );
 					idGraphNodeSocket& ownerSocket = nodeOwner->outputSockets[outputSocketIdx];
 					ImGui::IconItem icon = { ImGui::IconType::Flow , ownerSocket.connections.Num() > 0, ImColor( 255, 255, 255 ), ImColor( 0, 0, 0, 0 ) };
 					if( ownerSocket.var )
@@ -725,18 +699,51 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 						ImGui::GetWindowDrawList()->AddText( ImGui::GetCursorScreenPos() + ImVec2( 0, ImGui::GetStyle().ItemInnerSpacing.y ),
 															 ImColor( 50.0f, 45.0f, 255.0f, 255.0f ), ownerSocket.name.c_str() );
 					}
-
+					ImGui::PopItemWidth();
 					ImGui::TableSetColumnIndex( 3 );
 					ed::BeginPin( node.Outputs[outputSocketIdx]->ID, ed::PinKind::Output );
 					auto cursorPos = ImGui::GetCursorScreenPos();
 					auto drawList = ImGui::GetWindowDrawList();
 					ed::PinPivotAlignment( ImVec2( 1.0f, 0.5f ) );
 					ed::PinPivotSize( ImVec2( 0, 0 ) );
-					ImGui::DrawIcon( ImGui::GetWindowDrawList(), cursorPos, cursorPos + ImVec2( 25, 25 ), icon.type,  icon.filled, icon.color, icon.innerColor );
+					ImGui::DrawIcon( ImGui::GetWindowDrawList(), cursorPos, cursorPos + ImVec2( 25, 25 ), icon.type, icon.filled, icon.color, icon.innerColor );
 					ImGui::Dummy( ImVec2( 25, 25 ) );
 					ed::EndPin();
 					outputSocketIdx++;
 				}
+
+
+				if( inputSocketIdx < maxInputSockets )
+				{
+					ImGui::TableNextRow( 0 );
+					ImGui::TableSetColumnIndex( 1 );
+					ImGui::Dummy( ImVec2( 0.0f, 0.0f ) );
+					ImGui::PushItemWidth( TEXT_BASE_WIDTH * ( maxLengthIn + 1 ) );
+					idGraphNodeSocket& ownerSocket = nodeOwner->inputSockets[inputSocketIdx];
+					ImGui::IconItem icon = { ImGui::IconType::Flow , ownerSocket.connections.Num() > 0, ImColor( 255, 255, 255 ), ImColor( 0, 0, 0, 0 ) };
+					if( ownerSocket.var )
+					{
+						icon = ImGui::ImScriptVariable( idStr( reinterpret_cast<uintptr_t>( node.Inputs[inputSocketIdx]->ID.AsPointer() ) ), { ownerSocket.name.c_str(), "", ownerSocket.var } );
+						icon.filled = ownerSocket.connections.Num() > 0;
+					}
+					else
+					{
+						ImGui::GetWindowDrawList()->AddText( ImGui::GetCursorScreenPos() + ImVec2( 0, ImGui::GetStyle().ItemInnerSpacing.y ),
+															 ImColor( 50.0f, 45.0f, 255.0f, 255.0f ), ownerSocket.name.c_str() );
+					}
+					ImGui::PopItemWidth();
+					ImGui::TableSetColumnIndex( 0 );
+					ed::BeginPin( node.Inputs[inputSocketIdx]->ID, ed::PinKind::Input );
+					auto cursorPos = ImGui::GetCursorScreenPos();
+					auto drawList = ImGui::GetWindowDrawList();
+					ed::PinPivotAlignment( ImVec2( 0.25, 0.5f ) );
+					ed::PinPivotSize( ImVec2( 0, 0 ) );
+					ImGui::DrawIcon( ImGui::GetWindowDrawList(), cursorPos, cursorPos + ImVec2( 25, 25 ), icon.type, icon.filled, icon.color, icon.innerColor );
+					ImGui::Dummy( ImVec2( 25, 25 ) );
+					ed::EndPin();
+					inputSocketIdx++;
+				}
+
 				ImGui::PopID();
 			}
 			ImGui::EndTable();

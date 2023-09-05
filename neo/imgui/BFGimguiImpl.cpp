@@ -91,6 +91,8 @@ ImGui::IconItem ImGui::ImScriptVariable( const char* strId, const idScriptVariab
 				return ImColor( 147, 226, 74 );
 			case ev_string:
 				return ImColor( 124, 21, 153 );
+			case ev_vector:
+				return ImColor( 236, 180, 48 );
 			case ev_entity:
 				return ImColor( 51, 150, 215 );
 			case ev_object:
@@ -116,10 +118,12 @@ ImGui::IconItem ImGui::ImScriptVariable( const char* strId, const idScriptVariab
 				return ImGui::IconType::Circle;
 			case ev_string:
 				return ImGui::IconType::Circle;
+			case ev_vector:
+				return ImGui::IconType::Circle;
 			case ev_entity:
 				return ImGui::IconType::RoundSquare;
 			case ev_object:
-				return ImGui::IconType::RoundSquare;
+				return ImGui::IconType::Square;
 			case ev_function:
 				return ImGui::IconType::Square;
 			case ev_scriptevent:

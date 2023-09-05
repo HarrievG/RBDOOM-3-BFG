@@ -299,7 +299,7 @@ void StateGraphEditor::DrawGraphEntityTest()
 
 		for( auto& link : linkList )
 		{
-			ed::Link( link.ID, link.StartPinID, link.EndPinID, link.Color );
+			ed::Link( link.ID, link.StartPinID, link.EndPinID, link.Color, 2.0f );
 		}
 
 		Handle_NodeEvents();
@@ -415,6 +415,8 @@ void StateGraphEditor::GetAllStateThreads()
 void StateGraphEditor::DrawLeftPane( float paneWidth )
 {
 	auto& io = ImGui::GetIO();
+	const float TEXT_BASE_WIDTH = ImGui::CalcTextSize( "A" ).x;
+	const float TEXT_BASE_HEIGHT = ImGui::GetTextLineHeightWithSpacing();
 
 	ImGui::BeginChild( "Selection", ImVec2( paneWidth, 0 ) );
 
@@ -454,9 +456,10 @@ void StateGraphEditor::DrawLeftPane( float paneWidth )
 	ImGui::GetWindowDrawList()->AddRectFilled(
 		cursorScreenPos,
 		ImVec2( cursorScreenPos.x + paneWidth, cursorScreenPos.y + ImGui::GetTextLineHeight() ),
-		ImColor( ImGui::GetStyle().Colors[ImGuiCol_HeaderActive] ), ImGui::GetTextLineHeight() * 0.25f );
+		ImColor( ImGui::GetStyle().Colors[ImGuiCol_HeaderActive] ), 1.0f );
+	ImGui::Dummy( ImVec2( 0, ImGui::GetTextLineHeight() ) );
+	ImGui::GetWindowDrawList()->AddText( cursorScreenPos, ImColor( 50.0f, 45.0f, 255.0f, 255.0f ), "Nodes" );
 
-	ImGui::TextUnformatted( "Nodes" );
 	ImGui::Indent();
 	for( auto& node : nodeList )
 	{
@@ -553,11 +556,6 @@ void StateGraphEditor::DrawLeftPane( float paneWidth )
 
 	static int changeCount = 0;
 
-	ImGui::GetWindowDrawList()->AddRectFilled(
-		cursorScreenPos,
-		ImVec2( cursorScreenPos.x + paneWidth, cursorScreenPos.y + ImGui::GetTextLineHeight() ),
-		ImColor( ImGui::GetStyle().Colors[ImGuiCol_HeaderActive] ), ImGui::GetTextLineHeight() * 0.25f );
-
 	ImGui::TextUnformatted( "Selection" );
 
 	ImGui::Text( "Changed %d time%s", changeCount, changeCount > 1 ? "s" : "" );
@@ -624,6 +622,35 @@ void StateGraphEditor::DrawLeftPane( float paneWidth )
 
 	if( ImGui::CollapsingHeader( "Variables" ) )
 	{
+		if( graphEnt )
+		{
+			ImGui::TextDisabled( "Self ( %s )", graphEnt->GetClassname() );
+			ImGui::Separator();
+			idList<idScriptVariableInstance_t> thisVars;
+			graphEnt->GetType()->GetScriptVariables( graphEnt, thisVars );
+
+			static ImGuiTableFlags flags = ImGuiTableFlags_NoHostExtendX | ImGuiTableFlags_SizingStretchProp;
+			if( ImGui::BeginTable( "selfVars", 3, flags ) )
+			{
+				ImGui::TableSetupColumn( "", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_IndentDisable, 25 );
+				ImGui::TableSetupColumn( "", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_IndentDisable, TEXT_BASE_WIDTH * 20 );
+				ImGui::TableSetupColumn( "", ImGuiTableColumnFlags_IndentDisable );
+
+				for( auto& var : thisVars )
+				{
+					ImGui::TableNextRow( 0 );
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Dummy( ImVec2( 25, 25 ) );
+					ImGui::TableSetColumnIndex( 1 );
+					ImGui::Text( var.varName );
+					ImGui::TableSetColumnIndex( 2 );
+					ImGui::ImScriptVariable( var.varName, var );
+				}
+
+				ImGui::EndTable();
+			}
+		}
+		ImGui::TextDisabled( "Local" );
 		if( ImGui::Button( "Create New" ) )
 		{
 			//graphEnt->graph.CreateSubState("New Function", {}, {});
