@@ -31,6 +31,12 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "d3xp/Game_local.h"
 
+
+class GraphState;
+idScriptVariableBase* VarFromFormatSpec( const char spec, GraphState* graph = nullptr );
+idScriptVariableBase* VarFromType( etype_t type, GraphState* graph = nullptr );
+bool VarCopy( idScriptVariableBase* target, idScriptVariableBase* source );
+
 class idBlackBoard
 {
 public:
@@ -213,6 +219,11 @@ public:
 	idScriptStr		varStringTest;
 	idScriptVector	varVectorTest;
 
+	idScriptBool	varBoolTestX;
+	idScriptInteger	varIntTestX;
+	idScriptFloat	varFloatTestX;
+	idScriptStr		varStringTestX;
+	idScriptVector	varVectorTestX;
 private:
 	virtual void	SharedThink();
 	virtual void	Think();

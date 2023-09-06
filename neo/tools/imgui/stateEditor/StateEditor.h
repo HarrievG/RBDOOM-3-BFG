@@ -137,11 +137,11 @@ public:
 	StateGraphEditor* Graph;
 	GraphNode() :
 		dirty( false ), ID( -1 ), Name( "newNode" ), Inputs(), Outputs(), Color( ImColor( 255, 255, 255 ) ), Type( NodeType::Tree ), Size( 0, 0 ), FirstDraw( true )
-		,Owner( nullptr ),Graph( nullptr )
+		, Owner( nullptr ), Graph( nullptr )
 	{
 	}
 	GraphNode( int id, const char* name, idGraphNode* owner = nullptr, ImColor color = ImColor( 255, 255, 255 ) ) :
-		dirty( false ), ID( id ), Name( name ), Color( color ), Type( NodeType::Tree ), Size( 0, 0 ), FirstDraw( true ), Owner( owner ),Graph( nullptr )
+		dirty( false ), ID( id ), Name( name ), Color( color ), Type( NodeType::Tree ), Size( 0, 0 ), FirstDraw( true ), Owner( owner ), Graph( nullptr )
 	{
 	}
 };

@@ -335,6 +335,10 @@ stateResult_t idClassNode::Exec( stateParms_t* parms )
 	}
 	else if( type == Set )
 	{
+		if( inputSockets.Num() && inputSockets[1].connections[0]->var && targetVariable )
+		{
+			VarCopy( targetVariable, inputSockets[1].connections[0]->var );
+		}
 		return SRESULT_DONE;
 	}
 	else
@@ -359,55 +363,19 @@ void idClassNode::Setup( idClass* graphOwner )
 		int numargs = targetEvent->GetNumArgs();
 		const char* formatspec = targetEvent->GetArgFormat();
 
-		auto socketVar =
-			[]( idGraphNodeSocket * inp, const idEventDef * targetEvent, GraphState * graph, const char spec ) -> bool
-		{
-			switch( spec )
-			{
-				case D_EVENT_FLOAT:
-				{
-					inp->var = graph->blackBoard.Alloc<idScriptFloat>( 8 );
-				}
-				break;
-				case D_EVENT_INTEGER:
-				{
-					inp->var = graph->blackBoard.Alloc<idScriptInteger>( 8 );
-				}
-				break;
-
-				case D_EVENT_VECTOR:
-				{
-					inp->var = graph->blackBoard.Alloc<idScriptVector>( 3 * 8 );
-				}
-				break;
-
-				case D_EVENT_STRING:
-					inp->var = graph->blackBoard.Alloc( "" );
-					break;
-
-				case D_EVENT_ENTITY:
-				case D_EVENT_ENTITY_NULL:
-					inp->var = graph->blackBoard.Alloc<idScriptEntity>( 16 );
-					break;
-
-				default:
-					gameLocal.Warning( "idClassNode::Setup : Invalid arg format '%s' string for event.", spec, targetEvent->GetName() );
-					return false;
-			}
-			return true;
-		};
-
 		for( int i = 0; i < numargs; i++ )
 		{
 			idGraphNodeSocket* inp = &CreateInputSocket();
-			if( !socketVar( inp, targetEvent, graph, formatspec[i] ) )
+			inp->var = VarFromFormatSpec( formatspec[i], graph );
+			if( !inp->var )
 			{
 				inputSockets.RemoveIndexFast( inputSockets.Num() - 1 );
 			}
 		}
 
 		idGraphNodeSocket* out = &CreateOutputSocket();
-		if( !socketVar( out, targetEvent, graph, targetEvent->GetReturnType() ) )
+		out->var = VarFromFormatSpec( targetEvent->GetReturnType(), graph );
+		if( !out->var )
 		{
 			outputSockets.RemoveIndexFast( outputSockets.Num() - 1 );
 		}
@@ -833,7 +801,7 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 			if( ImGui::Button( var.varName, ImVec2( 180, 20 ) ) )
 			{
 				nodePtr->dirty = true;
-				nodePtr->Graph->DeleteAllPinsAndLinks(*nodePtr);
+				nodePtr->Graph->DeleteAllPinsAndLinks( *nodePtr );
 				OnChangeVar( var );
 				popup_text = var.varName;
 				ImGui::CloseCurrentPopup();  // These calls revoke the popup open state, which was set by OpenPopup above.

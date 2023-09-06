@@ -249,7 +249,7 @@ void StateGraphEditor::DrawGraphEntityTest()
 			{
 				idDict	args;
 				args.Set( "entkey", "idGraphedEntity__80" );
-
+				args.Set( "intkey", "1234" );
 				graphEnt = static_cast<idGraphedEntity*>( gameLocal.SpawnEntityType( idGraphedEntity::Type, &args ) );
 				graphEnt->PostEventMS( &EV_Activate, 0, graphEnt );
 				ReadGraph( &graphEnt->graph.localGraphState[0] );
@@ -302,6 +302,18 @@ void StateGraphEditor::DrawGraphEntityTest()
 		for( auto& link : linkList )
 		{
 			ed::Link( link.ID, link.StartPinID, link.EndPinID, link.Color, 2.0f );
+			idGraphNodeSocket** inputSocketPtr;
+			idGraphNodeSocket** outputSocketPtr;
+			GraphNodePin::socketHashIdx.Get( link.StartPinID.Get(), &outputSocketPtr );
+			GraphNodePin::socketHashIdx.Get( link.EndPinID.Get(), &inputSocketPtr );
+
+			idGraphNodeSocket* inputSocket = *inputSocketPtr;
+			idGraphNodeSocket* outputSocket = *outputSocketPtr;
+
+			if( outputSocket->active )
+			{
+				ed::Flow( link.ID );
+			}
 		}
 
 		Handle_NodeEvents();
@@ -641,7 +653,7 @@ void StateGraphEditor::DrawLeftPane( float paneWidth )
 				for( auto& var : thisVars )
 				{
 					ImGui::TableNextRow( 0 );
-					ImGui::TableSetColumnIndex(0);
+					ImGui::TableSetColumnIndex( 0 );
 					ImGui::Dummy( ImVec2( 25, 25 ) );
 					ImGui::TableSetColumnIndex( 1 );
 					ImGui::Text( var.varName );
@@ -693,7 +705,7 @@ void StateGraphEditor::Handle_NodeEvents()
 			//   * input invalid, output valid - user started to drag new ling from output pin
 			//   * input valid, output valid   - user dragged link over other pin, can be validated
 
-			if( startPinId && endPinId ) // both are valid, let's accept link
+			if( startPinId && endPinId ) // both are valid, can we accept link?
 			{
 				idGraphNodeSocket** inputSocketPtr;
 				idGraphNodeSocket** outputSocketPtr;
@@ -729,13 +741,14 @@ void StateGraphEditor::Handle_NodeEvents()
 								|| inputSocket->var->GetType() != outputSocket->var->GetType() )
 						{
 							ed::RejectNewItem( ImColor( 255, 0, 0 ), 2.0f );
-						}else
+						}
+						else
 						{
-							for ( auto* connection : outputSocket->connections )
+							for( auto* connection : outputSocket->connections )
 							{
-								if ( connection == inputSocket )
+								if( connection == inputSocket )
 								{
-									ed::RejectNewItem( ImColor (255, 0, 0 ), 2.0f );
+									ed::RejectNewItem( ImColor( 255, 0, 0 ), 2.0f );
 									break;
 								}
 							}
@@ -743,9 +756,9 @@ void StateGraphEditor::Handle_NodeEvents()
 					}
 					else
 					{
-						for ( auto* connection : outputSocket->connections )
+						for( auto* connection : outputSocket->connections )
 						{
-							if ( connection == inputSocket )
+							if( connection == inputSocket )
 							{
 								ed::RejectNewItem( ImColor( 255, 0, 0 ), 2.0f );
 								break;

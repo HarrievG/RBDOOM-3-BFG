@@ -658,11 +658,16 @@ void idGraphedEntity::Spawn()
 	auto& localBlackboard = localState.blackBoard;
 
 	//if not linked to a script, use blackboard as storage
-	( varFloatTest = localBlackboard.Alloc<idScriptFloat>( 8 ) ) = 3.1427f;
+	( varFloatTest = *localBlackboard.Alloc<idScriptFloat>( 8 ) ) = 3.1427f;
 	( varBoolTest =	localBlackboard.Alloc<idScriptInt>( 8 ) ) = 1;
 	( varIntTest =	localBlackboard.Alloc<idScriptInt>( 8 ) ) = 31427;
 	varStringTest = ( idScriptStr ) * localBlackboard.Alloc( "StringVariableTest" );
 	( varVectorTest = localBlackboard.Alloc<idScriptVector>( 24 ) ) = idVec3( 1.1, 2.3, 3.3 );
+	( varFloatTestX = localBlackboard.Alloc<idScriptFloat>( 8 ) ) = 3.1427f * 2;
+	( varBoolTestX =	localBlackboard.Alloc<idScriptInt>( 8 ) ) = 10;
+	( varIntTestX =	localBlackboard.Alloc<idScriptInt>( 8 ) ) = 31427 * 2;
+	varStringTestX = ( idScriptStr ) * localBlackboard.Alloc( "StringVariableTestX" );
+	( varVectorTestX = localBlackboard.Alloc<idScriptVector>( 24 ) ) = idVec3( 4.1, 5.3, 6.3 );
 	if( graphFile.IsEmpty() )
 	{
 		auto* initNode = graph.CreateNode( new idGraphOnInitNode() );
@@ -757,4 +762,97 @@ idGraphNodeSocket::~idGraphNodeSocket()
 		common->Warning( "SOCKET VAR LEAKED!!" );
 	}
 
+}
+
+idScriptVariableBase* VarFromFormatSpec( const char spec, GraphState* graph /*= nullptr*/ )
+{
+	idScriptVariableBase* ret = nullptr;
+
+	switch( spec )
+	{
+		case D_EVENT_FLOAT:
+			ret = graph->blackBoard.Alloc<idScriptFloat>( 8 );
+		break;
+		case D_EVENT_INTEGER:
+			ret = graph->blackBoard.Alloc<idScriptInteger>( 8 );
+		break;
+
+		case D_EVENT_VECTOR:
+			ret = graph->blackBoard.Alloc<idScriptVector>( 3 * 8 );
+		break;
+
+		case D_EVENT_STRING:
+			ret = graph->blackBoard.Alloc( "" );
+		break;
+
+		case D_EVENT_ENTITY:
+		case D_EVENT_ENTITY_NULL:
+			ret = graph->blackBoard.Alloc<idScriptEntity>( 16 );
+		break;
+
+		default:
+			gameLocal.Error( "idClassNode::Setup : Invalid arg format '%s' string for event.", spec );
+			break;
+	}
+	return ret;
+}
+
+idScriptVariableBase* VarFromType( etype_t type, GraphState* graph /*= nullptr*/ )
+{
+	idScriptVariableBase* ret = nullptr;
+	switch( type )
+	{
+		case ev_string:
+			ret = graph->blackBoard.Alloc( "" );
+			break;
+		case ev_float:
+			ret = graph->blackBoard.Alloc<idScriptFloat>( 8 );
+			break;
+		case ev_vector:
+			ret = graph->blackBoard.Alloc<idScriptVector>( 3 * 8 ) ;
+			break;
+		case ev_entity:
+			ret = graph->blackBoard.Alloc<idScriptEntity>( 16 );
+			break;
+		case ev_boolean:
+		case ev_int:
+			ret = graph->blackBoard.Alloc<idScriptInteger>( 8 );
+			break;
+		default:
+			gameLocal.Error( "idClassNode::Setup : Invalid arg format '%s' for event.", idTypeInfo::GetEnumTypeInfo( "etype_t", type ) );
+			break;
+	}
+
+	return ret;
+}
+
+bool VarCopy( idScriptVariableBase* target, idScriptVariableBase* source )
+{
+	assert( target->GetType() == source->GetType() );
+	switch( target->GetType() )
+	{
+		case ev_string:
+			*( idScriptStr* )target = *( ( idScriptStr* )source )->GetData();
+			break;
+		case ev_float:
+			*( idScriptFloat* )target = *( ( idScriptFloat* )source )->GetData();
+			break;
+		case ev_vector:
+			*( idScriptVector* )target = *( ( idScriptVector* )source )->GetData();
+			break;
+		case ev_entity:
+			gameLocal.Error( "idScriptEntity copy not implemented" );
+			//ret = graph->blackBoard.Alloc<idScriptEntity>(16);
+			break;
+		case ev_int:
+			*( idScriptInteger* )target = *( ( idScriptInteger* )source )->GetData();
+			break;
+		case ev_boolean:
+			*( idScriptBool* )target = *( ( idScriptBool* )source )->GetData();
+		default:
+			gameLocal.Warning( "idClassNode::Setup : Invalid arg format '%s' string for event.", idTypeInfo::GetEnumTypeInfo( "etype_t", target->GetType() ) );
+			return false;
+			break;
+	};
+	return true;
 }
