@@ -80,13 +80,6 @@ struct GraphNodePin
 	PinType				Type;
 	PinKind				Kind;
 
-
-
-	GraphNodePin() :
-		ID( -1 ), ParentNode( nullptr ), Name( "newPin" ), Type( PinType::Flow ), Kind( PinKind::Input )
-	{
-	}
-
 	GraphNodePin( int id, const char* name, PinType type, PinKind kind, idGraphNodeSocket* ownerSocket, GraphNode* parentNode ) :
 		ID( id ), ParentNode( parentNode ), Name( name ), Type( type ), Kind( kind )
 	{
@@ -135,15 +128,33 @@ public:
 
 	idGraphNode* Owner;
 	StateGraphEditor* Graph;
-	GraphNode() :
-		dirty( false ), ID( -1 ), Name( "newNode" ), Inputs(), Outputs(), Color( ImColor( 255, 255, 255 ) ), Type( NodeType::Tree ), Size( 0, 0 ), FirstDraw( true )
-		, Owner( nullptr ), Graph( nullptr )
-	{
-	}
 	GraphNode( int id, const char* name, idGraphNode* owner = nullptr, ImColor color = ImColor( 255, 255, 255 ) ) :
 		dirty( false ), ID( id ), Name( name ), Color( color ), Type( NodeType::Tree ), Size( 0, 0 ), FirstDraw( true ), Owner( owner ), Graph( nullptr )
 	{
+		GraphNode** value;
+		if( nodeHashIdx.Get( id, &value ) && *value != NULL )
+		{
+			assert( 1 );
+		}
+		else
+		{
+			nodeHashIdx.Set( id, this );
+		}
 	}
+	~GraphNode()
+	{
+		GraphNode** value;
+		if( nodeHashIdx.Get( ID.Get(), &value ) )
+		{
+			nodeHashIdx.Remove( ID.Get() );
+		}
+		else
+		{
+			assert( 1 );
+		}
+
+	}
+	static idHashTableT<int, GraphNode*> nodeHashIdx;
 };
 
 class StateGraphEditor
@@ -181,17 +192,18 @@ public:
 	static StateGraphEditor&		Instance();
 	static void						Enable( const idCmdArgs& args );
 
-	GraphNode*						SpawnTreeSequenceNode();
 	const Link&						GetLinkByID( ed::LinkId& id );
 	const int						GetLinkIndexByID( ed::LinkId& id );
 	idList<Link*>					GetAllLinks( const GraphNode& target );
 	void							DeleteAllPinsAndLinks( GraphNode& target );
 	void							DeleteLink( StateGraphEditor::Link& id );
+	void							DeleteNode( GraphNode* node );
 	void							ReadNode( idGraphNode* node, GraphNode& newNode );
 	void							ReadGraph( const GraphState* graph );
 	void							Clear();
 private:
 
+	void Handle_ContextMenus();
 	void Handle_NodeEvents();
 	void DrawGraphEntityTest();
 	void DrawMapGraph();
@@ -205,7 +217,7 @@ private:
 	int					nextElementId = 1;
 
 
-	idList<GraphNode>	nodeList;
+	idList<GraphNode*>	nodeList;
 	idList<Link>		linkList;
 
 	bool				isShown;

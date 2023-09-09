@@ -32,11 +32,13 @@ If you have questions concerning this license or the applicable additional terms
 #include "StateEditor.h"
 
 #include "../imgui/BFGimgui.h"
-#include "../imgui/imgui_internal.h"
 
 #include "../d3xp/Game_local.h"
 #include "../extern/imgui-node-editor/imgui_node_editor.h"
 #include "../d3xp/StateGraph.h"
+
+# define IMGUI_DEFINE_MATH_OPERATORS
+#include "imgui_internal.h"
 
 namespace ed = ax::NodeEditor;
 namespace ImGuiTools
@@ -45,6 +47,7 @@ using namespace ImGui;
 
 
 idHashTableT<int, idGraphNodeSocket*> GraphNodePin::socketHashIdx;
+idHashTableT<int, GraphNode*> GraphNode::nodeHashIdx;
 
 static bool Splitter( bool split_vertically, float thickness, float* size1, float* size2, float min_size1, float min_size2, float splitter_long_axis_size = -1.0f )
 {
@@ -70,18 +73,6 @@ StateGraphEditor::StateGraphEditor()
 	  graphEnt( nullptr )
 {
 
-}
-
-ImGuiTools::GraphNode* StateGraphEditor::SpawnTreeSequenceNode()
-{
-	GraphNode& newNode = nodeList.Alloc() = { nextElementId++, "Sequence" };
-	newNode.Type = NodeType::Tree;
-
-	//GraphNodePin& newInput = newNode.Inputs.Alloc() = { nextElementId++, "IN", PinType::Flow , PinKind::Input , &newNode };
-	//GraphNodePin& newOutput = newNode.Outputs.Alloc() = { nextElementId++, "OUT", PinType::Flow , PinKind::Output, &newNode };
-
-	//BuildNode(&m_Nodes.back());
-	return &newNode;
 }
 
 const int StateGraphEditor::GetLinkIndexByID( ed::LinkId& id )
@@ -164,6 +155,14 @@ void StateGraphEditor::DeleteLink( StateGraphEditor::Link& link )
 	linkList.RemoveIndexFast( idx );
 }
 
+void StateGraphEditor::DeleteNode( GraphNode* node )
+{
+	DeleteAllPinsAndLinks( *node );
+	graphEnt->graph.RemoveNode( node->Owner );
+	nodeList.Remove( node );
+	delete node;
+}
+
 void StateGraphEditor::ReadNode( idGraphNode* node, GraphNode& newNode )
 {
 	DeleteAllPinsAndLinks( newNode );
@@ -185,15 +184,18 @@ void StateGraphEditor::ReadGraph( const GraphState* graph )
 {
 	for( auto node : graph->nodes )
 	{
-		auto& newNode = nodeList.Alloc() = { nextElementId++, node->GetName(), node };
+		auto& newNode = *( nodeList.Alloc() = new GraphNode( nextElementId++, node->GetName(), node ) );
 		ReadNode( node, newNode );
 	}
 	for( idGraphNodeSocket::Link_t& link : graph->links )
 	{
-		auto& inputNode = nodeList[link.end->nodeIndex];
-		auto& outputNode = nodeList[link.start->nodeIndex];
-		Link& newLink = linkList.Alloc() = { ed::LinkId( nextElementId++ ), outputNode.Outputs[link.start->socketIndex]->ID, inputNode.Inputs[link.end->socketIndex]->ID };
-	}
+		auto& inputNode = *nodeList[link.end->nodeIndex];
+		auto& outputNode = *nodeList[link.start->nodeIndex];
+		Link& newLink = linkList.Alloc();
+		newLink.ID			= ed::LinkId( nextElementId++ );
+		newLink.StartPinID	= outputNode.Outputs[link.start->socketIndex]->ID;
+		newLink.EndPinID	= inputNode.Inputs[link.end->socketIndex]->ID;
+	};
 }
 
 void StateGraphEditor::Clear()
@@ -289,8 +291,9 @@ void StateGraphEditor::DrawGraphEntityTest()
 		//ImGui::SameLine(0.0f, 12.0f);
 		ed::Begin( "My Editor" );
 
-		for( auto& node : nodeList )
+		for( auto* nodePtr : nodeList )
 		{
+			auto& node = *nodePtr;
 			if( node.dirty )
 			{
 				ReadNode( node.Owner, node );
@@ -302,41 +305,16 @@ void StateGraphEditor::DrawGraphEntityTest()
 		for( auto& link : linkList )
 		{
 			ed::Link( link.ID, link.StartPinID, link.EndPinID, link.Color, 2.0f );
-			idGraphNodeSocket** inputSocketPtr;
 			idGraphNodeSocket** outputSocketPtr;
 			GraphNodePin::socketHashIdx.Get( link.StartPinID.Get(), &outputSocketPtr );
-			GraphNodePin::socketHashIdx.Get( link.EndPinID.Get(), &inputSocketPtr );
-
-			idGraphNodeSocket* inputSocket = *inputSocketPtr;
 			idGraphNodeSocket* outputSocket = *outputSocketPtr;
-
 			if( outputSocket->active )
 			{
 				ed::Flow( link.ID );
 			}
 		}
-
+		Handle_ContextMenus();
 		Handle_NodeEvents();
-
-		static ed::NodeId contextNodeId = 0;
-		static ed::LinkId contextLinkId = 0;
-		static ed::PinId  contextPinId = 0;
-		static bool createNewNode = false;
-
-		//auto openPopupPosition = ImGui::GetMousePos();
-		//ed::Suspend();
-		//if (ed::ShowNodeContextMenu(&contextNodeId))
-		//	ImGui::OpenPopup("Node Context Menu");
-		//else if (ed::ShowPinContextMenu(&contextPinId))
-		//	ImGui::OpenPopup("Pin Context Menu");
-		//else if (ed::ShowLinkContextMenu(&contextLinkId))
-		//	ImGui::OpenPopup("Link Context Menu");
-		//else if (ed::ShowBackgroundContextMenu())
-		//{
-		//	ImGui::OpenPopup("Create New Node");
-		//	newNodeLinkPin = nullptr;
-		//}
-		//ed::Resume();
 
 		ed::End();
 		ImGui::EndChild();
@@ -475,8 +453,10 @@ void StateGraphEditor::DrawLeftPane( float paneWidth )
 	ImGui::GetWindowDrawList()->AddText( cursorScreenPos, ImColor( 50.0f, 45.0f, 255.0f, 255.0f ), "Nodes" );
 
 	ImGui::Indent();
-	for( auto& node : nodeList )
+	for( auto* nodePtr : nodeList )
 	{
+		auto& node = *nodePtr;
+
 		ImGui::PushID( node.ID.AsPointer() );
 		auto start = ImGui::GetCursorScreenPos();
 
@@ -669,24 +649,72 @@ void StateGraphEditor::DrawLeftPane( float paneWidth )
 		{
 			//graphEnt->graph.CreateSubState("New Function", {}, {});
 		}
+
+
 	}
 
-
-	//idPlayer* player = gameLocal.GetLocalPlayer();
-	//if( player )
-	//{
-	//	auto ret = idClass::GetClass( "idPlayer" )->GetScriptVariables( ( void* )player );
-	//	for( auto& scriptVar : ret )
-	//	{
-	//		ImScriptVariable( scriptVar );
-	//	}
-	//}
 	ImGui::EndChild();
 	SameLine();
 }
 
+void StateGraphEditor::Handle_ContextMenus()
+{
+	static ed::NodeId contextNodeId = 0;
+	static ed::LinkId contextLinkId = 0;
+	static ed::PinId  contextPinId = 0;
+	auto openPopupPosition = ImGui::GetMousePos();
+	ed::Suspend();
+	if( ed::ShowNodeContextMenu( &contextNodeId ) )
+	{
+		ImGui::OpenPopup( "Node Context Menu" );
+	}
+	else if( ed::ShowPinContextMenu( &contextPinId ) )
+	{
+		ImGui::OpenPopup( "Pin Context Menu" );
+	}
+	else if( ed::ShowLinkContextMenu( &contextLinkId ) )
+	{
+		ImGui::OpenPopup( "Link Context Menu" );
+	}
+	else if( ed::ShowBackgroundContextMenu() )
+	{
+		ImGui::OpenPopup( "Create New Node" );
+	}
+
+	ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 8, 8 ) );
+	if( ImGui::BeginPopup( "Create New Node" ) )
+	{
+		if( ImGui::MenuItem( "Entity Node" ) )
+		{
+
+		}
+		ImGui::EndPopup();
+	}
+	ImGui::PopStyleVar();
+
+	ed::Resume();
+}
+
 void StateGraphEditor::Handle_NodeEvents()
 {
+	auto showLabel = []( const char* label, ImColor color )
+	{
+		ImGui::SetCursorPosY( ImGui::GetCursorPosY() - ImGui::GetTextLineHeight() );
+		auto size = ImGui::CalcTextSize( label );
+
+		auto padding = ImGui::GetStyle().FramePadding;
+		auto spacing = ImGui::GetStyle().ItemSpacing;
+
+		ImGui::SetCursorPos( ImGui::GetCursorPos() + ImVec2( spacing.x, -spacing.y ) );
+
+		auto rectMin = ImGui::GetCursorScreenPos() - padding;
+		auto rectMax = ImGui::GetCursorScreenPos() + size + padding;
+
+		auto drawList = ImGui::GetWindowDrawList();
+		drawList->AddRectFilled( rectMin, rectMax, color, size.y * 0.15f );
+		ImGui::TextUnformatted( label );
+	};
+
 	// Handle creation action, returns true if editor want to create new object (node or link)
 	if( ed::BeginCreate() )
 	{
@@ -719,7 +747,10 @@ void StateGraphEditor::Handle_NodeEvents()
 				if( ed::AcceptNewItem() )
 				{
 					graphEnt->graph.AddLink( *outputSocket, *inputSocket );
-					Link& newLink = linkList.Alloc() = { ed::LinkId( nextElementId++ ), startPinId , endPinId };
+					Link& newLink = linkList.Alloc();
+					newLink.ID = ed::LinkId( nextElementId++ );
+					newLink.StartPinID = startPinId;
+					newLink.EndPinID = endPinId;
 
 					if( inputSocket->var )
 					{
@@ -768,6 +799,28 @@ void StateGraphEditor::Handle_NodeEvents()
 				}
 			}
 		}
+
+		ed::PinId pinId = 0;
+		if( ed::QueryNewNode( &pinId ) )
+		{
+			idGraphNodeSocket** newSocket;
+			GraphNodePin::socketHashIdx.Get( pinId.Get(), &newSocket );
+			idGraphNodeSocket* newSocketPtr = *newSocket;
+			if( newSocketPtr )
+			{
+				showLabel( "+ Create Node", ImColor( 32, 45, 32, 180 ) );
+			}
+
+			if( ed::AcceptNewItem() )
+			{
+				//createNewNode = true;
+				//newNodeLinkPin = FindPin(pinId);
+				//newLinkPin = nullptr;
+				ed::Suspend();
+				ImGui::OpenPopup( "Create New Node" );
+				ed::Resume();
+			}
+		}
 	}
 	ed::EndCreate(); // Wraps up object creation action handling.
 
@@ -791,6 +844,19 @@ void StateGraphEditor::Handle_NodeEvents()
 
 			// You may reject link deletion by calling:
 			// ed::RejectDeletedItem();
+		}
+
+		ed::NodeId nodeId = 0;
+		while( ed::QueryDeletedNode( &nodeId ) )
+		{
+			if( ed::AcceptDeletedItem() )
+			{
+
+				GraphNode** targetNode;
+				GraphNode::nodeHashIdx.Get( nodeId.Get(), &targetNode );
+				GraphNode* targetNodePtr = *targetNode;
+				DeleteNode( targetNodePtr );
+			}
 		}
 	}
 	ed::EndDelete(); // Wrap up deletion action

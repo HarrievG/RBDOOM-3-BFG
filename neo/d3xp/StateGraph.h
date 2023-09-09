@@ -91,6 +91,8 @@ public:
 		idGraphNodeSocket* end;
 	} Link_t;
 	//////////////////////////////////////////////////////////////////////////
+
+	idGraphNodeSocket& operator=( idGraphNodeSocket&& );
 	~idGraphNodeSocket();
 	idGraphNodeSocket() : owner( nullptr ), var( nullptr ), active( false ), name( "" ), socketIndex( -1 ), nodeIndex( -1 ), freeData( true ), isOutput( false ) {}
 	idList<idGraphNodeSocket*> connections;
@@ -117,6 +119,7 @@ public:
 	idBlackBoard blackBoard;
 protected:
 	rvStateThread* stateThread;
+	idList<idScriptVariableInstance_t> localVariables;
 };
 
 class idGraphNode : public idClass
@@ -166,6 +169,7 @@ public:
 	void								WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL );
 	bool								LoadBinary( idFile* file, const ID_TIME_T _timeStamp , idClass* owner = nullptr );
 
+	void								RemoveNode( idGraphNode* node );
 	idGraphNode*						CreateNode( idGraphNode* node );
 	void								RemoveLink( idGraphNodeSocket* start, idGraphNodeSocket* end );
 	idGraphNodeSocket::Link_t&			AddLink( idGraphNodeSocket& start, idGraphNodeSocket& end );
@@ -180,15 +184,17 @@ public:
 	template<class T>
 	T* CreateNode( int stateIndex );
 
+	void								DeleteLocalStateNode( int stateIndex, idGraphNode* node );
+	void								DeleteLocalStateNode( const char* stateName, idGraphNode* node );
 	idGraphNode*						CreateLocalStateNode( int stateIndex, idGraphNode* node );
 	idGraphNode*						CreateLocalStateNode( const char* stateName, idGraphNode* node );
 	void								Clear();
 
 	int									CreateSubState( const char* name, idList<idScriptVariableInstance_t> inputs, idList< idScriptVariableInstance_t> ouputs );
 
-	idStrList						localStates;
-	idHashIndex						localStateHash;
-	idList<GraphState>				localGraphState;
+	idStrList							localStates;
+	idHashIndex							localStateHash;
+	idList<GraphState>					localGraphState;
 private:
 
 };

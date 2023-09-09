@@ -176,14 +176,14 @@ bool idStateGraph::LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass
 	return false;
 }
 
+void idStateGraph::RemoveNode( idGraphNode* node )
+{
+	DeleteLocalStateNode( "GRAPH_MAIN", node );
+}
+
 idGraphNode* idStateGraph::CreateNode( idGraphNode* node )
 {
 	return CreateLocalStateNode( "GRAPH_MAIN", node );
-	//
-	//node->graph = this;
-	//auto * retNode = nodes.Alloc() = node;
-	//node->nodeIndex = nodes.Num() - 1;
-	//return retNode;
 }
 
 void idStateGraph::RemoveLink( idGraphNodeSocket* start, idGraphNodeSocket* end )
@@ -307,6 +307,31 @@ int idStateGraph::GetLocalState( const char* newStateName )
 
 	return i;
 
+}
+
+void idStateGraph::DeleteLocalStateNode( int stateIndex, idGraphNode* node )
+{
+	GraphState& graphState = localGraphState[stateIndex];
+	assert( !graphState.activeNodes.Num() );
+	idGraphNode* lastNode = graphState.nodes[graphState.nodes.Num() - 1];
+	int nodeIdx = node->nodeIndex;
+	lastNode->nodeIndex = nodeIdx;
+	for( auto& socket : lastNode->inputSockets )
+	{
+		socket.nodeIndex = nodeIdx;
+	}
+	for( auto& socket : lastNode->outputSockets )
+	{
+		socket.nodeIndex = nodeIdx;
+	}
+	graphState.nodes.RemoveIndexFast( nodeIdx );
+	delete node;
+}
+
+void idStateGraph::DeleteLocalStateNode( const char* stateName, idGraphNode* node )
+{
+	int stateIndex = GetLocalState( stateName );
+	DeleteLocalStateNode( stateIndex, node );
 }
 
 idGraphNode* idStateGraph::CreateLocalStateNode( int stateIndex, idGraphNode* node )
@@ -662,12 +687,12 @@ void idGraphedEntity::Spawn()
 	( varBoolTest =	localBlackboard.Alloc<idScriptInt>( 8 ) ) = 1;
 	( varIntTest =	localBlackboard.Alloc<idScriptInt>( 8 ) ) = 31427;
 	varStringTest = ( idScriptStr ) * localBlackboard.Alloc( "StringVariableTest" );
-	( varVectorTest = localBlackboard.Alloc<idScriptVector>( 24 ) ) = idVec3( 1.1, 2.3, 3.3 );
+	( varVectorTest = localBlackboard.Alloc<idScriptVector>( 24 ) ) = idVec3( 1.1f, 2.3f, 3.3f );
 	( varFloatTestX = localBlackboard.Alloc<idScriptFloat>( 8 ) ) = 3.1427f * 2;
 	( varBoolTestX =	localBlackboard.Alloc<idScriptInt>( 8 ) ) = 10;
 	( varIntTestX =	localBlackboard.Alloc<idScriptInt>( 8 ) ) = 31427 * 2;
 	varStringTestX = ( idScriptStr ) * localBlackboard.Alloc( "StringVariableTestX" );
-	( varVectorTestX = localBlackboard.Alloc<idScriptVector>( 24 ) ) = idVec3( 4.1, 5.3, 6.3 );
+	( varVectorTestX = localBlackboard.Alloc<idScriptVector>( 24 ) ) = idVec3( 4.1f, 5.3f, 6.3f );
 	if( graphFile.IsEmpty() )
 	{
 		auto* initNode = graph.CreateNode( new idGraphOnInitNode() );
@@ -738,6 +763,24 @@ void idGraphedEntity::Event_Activate( idEntity* activator )
 	BecomeActive( TH_THINK );
 }
 
+idGraphNodeSocket& idGraphNodeSocket::operator=( idGraphNodeSocket&& other )
+{
+	connections = std::move( other.connections );
+	owner = other.owner;
+	var = other.var;
+	active = other.active;
+	name = std::move( other.name );
+	socketIndex = other.socketIndex;
+	nodeIndex = other.nodeIndex;
+	freeData = other.freeData;
+	isOutput = other.isOutput;
+	
+	other.owner = nullptr;
+	other.var = nullptr;
+	
+	return *this;
+}
+
 idGraphNodeSocket::~idGraphNodeSocket()
 {
 	if( var && !connections.Num() )
@@ -772,24 +815,26 @@ idScriptVariableBase* VarFromFormatSpec( const char spec, GraphState* graph /*= 
 	{
 		case D_EVENT_FLOAT:
 			ret = graph->blackBoard.Alloc<idScriptFloat>( 8 );
-		break;
+			break;
 		case D_EVENT_INTEGER:
 			ret = graph->blackBoard.Alloc<idScriptInteger>( 8 );
-		break;
+			break;
 
 		case D_EVENT_VECTOR:
 			ret = graph->blackBoard.Alloc<idScriptVector>( 3 * 8 );
-		break;
+			break;
 
 		case D_EVENT_STRING:
 			ret = graph->blackBoard.Alloc( "" );
-		break;
+			break;
 
 		case D_EVENT_ENTITY:
 		case D_EVENT_ENTITY_NULL:
 			ret = graph->blackBoard.Alloc<idScriptEntity>( 16 );
-		break;
-
+			break;
+		case D_EVENT_VOID:
+			//no var but valid
+			break;
 		default:
 			gameLocal.Error( "idClassNode::Setup : Invalid arg format '%s' string for event.", spec );
 			break;

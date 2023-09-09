@@ -105,9 +105,14 @@ void idStateNode::Setup( idClass* graphOwner )
 	newInput = &CreateInputSocket();
 	newInput->name = "State";
 	newInput->var = new idScriptStr( ( void* )&input_State );
+	newInput->freeData = false;
 	idGraphNodeSocket& newOutput = CreateOutputSocket();
 	newOutput.name = "Result";
 	newOutput.var = new idScriptInt( ( void* )&output_Result );
+	newOutput.freeData = false;
+
+	outputSockets.Condense();
+	inputSockets.Condense();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -147,6 +152,8 @@ void idGraphOnInitNode::Setup( idClass* graphOwner )
 	newOutput.active = true;
 	newOutput.name = "";
 	done = false;
+	outputSockets.Condense();
+	inputSockets.Condense();
 }
 
 idVec4 idGraphOnInitNode::NodeTitleBarColor()
@@ -413,7 +420,8 @@ void idClassNode::Setup( idClass* graphOwner )
 			nodeOwnerClass = ( ( idClass** )&scriptThread );
 		}
 	}
-
+	outputSockets.Condense();
+	inputSockets.Condense();
 }
 
 void idClassNode::OnChangeDef( const idEventDef* eventDef )
@@ -428,6 +436,56 @@ void idClassNode::OnChangeVar( idScriptVariableInstance_t& varInstance )
 	targetVariableName = varInstance.varName;
 	targetVariable = varInstance.scriptVariable;
 	Setup( ownerClass );
+}
+
+const char* idClassNode::GetName()
+{
+	currentTitle = "";
+	switch( type )
+	{
+		case idClassNode::Call:
+			return "Call Event";
+			break;
+		case idClassNode::Set:
+			if( targetVariable )
+			{
+				currentTitle = "Set ";
+			}
+			break;
+		case idClassNode::Get:
+			if( targetVariable )
+			{
+				currentTitle = "Get ";
+			}
+			break;
+	}
+
+	if( targetVariable )
+	{
+		switch( targetVariable->GetType() )
+		{
+			case ev_string:
+				currentTitle += "String";
+				break;
+			case ev_float:
+				currentTitle += "Float";
+				break;
+			case ev_vector:
+				currentTitle += "3D Vector";
+				break;
+			case ev_entity:
+				currentTitle += "Entity";
+				break;
+			case ev_boolean:
+				currentTitle += "Boolean";
+				break;
+			case ev_int:
+				currentTitle += "Integer";
+				break;
+		}
+		return currentTitle.c_str();
+	};
+	return "idClassNode";
 }
 
 void idClassNode::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL */ )
@@ -607,9 +665,9 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 		static ImGuiTableFlags flags = ImGuiTableFlags_NoHostExtendX | ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_NoPadOuterX;
 		if( ImGui::BeginTable( "NodeContent", 4, flags ) )
 		{
-			ImGui::TableSetupColumn( "", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_IndentDisable, 25 );
+			ImGui::TableSetupColumn( "", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_IndentDisable, type != NodeType::Get ? 25 : 1 );
 			ImGui::TableSetupColumn( "", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_IndentDisable, TEXT_BASE_WIDTH * ( maxLengthIn + 1 ) );
-			ImGui::TableSetupColumn( "", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_IndentDisable, TEXT_BASE_WIDTH * maxLengthOut );
+			ImGui::TableSetupColumn( "", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_IndentDisable, type != NodeType::Get ? TEXT_BASE_WIDTH* maxLengthOut : 1 );
 			ImGui::TableSetupColumn( "", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_IndentDisable, 25 );
 
 			ImGui::AlignTextToFramePadding();
@@ -636,14 +694,17 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 				}
 			}
 			ImGui::TableSetColumnIndex( 0 );
-			ed::BeginPin( node.Inputs[0]->ID, ed::PinKind::Input );
-			auto cursorPos = ImGui::GetCursorScreenPos();
-			auto drawList = ImGui::GetWindowDrawList();
-			ed::PinPivotAlignment( ImVec2( 0.25, 0.5f ) );
-			ed::PinPivotSize( ImVec2( 0, 0 ) );
-			ImGui::DrawIcon( ImGui::GetWindowDrawList(), cursorPos, cursorPos + ImVec2( 25, 25 ), ImGui::IconType::Flow, nodeOwner->inputSockets[0].connections.Num(), ImColor( 255, 255, 255 ), ImColor( 0, 0, 0, 0 ) );
-			ImGui::Dummy( ImVec2( 25, 25 ) );
-			ed::EndPin();
+			if( type != NodeType::Get )
+			{
+				ed::BeginPin( node.Inputs[0]->ID, ed::PinKind::Input );
+				auto cursorPos = ImGui::GetCursorScreenPos();
+				auto drawList = ImGui::GetWindowDrawList();
+				ed::PinPivotAlignment( ImVec2( 0.25, 0.5f ) );
+				ed::PinPivotSize( ImVec2( 0, 0 ) );
+				ImGui::DrawIcon( ImGui::GetWindowDrawList(), cursorPos, cursorPos + ImVec2( 25, 25 ), ImGui::IconType::Flow, nodeOwner->inputSockets[0].connections.Num(), ImColor( 255, 255, 255 ), ImColor( 0, 0, 0, 0 ) );
+				ImGui::Dummy( ImVec2( 25, 25 ) );
+				ed::EndPin();
+			}
 			ImGui::PopID();
 
 			for( int i = 1; i <= maxSocket; i++ )
@@ -652,13 +713,16 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 				if( outputSocketIdx < maxOutputSockets )
 				{
 					ImGui::TableSetColumnIndex( 2 );
-					ImGui::Dummy( ImVec2( 0.0f, 0.0f ) );
-					ImGui::PushItemWidth( TEXT_BASE_WIDTH * maxLengthOut );
+					if( type != NodeType::Get )
+					{
+						ImGui::Dummy( ImVec2( 0.0f, 0.0f ) );
+					}
+					ImGui::PushItemWidth( type != NodeType::Get ? TEXT_BASE_WIDTH* maxLengthOut : 1 );
 					idGraphNodeSocket& ownerSocket = nodeOwner->outputSockets[outputSocketIdx];
 					ImGui::IconItem icon = { ImGui::IconType::Flow , ownerSocket.connections.Num() > 0, ImColor( 255, 255, 255 ), ImColor( 0, 0, 0, 0 ) };
 					if( ownerSocket.var )
 					{
-						icon = ImGui::ImScriptVariable( idStr( reinterpret_cast<uintptr_t>( node.Outputs[outputSocketIdx]->ID.AsPointer() ) ), { ownerSocket.name.c_str(), "", ownerSocket.var } );
+						icon = ImGui::ImScriptVariable( idStr( reinterpret_cast<uintptr_t>( node.Outputs[outputSocketIdx]->ID.AsPointer() ) ), { ownerSocket.name.c_str(), "", ownerSocket.var }, type != NodeType::Get );
 						icon.filled = ownerSocket.connections.Num() > 0;
 					}
 					else

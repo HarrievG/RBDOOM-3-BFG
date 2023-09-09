@@ -1201,7 +1201,9 @@ ID_INLINE bool idList<_type_, _tag_>::RemoveIndexFast( int index )
 	num--;
 	if( index != num )
 	{
-		list[ index ] = list[ num ];
+
+		list[index] = std::move( list[num] );
+		//list[ index ] = list[ num ];
 	}
 
 	return true;

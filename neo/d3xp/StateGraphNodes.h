@@ -77,10 +77,7 @@ public:
 	stateResult_t Exec( stateParms_t* parms ) override;
 	void OnChangeDef( const idEventDef* eventDef );
 	void OnChangeVar( idScriptVariableInstance_t& varInstance );
-	const char* GetName() override
-	{
-		return "idClassNode";
-	}
+	const char* GetName() override;
 	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL ) override;
 	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass* owner = nullptr ) override;
 	void Setup( idClass* graphOwner ) override;
@@ -94,6 +91,7 @@ public:
 	idScriptVariableBase* targetVariable;
 	idStr targetVariableName;
 	idThread* scriptThread;//for sys events;
+	idStr currentTitle;
 };
 
 class idGraphOnInitNode : public idGraphNode
