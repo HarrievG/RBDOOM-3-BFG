@@ -220,6 +220,19 @@ void StateGraphEditor::Init()
 	ed::Config config;
 	config.SettingsFile = "Simple.json";
 	EditorContext = ed::CreateEditor();
+	auto* childNode = idGraphNode::Type.node.GetChild();
+	if( childNode )
+	{
+		nodeTypes.Append( static_cast<idGraphNode*>( childNode->CreateInstance() ) );
+		for( const idTypeInfo* c = childNode->node.GetSibling(); c != NULL; c = c->node.GetSibling() )
+		{
+			nodeTypes.Append( static_cast<idGraphNode*>( c->CreateInstance() ) );
+		}
+	}
+	else
+	{
+		assert( 1, "typeinfo was not intialized" );
+	}
 }
 
 void StateGraphEditor::DrawGraphEntityTest()
@@ -684,9 +697,15 @@ void StateGraphEditor::Handle_ContextMenus()
 	ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 8, 8 ) );
 	if( ImGui::BeginPopup( "Create New Node" ) )
 	{
-		if( ImGui::MenuItem( "Entity Node" ) )
+		idList<int> classNums;
+		for( auto* nodePtr : nodeTypes )
 		{
-
+			idGraphNode* createdNode = nodePtr->QueryNodeContstruction( &graphEnt->graph, graphEnt );
+			if( createdNode != nullptr )
+			{
+				auto& newNode = *( nodeList.Alloc() = new GraphNode( nextElementId++, createdNode->GetName(), createdNode ) );
+				ReadNode( createdNode, newNode );
+			}
 		}
 		ImGui::EndPopup();
 	}

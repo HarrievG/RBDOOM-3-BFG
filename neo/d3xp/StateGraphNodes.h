@@ -52,7 +52,8 @@ public:
 	}
 	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL ) override;
 	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass* owner = nullptr ) override;
-	void Setup( idClass* graphOwner ) override;
+	void Setup( idClass* graphOwner );
+	idGraphNode* QueryNodeContstruction( idStateGraph* targetGraph, idClass* graphOwner );
 
 	idStr			input_State;
 	NodeType		type;
@@ -80,7 +81,8 @@ public:
 	const char* GetName() override;
 	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL ) override;
 	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass* owner = nullptr ) override;
-	void Setup( idClass* graphOwner ) override;
+	void Setup( idClass* graphOwner );
+	idGraphNode* QueryNodeContstruction( idStateGraph* targetGraph, idClass* graphOwner );
 
 	idClass* ownerClass;
 	idClass** nodeOwnerClass;
@@ -107,7 +109,8 @@ public:
 	}
 	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL ) override;
 	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass* owner = nullptr ) override;
-	void Setup( idClass* graphOwner ) override;
+	void Setup( idClass* graphOwner );
+	idGraphNode* QueryNodeContstruction( idStateGraph* targetGraph, idClass* graphOwner );
 
 	idVec4 NodeTitleBarColor() override;
 
@@ -133,7 +136,11 @@ public:
 	}
 	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL ) override;
 	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass* owner = nullptr ) override;
-	void Setup( idClass* graphOwner ) override;
+	void Setup( idClass* graphOwner );
+	idGraphNode* QueryNodeContstruction( idStateGraph* targetGraph, idClass* graphOwner )
+	{
+		return nullptr;
+	}
 
 	idVec4 NodeTitleBarColor() override;
 

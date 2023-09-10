@@ -115,6 +115,11 @@ void idStateNode::Setup( idClass* graphOwner )
 	inputSockets.Condense();
 }
 
+idGraphNode* idStateNode::QueryNodeContstruction( idStateGraph* targetGraph, idClass* graphOwner )
+{
+	return nullptr;
+}
+
 //////////////////////////////////////////////////////////////////////////
 CLASS_DECLARATION( idGraphNode, idGraphOnInitNode )
 END_CLASS
@@ -154,6 +159,11 @@ void idGraphOnInitNode::Setup( idClass* graphOwner )
 	done = false;
 	outputSockets.Condense();
 	inputSockets.Condense();
+}
+
+idGraphNode* idGraphOnInitNode::QueryNodeContstruction( idStateGraph* targetGraph, idClass* graphOwner )
+{
+	return nullptr;
 }
 
 idVec4 idGraphOnInitNode::NodeTitleBarColor()
@@ -422,6 +432,33 @@ void idClassNode::Setup( idClass* graphOwner )
 	}
 	outputSockets.Condense();
 	inputSockets.Condense();
+}
+
+idGraphNode* idClassNode::QueryNodeContstruction( idStateGraph* targetGraph, idClass* graphOwner )
+{
+	auto& graph = *targetGraph;
+	if( ImGui::MenuItem( "Call Event" ) )
+	{
+		auto* classNode = static_cast<idClassNode*>( graph.CreateNode( new idClassNode() ) );
+		classNode->type = idClassNode::Call;
+		classNode->Setup( graphOwner );
+		return classNode;
+	}
+	if( ImGui::MenuItem( "Set Variable" ) )
+	{
+		auto* classNodeVarSet = static_cast<idClassNode*>( graph.CreateNode( new idClassNode() ) );
+		classNodeVarSet->type = idClassNode::Set;
+		classNodeVarSet->Setup( graphOwner );
+		return classNodeVarSet;
+	}
+	if( ImGui::MenuItem( "Get Variable" ) )
+	{
+		auto* classNodeVarGet = static_cast<idClassNode*>( graph.CreateNode( new idClassNode() ) );
+		classNodeVarGet->type = idClassNode::Get;
+		classNodeVarGet->Setup( graphOwner );
+		return classNodeVarGet;
+	}
+	return nullptr;
 }
 
 void idClassNode::OnChangeDef( const idEventDef* eventDef )

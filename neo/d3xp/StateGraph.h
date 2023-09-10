@@ -128,20 +128,25 @@ public:
 	ABSTRACT_PROTOTYPE( idGraphNode );
 
 	virtual stateResult_t Exec( stateParms_t* parms ) = 0;
-	virtual	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL );
-	virtual	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass* owner = nullptr );
 	virtual const char* GetName() = 0;
 	virtual void Setup( idClass* graphOwner ) = 0;
 
-	//should only be used in editor.
+	//////////////////////////////////////////////////////////////////////////
+	//Should only be used in editor.
+	virtual idGraphNode* QueryNodeContstruction( idStateGraph* targetGraph, idClass* graphOwner ) = 0;
 	virtual void Draw( ImGuiTools::GraphNode* nodePtr );
 	virtual idVec4 NodeTitleBarColor();
+	//////////////////////////////////////////////////////////////////////////
+
+	virtual	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL );
+	virtual	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass* owner = nullptr );
 
 	idGraphNodeSocket& CreateInputSocket();
 	idGraphNodeSocket& CreateOutputSocket();
 	bool HasActiveSocket();
 	void ActivateOutputConnections();
 	void DeactivateInputs();
+
 	idList<idGraphNodeSocket> inputSockets;
 	idList<idGraphNodeSocket> outputSockets;
 	GraphState* graph;
@@ -184,10 +189,6 @@ public:
 	template<class T>
 	T* CreateNode( int stateIndex );
 
-	void								DeleteLocalStateNode( int stateIndex, idGraphNode* node );
-	void								DeleteLocalStateNode( const char* stateName, idGraphNode* node );
-	idGraphNode*						CreateLocalStateNode( int stateIndex, idGraphNode* node );
-	idGraphNode*						CreateLocalStateNode( const char* stateName, idGraphNode* node );
 	void								Clear();
 
 	int									CreateSubState( const char* name, idList<idScriptVariableInstance_t> inputs, idList< idScriptVariableInstance_t> ouputs );
@@ -196,7 +197,10 @@ public:
 	idHashIndex							localStateHash;
 	idList<GraphState>					localGraphState;
 private:
-
+	void								DeleteLocalStateNode( int stateIndex, idGraphNode* node );
+	void								DeleteLocalStateNode( const char* stateName, idGraphNode* node );
+	idGraphNode*						CreateLocalStateNode( int stateIndex, idGraphNode* node );
+	idGraphNode*						CreateLocalStateNode( const char* stateName, idGraphNode* node );
 };
 
 //Testcase for idStateGraph[editor]

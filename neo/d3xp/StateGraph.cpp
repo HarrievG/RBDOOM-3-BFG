@@ -683,13 +683,13 @@ void idGraphedEntity::Spawn()
 	auto& localBlackboard = localState.blackBoard;
 
 	//if not linked to a script, use blackboard as storage
-	( varFloatTest = *localBlackboard.Alloc<idScriptFloat>( 8 ) ) = 3.1427f;
+	( varFloatTest = localBlackboard.Alloc<idScriptFloat>( 8 ) ) = 3.1427f;
 	( varBoolTest =	localBlackboard.Alloc<idScriptInt>( 8 ) ) = 1;
 	( varIntTest =	localBlackboard.Alloc<idScriptInt>( 8 ) ) = 31427;
 	varStringTest = ( idScriptStr ) * localBlackboard.Alloc( "StringVariableTest" );
 	( varVectorTest = localBlackboard.Alloc<idScriptVector>( 24 ) ) = idVec3( 1.1f, 2.3f, 3.3f );
 	( varFloatTestX = localBlackboard.Alloc<idScriptFloat>( 8 ) ) = 3.1427f * 2;
-	( varBoolTestX =	localBlackboard.Alloc<idScriptInt>( 8 ) ) = 10;
+	( varBoolTestX = localBlackboard.Alloc<idScriptInt>( 8 ) ) = 10;
 	( varIntTestX =	localBlackboard.Alloc<idScriptInt>( 8 ) ) = 31427 * 2;
 	varStringTestX = ( idScriptStr ) * localBlackboard.Alloc( "StringVariableTestX" );
 	( varVectorTestX = localBlackboard.Alloc<idScriptVector>( 24 ) ) = idVec3( 4.1f, 5.3f, 6.3f );
@@ -774,10 +774,10 @@ idGraphNodeSocket& idGraphNodeSocket::operator=( idGraphNodeSocket&& other )
 	nodeIndex = other.nodeIndex;
 	freeData = other.freeData;
 	isOutput = other.isOutput;
-	
+
 	other.owner = nullptr;
 	other.var = nullptr;
-	
+
 	return *this;
 }
 
