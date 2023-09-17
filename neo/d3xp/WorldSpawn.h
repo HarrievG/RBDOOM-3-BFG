@@ -50,7 +50,7 @@ public:
 	void			Restore( idRestoreGame* savefile );
 
 	void			Event_PlayBackgroundMusic();
-
+	void			Event_Activate( idEntity* activator );
 private:
 	void			SetMusicTrack();
 

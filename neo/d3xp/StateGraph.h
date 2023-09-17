@@ -49,11 +49,6 @@ public:
 		return  new scriptType( b );
 	}
 
-	void Free( byte* var )
-	{
-		data.Free( var );
-	}
-
 	//const for a reason!
 	//const idScriptString* Alloc( const char* str )
 	//{
@@ -62,21 +57,34 @@ public:
 
 	idScriptStr* Alloc( const char* str )
 	{
-		strList.Alloc() = idStr( str );
-		return new idScriptStr( ( void* )&strList[strList.Num() - 1] );
+		strList.Alloc() = new idStr( str );
+		return new idScriptStr( ( void* )strList[strList.Num() - 1] );
 	}
 
-	void Free( idScriptStr* var )
+	void Free( idStr* var )
 	{
-		strList.Remove( *var->GetData() );
+		strList.Remove( var );
 	}
 
+	void Free( byte* var )
+	{
+		data.Free( var );
+	}
+
+	idBlackBoard()
+	{
+		data.Init();
+	}
+	~idBlackBoard()
+	{
+		data.Shutdown();
+	}
 private:
-	idDynamicBlockAlloc< byte , 100 * 1024, 256 , TAG_BLACKBOARD> data;
+	idDynamicBlockAlloc< byte , 16 * 1024, 256 , TAG_BLACKBOARD> data;
 
 	//use for static node strings
 	//idStrPool		strPool;
-	idStrList		strList;
+	idStrPtrList		strList;
 };
 
 class idGraphNode;
@@ -94,7 +102,9 @@ public:
 
 	idGraphNodeSocket& operator=( idGraphNodeSocket&& );
 	~idGraphNodeSocket();
-	idGraphNodeSocket() : owner( nullptr ), var( nullptr ), active( false ), name( "" ), socketIndex( -1 ), nodeIndex( -1 ), freeData( true ), isOutput( false ) {}
+	idGraphNodeSocket() :
+		owner( nullptr ), var( nullptr ), active( false ), name( "" ), socketIndex( -1 ),
+		nodeIndex( -1 ), freeData( true ), isOutput( false ) {}
 	idList<idGraphNodeSocket*> connections;
 	idGraphNode* owner;
 	idScriptVariableBase* var;
@@ -133,7 +143,7 @@ public:
 
 	//////////////////////////////////////////////////////////////////////////
 	//Should only be used in editor.
-	virtual idGraphNode* QueryNodeContstruction( idStateGraph* targetGraph, idClass* graphOwner ) = 0;
+	virtual idGraphNode* QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner ) = 0;
 	virtual void Draw( ImGuiTools::GraphNode* nodePtr );
 	virtual idVec4 NodeTitleBarColor();
 	//////////////////////////////////////////////////////////////////////////
@@ -165,15 +175,18 @@ public:
 
 	CLASS_PROTOTYPE( idStateGraph );
 
+	void								Event_Activate( idEntity* activator );
 	idStateGraph();
 
 	~idStateGraph();
-	virtual void						SharedThink();
+	virtual void						Think();
 
 	void								ConvertScriptObject( idScriptObject* scriptObject );
 	void								WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL );
 	bool								LoadBinary( idFile* file, const ID_TIME_T _timeStamp , idClass* owner = nullptr );
 
+	idList<idScriptVariableInstance_t>& GetVariables();
+	idScriptVariableInstance_t&			CreateVariable( const char* variableName, etype_t type );
 	void								RemoveNode( idGraphNode* node );
 	idGraphNode*						CreateNode( idGraphNode* node );
 	void								RemoveLink( idGraphNodeSocket* start, idGraphNodeSocket* end );
@@ -201,6 +214,8 @@ private:
 	void								DeleteLocalStateNode( const char* stateName, idGraphNode* node );
 	idGraphNode*						CreateLocalStateNode( int stateIndex, idGraphNode* node );
 	idGraphNode*						CreateLocalStateNode( const char* stateName, idGraphNode* node );
+
+	idList<idScriptVariableInstance_t>&  GetLocalVariables();
 };
 
 //Testcase for idStateGraph[editor]
@@ -220,9 +235,6 @@ public:
 
 	void			Event_Activate( idEntity* activator );
 
-	idStateGraph	graph;
-	rvStateThread	stateThread;
-
 	idScriptBool	varBoolTest;
 	idScriptInteger	varIntTest;
 	idScriptFloat	varFloatTest;
@@ -235,7 +247,6 @@ public:
 	idScriptStr		varStringTestX;
 	idScriptVector	varVectorTestX;
 private:
-	virtual void	SharedThink();
 	virtual void	Think();
 protected:
 

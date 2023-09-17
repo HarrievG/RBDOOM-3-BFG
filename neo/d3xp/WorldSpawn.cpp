@@ -52,6 +52,7 @@ CLASS_DECLARATION( idEntity, idWorldspawn )
 EVENT( EV_Remove,				idWorldspawn::Event_Remove )
 EVENT( EV_SafeRemove,			idWorldspawn::Event_Remove )
 EVENT( EV_PlayBackgroundMusic,	idWorldspawn::Event_PlayBackgroundMusic )
+EVENT( EV_Activate,				idWorldspawn::Event_Activate )
 END_CLASS
 
 /*
@@ -80,6 +81,32 @@ void idWorldspawn::Spawn()
 	if( spawnArgs.GetBool( "no_stamina" ) )
 	{
 		pm_stamina.SetFloat( 0.0f );
+	}
+
+	// load mapgraph
+	if( graphObject == nullptr )
+	{
+		idStr	graphName;
+		graphName = gameLocal.GetMapName();
+		graphName.SetFileExtension( ".bgrph" );
+		if( fileSystem->ReadFile( graphName, NULL, NULL ) > 0 )
+		{
+			graphObject = new idStateGraph();
+			graphStateThread.SetOwner( this );
+			graphObject->localGraphState[0].targetStateThread = &graphStateThread;
+
+			idFileLocal file( fileSystem->OpenFileRead( graphName ) );
+			if( !graphObject->LoadBinary( file, file->Timestamp(), this ) )
+			{
+				gameLocal.Error( "Could not load graph '%s' ", graphName.c_str() );
+			}
+			//i want this gone, but i also want a mapgraph to be triggered at the same moment as the Main() function
+			//is now called from script so i trigger it the same way and initially update the graph in worldspawn::event_activate.
+			auto* func = gameLocal.program.CompileFunction( "graphStart", "void graphStart () {sys.trigger($world);}" );
+			thread = new idThread( func );
+			thread->DelayedStart( 0 );
+
+		}
 	}
 
 	// load script
@@ -290,4 +317,14 @@ void idWorldspawn::Event_PlayBackgroundMusic()
 		gameSoundWorld->PlayShaderDirectly( musicTrack, SND_CHANNEL_MUSIC );
 	}
 }
+
+void idWorldspawn::Event_Activate( idEntity* activator )
+{
+	if( graphObject )
+	{
+		graphObject->ProcessEvent( &EV_Activate, this );
+		graphObject->Think();
+	}
+}
+
 // RB end

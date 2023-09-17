@@ -332,7 +332,6 @@ void idTypeInfo::GetScriptVariables( void* owner , idList<idScriptVariableInstan
 							}
 
 							instance->varName = currentVar.name;
-							instance->typeName = currentVar.type;
 							instance->scriptVariable = ( idScriptVariableBase* )( ( uintptr_t )owner + currentVar.offset );
 
 							if( searching )
@@ -364,7 +363,14 @@ idList<const idEventDef*> idTypeInfo::GetEventDefs( bool checkSuper/* = true*/ )
 		idEventFunc<idClass>* def = infoPtr->eventCallbacks;
 		if( !def || !def[0].event )
 		{
-			// no new events or overrides
+			if( checkSuper )
+			{
+				infoPtr = infoPtr->super;
+			}
+			else
+			{
+				infoPtr = nullptr;
+			}
 			continue;
 		}
 

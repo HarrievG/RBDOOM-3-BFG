@@ -39,6 +39,7 @@ class idEntity;
 class idThread;
 class idSaveGame;
 class idRestoreGame;
+class idClass;
 
 #define MAX_STRING_LEN		128
 #define MAX_GLOBALS			296608			// in bytes
@@ -200,6 +201,7 @@ class idScriptVariableBase
 public:
 	virtual	etype_t GetType( ) = 0;
 	virtual	byte* GetRawData() = 0;
+	virtual void SetRawData( byte* rawData ) = 0;
 };
 
 
@@ -230,6 +232,10 @@ public:
 	byte* GetRawData() override
 	{
 		return ( byte* )data;
+	}
+	void SetRawData( byte* rawData ) override
+	{
+		data = ( type* )rawData;
 	}
 };
 
@@ -311,23 +317,24 @@ sample the data for non-dynamic values.
 
 ***********************************************************************/
 
-typedef idScriptVariable<int, ev_boolean, int>				idScriptBool;
-typedef idScriptVariable<float, ev_float, float>			idScriptFloat;
-typedef idScriptVariable<float, ev_float, int>				idScriptInt;
-typedef idScriptVariable<idVec3, ev_vector, idVec3>			idScriptVector;
-typedef idScriptVariable<idStr, ev_string, const char*>		idScriptString;
-typedef idScriptVariable < idStr, ev_string, idStr&& >			idScriptStr;
-typedef idScriptVariable < idEntity*, ev_entity, idEntity&& >	idScriptEntity;
-typedef idScriptVariable<int, ev_int, int>					idScriptInteger;
+typedef idScriptVariable<int		, ev_boolean,	int>			idScriptBool;
+typedef idScriptVariable<float		, ev_float,		float>			idScriptFloat;
+typedef idScriptVariable<float		, ev_float,		int>			idScriptInt;
+typedef idScriptVariable<idVec3		, ev_vector,		idVec3>			idScriptVector;
+typedef idScriptVariable<idStr		, ev_string,		const char*>	idScriptString;
+typedef idScriptVariable < idStr		, ev_string,		idStr&& >		idScriptStr;
+typedef idScriptVariable < idEntity*, ev_entity,		idEntity&& >		idScriptEntity;
+typedef idScriptVariable < idClass*, ev_object,		idClass&& >		idScriptClass;
+typedef idScriptVariable<int		, ev_int,		int>			idScriptInteger;
 
 typedef struct
 {
 	const char* varName;
-	const char* typeName;
 	idScriptVariableBase* scriptVariable;
 } idScriptVariableInstance_t;
 
-//keep in sync with list above, used for finding scripts vars in a idClass
+//keep in sync with list above, order should mimic  etype_t
+// used for finding scripts vars in a idClass and for graph editor
 static idStr idScriptVariableTypes[] =
 {
 	"idScriptBool",

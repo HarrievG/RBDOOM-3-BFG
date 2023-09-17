@@ -744,7 +744,7 @@ void idEntity::Spawn()
 		idFileLocal inputFile( fileSystem->OpenFileRead( generatedFilename, "fs_basepath" ) );
 		if( inputFile )
 		{
-			graphObject->LoadBinary( inputFile, inputFile->Timestamp() );
+			graphObject->LoadBinary( inputFile, inputFile->Timestamp(), this );
 		}
 	}
 
@@ -770,6 +770,11 @@ idEntity::~idEntity()
 
 	Signal( SIG_REMOVED );
 
+	if( graphObject )
+	{
+		graphStateThread.Clear();
+		delete graphObject;
+	}
 	// we have to set back the default physics object before unbinding because the entity
 	// specific physics object might be an entity variable and as such could already be destroyed.
 	SetPhysics( NULL );
@@ -1048,7 +1053,7 @@ void idEntity::Think()
 	Present();
 	if( graphObject )
 	{
-		graphStateThread.Execute();
+		graphObject->Think();
 	}
 }
 
@@ -1937,17 +1942,6 @@ renderView_t* idEntity::GetRenderView()
 	renderView->time[1] = gameLocal.fast.time;
 
 	return renderView;
-}
-
-void idEntity::SharedThink()
-{
-	if( thinkFlags & TH_THINK )
-	{
-		if( graphObject )
-		{
-			graphObject->SharedThink();
-		}
-	}
 }
 
 /***********************************************************************

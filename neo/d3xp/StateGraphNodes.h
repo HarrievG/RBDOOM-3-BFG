@@ -34,7 +34,6 @@ If you have questions concerning this license or the applicable additional terms
 
 class idStateNode : public idGraphNode
 {
-public:
 	CLASS_PROTOTYPE( idStateNode );
 
 	enum NodeType
@@ -45,6 +44,7 @@ public:
 	};
 	idStateNode();
 
+	void Execute( int parm );
 	stateResult_t Exec( stateParms_t* parms ) override;
 	const char* GetName() override
 	{
@@ -53,7 +53,7 @@ public:
 	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL ) override;
 	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass* owner = nullptr ) override;
 	void Setup( idClass* graphOwner );
-	idGraphNode* QueryNodeContstruction( idStateGraph* targetGraph, idClass* graphOwner );
+	idGraphNode* QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner );
 
 	idStr			input_State;
 	NodeType		type;
@@ -82,10 +82,9 @@ public:
 	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL ) override;
 	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass* owner = nullptr ) override;
 	void Setup( idClass* graphOwner );
-	idGraphNode* QueryNodeContstruction( idStateGraph* targetGraph, idClass* graphOwner );
+	idGraphNode* QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner );
 
-	idClass* ownerClass;
-	idClass** nodeOwnerClass;
+	idEntityPtr<idEntity> ownerEntityPtr;
 
 	NodeType type;
 	const idEventDef* targetEvent;
@@ -94,6 +93,11 @@ public:
 	idStr targetVariableName;
 	idThread* scriptThread;//for sys events;
 	idStr currentTitle;
+
+private:
+	idClass* ownerClass;
+	idClass** nodeOwnerClass;
+	void SetOwner( idClass** target );
 };
 
 class idGraphOnInitNode : public idGraphNode
@@ -110,10 +114,10 @@ public:
 	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL ) override;
 	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass* owner = nullptr ) override;
 	void Setup( idClass* graphOwner );
-	idGraphNode* QueryNodeContstruction( idStateGraph* targetGraph, idClass* graphOwner );
+	idGraphNode* QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner );
 
 	idVec4 NodeTitleBarColor() override;
-
+	void OnActivate( idEntity* activator );
 private:
 	bool done;
 };
@@ -137,7 +141,7 @@ public:
 	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL ) override;
 	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass* owner = nullptr ) override;
 	void Setup( idClass* graphOwner );
-	idGraphNode* QueryNodeContstruction( idStateGraph* targetGraph, idClass* graphOwner )
+	idGraphNode* QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner )
 	{
 		return nullptr;
 	}

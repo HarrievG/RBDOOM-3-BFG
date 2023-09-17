@@ -71,7 +71,8 @@ bool ImGui::DragVec3fitLabel( const char* label, idVec3& v, float v_speed,
 	return ImGui::DragVec3( label, v, v_speed, v_min, v_max, display_format, power, false );
 }
 
-ImGui::IconItem ImGui::ImScriptVariable( const char* strId, const idScriptVariableInstance_t& scriptVar, bool enabled /*= true*/ )
+ImGui::IconItem ImGui::ImScriptVariable
+( const char* strId, const idScriptVariableInstance_t& scriptVar, bool enabled /*= true*/ )
 {
 	etype_t t = scriptVar.scriptVariable->GetType();
 
@@ -96,7 +97,7 @@ ImGui::IconItem ImGui::ImScriptVariable( const char* strId, const idScriptVariab
 			case ev_entity:
 				return ImColor( 51, 150, 215 );
 			case ev_object:
-				return ImColor( 51, 150, 215 );
+				return ImColor( 51, 51, 215 );
 			case ev_function:
 				return ImColor( 218, 0, 183 );
 			case ev_scriptevent:
@@ -154,9 +155,27 @@ ImGui::IconItem ImGui::ImScriptVariable( const char* strId, const idScriptVariab
 			case ev_boolean:
 				ImGui::Checkbox( idStr( "##" ) + strId, ( bool* )( ( idScriptBool* )( scriptVar.scriptVariable ) )->GetData() );
 				break;
+
+			case ev_object:
+			{
+
+				if( 0 ) // (*(idScriptClass**)(scriptVar.scriptVariable)->GetRawData())
+				{
+					idClass& targetClass = *( *( ( idScriptClass* )scriptVar.scriptVariable )->GetData() );
+
+					idStr txt = targetClass.GetClassname();
+					ImGui::Text( txt );
+				}
+				else
+				{
+					ImGui::LabelText( idStr( "##" ) + strId, "" );
+				}
+
+			}
+			break;
 			case ev_entity:
 			{
-				if( *( idScriptEntity** )( scriptVar.scriptVariable )->GetRawData() )
+				if( 0 ) //( *( idScriptEntity** )( scriptVar.scriptVariable )->GetRawData() )
 				{
 
 					idStr txt = ( *( ( idScriptEntity* )scriptVar.scriptVariable )->GetData() )->GetName();
@@ -393,7 +412,8 @@ void ImGui::DrawIcon( ImDrawList* drawList, const ImVec2& a, const ImVec2& b, Im
 #endif
 			}
 		}
-		else if( type == ImGui::IconType::Diamond )
+
+		if( type == ImGui::IconType::Diamond )
 		{
 			if( filled )
 			{

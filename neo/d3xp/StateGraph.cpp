@@ -36,7 +36,19 @@ If you have questions concerning this license or the applicable additional terms
 #include "imgui_internal.h"
 
 CLASS_DECLARATION( idClass, idStateGraph )
+EVENT( EV_Activate, idStateGraph::Event_Activate )
 END_CLASS
+
+void idStateGraph::Event_Activate( idEntity* activator )
+{
+	for (auto& state : localGraphState)
+	{
+		for (auto* node : state.nodes)
+		{
+			node->ProcessEvent(&EV_Activate, activator);
+		}
+	}
+}
 
 idStateGraph::idStateGraph()
 {
@@ -83,7 +95,7 @@ int idStateGraph::CreateSubState( const char* name, idList<idScriptVariableInsta
 	return stateIndex;
 }
 
-void idStateGraph::SharedThink()
+void idStateGraph::Think()
 {
 	auto& graph = localGraphState[0];
 	if( !graph.owner )
@@ -176,6 +188,23 @@ bool idStateGraph::LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass
 	return false;
 }
 
+idList<idScriptVariableInstance_t>& idStateGraph::GetVariables()
+{
+	return GetLocalVariables();
+}
+
+idScriptVariableInstance_t& idStateGraph::CreateVariable( const char* variableName, etype_t type )
+{
+	int stateIndex = GetLocalState( "GRAPH_MAIN" );
+	GraphState& stateNodes = localGraphState[stateIndex];
+
+	auto& newInstance = stateNodes.localVariables.Alloc();
+
+	newInstance.varName = variableName;
+	newInstance.scriptVariable = VarFromType( type, &stateNodes );
+	return newInstance;
+}
+
 void idStateGraph::RemoveNode( idGraphNode* node )
 {
 	DeleteLocalStateNode( "GRAPH_MAIN", node );
@@ -199,7 +228,6 @@ void idStateGraph::RemoveLink( idGraphNodeSocket* start, idGraphNodeSocket* end 
 			{
 				if( start->connections[i] == end )
 				{
-					start->connections[lastIndex]->socketIndex = i;
 					start->connections.RemoveIndexFast( i );
 				}
 			}
@@ -208,11 +236,11 @@ void idStateGraph::RemoveLink( idGraphNodeSocket* start, idGraphNodeSocket* end 
 			{
 				if( end->connections[i] == start )
 				{
-					end->connections[lastIndex]->socketIndex = i;
 					end->connections.RemoveIndexFast( i );
 				}
 			}
 			currentGraphState.links.RemoveIndexFast( idx );
+			return;
 		}
 		idx++;
 	}
@@ -315,6 +343,7 @@ void idStateGraph::DeleteLocalStateNode( int stateIndex, idGraphNode* node )
 	assert( !graphState.activeNodes.Num() );
 	idGraphNode* lastNode = graphState.nodes[graphState.nodes.Num() - 1];
 	int nodeIdx = node->nodeIndex;
+	node->nodeIndex = lastNode->nodeIndex;
 	lastNode->nodeIndex = nodeIdx;
 	for( auto& socket : lastNode->inputSockets )
 	{
@@ -324,8 +353,16 @@ void idStateGraph::DeleteLocalStateNode( int stateIndex, idGraphNode* node )
 	{
 		socket.nodeIndex = nodeIdx;
 	}
-	graphState.nodes.RemoveIndexFast( nodeIdx );
+	for( auto& socket : node->outputSockets )
+	{
+		socket.nodeIndex = node->nodeIndex;
+	}
+	for( auto& socket : node->inputSockets )
+	{
+		socket.nodeIndex = node->nodeIndex;
+	}
 	delete node;
+	graphState.nodes.RemoveIndexFast( nodeIdx );
 }
 
 void idStateGraph::DeleteLocalStateNode( const char* stateName, idGraphNode* node )
@@ -348,6 +385,12 @@ idGraphNode* idStateGraph::CreateLocalStateNode( const char* stateName, idGraphN
 {
 	int stateIndex = GetLocalState( stateName );
 	return CreateLocalStateNode( stateIndex, node );
+}
+
+idList<idScriptVariableInstance_t>& idStateGraph::GetLocalVariables()
+{
+	int stateIndex = GetLocalState( "GRAPH_MAIN" );
+	return localGraphState[stateIndex].localVariables;
 }
 
 template<class T>
@@ -374,7 +417,40 @@ void idGraphNode::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL */ )
 			file->WriteBig( socketList.Num() );
 			for( auto& socket : socketList )
 			{
-				file->WriteBig( socket.connections.Num() );
+				file->WriteInt( socket.var ? socket.var->GetType() : ev_void );
+				bool writeSocketData = socket.var && ( socket.freeData && !socket.connections.Num() );
+				file->WriteBool( writeSocketData );
+				if( writeSocketData )
+				{
+					switch( socket.var->GetType() )
+					{
+						case ev_string:
+							file->WriteString( *( ( idScriptStr* )socket.var )->GetData() );
+							break;
+						case ev_float:
+							file->WriteFloat( *( ( idScriptFloat* )socket.var )->GetData() );
+							break;
+						case ev_vector:
+							file->WriteVec3( *( ( idScriptVector* )socket.var )->GetData() );
+							break;
+						case ev_entity:
+						{
+							gameLocal.Warning( "idClassNode::WriteBinary : ev_entity not implemented" );
+							//idEntityPtr<idEntity> tmpEntPtr;
+							//tmpEntPtr = (*((idScriptEntity*)socket.var)->GetData());
+							//file->WriteInt(tmpEntPtr.GetSpawnId());
+						}
+						break;
+						case ev_int:
+							file->WriteInt( *( ( idScriptInteger* )socket.var )->GetData() );
+							break;
+						case ev_boolean:
+							file->WriteBool( *( ( idScriptBool* )socket.var )->GetData() );
+						default:
+							gameLocal.Warning( "idClassNode::WriteBinary : Invalid arg format '%s' ", idTypeInfo::GetEnumTypeInfo( "etype_t", socket.var->GetType() ) );
+							break;
+					}
+				}
 			}
 		};
 
@@ -396,8 +472,68 @@ bool idGraphNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass*
 			for( auto& socket : socketList )
 			{
 				socket.owner = this;
-				int numConnections;
-				file->ReadBig( numConnections );
+				int typeNum;
+				file->ReadInt( typeNum );
+				bool readData;
+				file->ReadBool( readData );
+				if( typeNum != ev_void )
+				{
+					switch( typeNum )
+					{
+						case ev_string:
+						{
+							if( readData )
+							{
+								file->ReadString( *static_cast<idScriptStr*>( socket.var )->GetData() );
+							}
+						}
+						break;
+						case ev_float:
+						{
+							if( readData )
+							{
+								file->ReadFloat( *static_cast<idScriptFloat*>( socket.var )->GetData() );
+							}
+						}
+						break;
+						case ev_vector:
+						{
+							if( readData )
+							{
+								file->ReadVec3( *static_cast<idScriptVector*>( socket.var )->GetData() );
+							}
+						}
+						break;
+						//case ev_object:
+						//	//classtype?
+						//	break;
+						//case ev_entity:
+						//	//entity nr?
+						//	//ret = graph->blackBoard.Alloc<idScriptEntity>(16);
+						//	break;
+						case ev_boolean:
+						{
+							if( readData )
+							{
+								bool readVar;
+								file->ReadBool( readVar );
+								*static_cast<idScriptBool*>( socket.var ) = readVar;
+							}
+						}
+						break;
+						case ev_int:
+						{
+							if( readData )
+							{
+								file->ReadInt( *static_cast<idScriptInteger*>( socket.var )->GetData() );
+							}
+						}
+						break;
+						default:
+							gameLocal.Warning( "idGraphNode::LoadBinary : Invalid arg format '%s' ", idTypeInfo::GetEnumTypeInfo( "etype_t", typeNum ) );
+							break;
+					};
+				}
 			}
 		};
 
@@ -422,8 +558,8 @@ void idGraphNode::Draw( ImGuiTools::GraphNode* nodePtr )
 	auto& node = *nodePtr;
 	namespace ed = ax::NodeEditor;
 	using namespace ImGuiTools;
-	ed::BeginNode( node.ID );
 	ImGui::PushID( node.ID.Get() );
+	ed::BeginNode( node.ID );
 	ImGui::AlignTextToFramePadding();
 
 	if( auto* owner = node.Owner )
@@ -457,15 +593,14 @@ void idGraphNode::Draw( ImGuiTools::GraphNode* nodePtr )
 				default:
 					return 1;
 					break;
-				case ev_string:
-					return 20;
-					break;
 				case ev_float:
 					return 10;
 					break;
 				case ev_vector:
 					return 18;
 					break;
+				case ev_string:
+				case ev_object:
 				case ev_entity:
 					return 20;
 					break;
@@ -528,7 +663,7 @@ void idGraphNode::Draw( ImGuiTools::GraphNode* nodePtr )
 					ImGui::IconItem icon = { ImGui::IconType::Flow , ownerSocket.connections.Num() > 0, ImColor( 255, 255, 255 ), ImColor( 0, 0, 0, 0 ) };
 					if( ownerSocket.var )
 					{
-						icon = ImGui::ImScriptVariable( idStr( reinterpret_cast<uintptr_t>( node.Inputs[inputSocketIdx]->ID.AsPointer() ) ), { ownerSocket.name.c_str(), "", ownerSocket.var } );
+						icon = ImGui::ImScriptVariable( idStr( reinterpret_cast<uintptr_t>( node.Inputs[inputSocketIdx]->ID.AsPointer() ) ), { ownerSocket.name.c_str(), ownerSocket.var } );
 						icon.filled = ownerSocket.connections.Num() > 0;
 					}
 					else
@@ -537,6 +672,7 @@ void idGraphNode::Draw( ImGuiTools::GraphNode* nodePtr )
 															 ImColor( 50.0f, 45.0f, 255.0f, 255.0f ), ownerSocket.name.c_str() );
 					}
 
+					ImGui::PushID( node.Inputs[inputSocketIdx]->ID.Get() );
 					ImGui::TableSetColumnIndex( 0 );
 					ed::BeginPin( node.Inputs[inputSocketIdx]->ID, ed::PinKind::Input );
 					auto cursorPos = ImGui::GetCursorScreenPos();
@@ -546,6 +682,7 @@ void idGraphNode::Draw( ImGuiTools::GraphNode* nodePtr )
 					ImGui::DrawIcon( ImGui::GetWindowDrawList(), cursorPos, cursorPos + ImVec2( 25, 25 ), icon.type, icon.filled, icon.color, icon.innerColor );
 					ImGui::Dummy( ImVec2( 25, 25 ) );
 					ed::EndPin();
+					ImGui::PopID();
 					inputSocketIdx++;
 				}
 				if( outputSocketIdx <= maxOutputSockets - 1 )
@@ -555,7 +692,7 @@ void idGraphNode::Draw( ImGuiTools::GraphNode* nodePtr )
 					ImGui::IconItem icon = { ImGui::IconType::Flow , ownerSocket.connections.Num() > 0, ImColor( 255, 255, 255 ), ImColor( 0, 0, 0, 0 ) };
 					if( ownerSocket.var )
 					{
-						icon = ImGui::ImScriptVariable( idStr( reinterpret_cast<uintptr_t>( node.Outputs[outputSocketIdx]->ID.AsPointer() ) ), { ownerSocket.name.c_str(), "", ownerSocket.var } );
+						icon = ImGui::ImScriptVariable( idStr( reinterpret_cast<uintptr_t>( node.Outputs[outputSocketIdx]->ID.AsPointer() ) ), { ownerSocket.name.c_str(), ownerSocket.var } );
 						icon.filled = ownerSocket.connections.Num() > 0;
 					}
 					else
@@ -563,7 +700,7 @@ void idGraphNode::Draw( ImGuiTools::GraphNode* nodePtr )
 						ImGui::GetWindowDrawList()->AddText( ImGui::GetCursorScreenPos() + ImVec2( 0, ImGui::GetStyle().ItemInnerSpacing.y ),
 															 ImColor( 50.0f, 45.0f, 255.0f, 255.0f ), ownerSocket.name.c_str() );
 					}
-
+					ImGui::PushID( node.Outputs[outputSocketIdx]->ID.Get() );
 					ImGui::TableSetColumnIndex( 3 );
 					ed::BeginPin( node.Outputs[outputSocketIdx]->ID, ed::PinKind::Output );
 					auto cursorPos = ImGui::GetCursorScreenPos();
@@ -573,6 +710,7 @@ void idGraphNode::Draw( ImGuiTools::GraphNode* nodePtr )
 					ImGui::DrawIcon( ImGui::GetWindowDrawList(), cursorPos, cursorPos + ImVec2( 25, 25 ), icon.type, icon.filled, icon.color, icon.innerColor );
 					ImGui::Dummy( ImVec2( 25, 25 ) );
 					ed::EndPin();
+					ImGui::PopID();
 					outputSocketIdx++;
 				}
 				ImGui::PopID();
@@ -616,7 +754,6 @@ idGraphNodeSocket& idGraphNode::CreateOutputSocket()
 }
 
 //////////////////////////////////////////////////////////////////////////
-
 
 ABSTRACT_DECLARATION( idClass, idGraphNode )
 END_CLASS
@@ -675,80 +812,72 @@ END_CLASS
 
 void idGraphedEntity::Spawn()
 {
-	idStr graphFile = spawnArgs.GetString( "graph", "" );
+	idStr graphFile = spawnArgs.GetString( "graphObject", "" );
 
-	stateThread.SetOwner( this );
-	auto& localState = graph.localGraphState[0];
-	localState.targetStateThread = &stateThread;
-	auto& localBlackboard = localState.blackBoard;
-
-	//if not linked to a script, use blackboard as storage
-	( varFloatTest = localBlackboard.Alloc<idScriptFloat>( 8 ) ) = 3.1427f;
-	( varBoolTest =	localBlackboard.Alloc<idScriptInt>( 8 ) ) = 1;
-	( varIntTest =	localBlackboard.Alloc<idScriptInt>( 8 ) ) = 31427;
-	varStringTest = ( idScriptStr ) * localBlackboard.Alloc( "StringVariableTest" );
-	( varVectorTest = localBlackboard.Alloc<idScriptVector>( 24 ) ) = idVec3( 1.1f, 2.3f, 3.3f );
-	( varFloatTestX = localBlackboard.Alloc<idScriptFloat>( 8 ) ) = 3.1427f * 2;
-	( varBoolTestX = localBlackboard.Alloc<idScriptInt>( 8 ) ) = 10;
-	( varIntTestX =	localBlackboard.Alloc<idScriptInt>( 8 ) ) = 31427 * 2;
-	varStringTestX = ( idScriptStr ) * localBlackboard.Alloc( "StringVariableTestX" );
-	( varVectorTestX = localBlackboard.Alloc<idScriptVector>( 24 ) ) = idVec3( 4.1f, 5.3f, 6.3f );
-	if( graphFile.IsEmpty() )
+	if( graphObject )
 	{
-		auto* initNode = graph.CreateNode( new idGraphOnInitNode() );
-		initNode->Setup( this );
+		auto& localState = graphObject->localGraphState[0];
+		auto& localBlackboard = localState.blackBoard;
 
-		//auto* bbStr			= graph.blackBoard.Alloc("State_Idle");
-		//auto * stateNode		= graph.AddNode(new idStateNode(this, (const char*)(bbStr)));
+		idScriptVariableBase* test = &varStringTest;
+		idScriptVariableBase* test2 = &varStringTestX;
+		//if not linked to a script, use blackboard as storage
 
-		auto* stateNode = static_cast<idStateNode*>( graph.CreateNode( new idStateNode() ) );
-		stateNode->stateThread = &stateThread;
-		stateNode->input_State = "State_Idle";
-		stateNode->type = idStateNode::NodeType::Set;
-		stateNode->Setup( this );
+		varFloatTest.SetRawData( localBlackboard.Alloc<idScriptFloat>( 8 )->GetRawData() );
+		varFloatTest = 3.1427f;
+		varBoolTest.SetRawData( localBlackboard.Alloc<idScriptInt>( 8 )->GetRawData() );
+		varBoolTest = 1;
+		varIntTest.SetRawData( localBlackboard.Alloc<idScriptInt>( 8 )->GetRawData() );
+		varIntTest = 31427;
+		varStringTest.SetRawData( localBlackboard.Alloc( "StringVariableTest" )->GetRawData() );
+		( varVectorTest = localBlackboard.Alloc<idScriptVector>( 24 ) ) = idVec3( 1.1f, 2.3f, 3.3f );
 
-		auto* classNode = static_cast<idClassNode*>( graph.CreateNode( new idClassNode() ) );
-		classNode->type = idClassNode::Call;
-		classNode->Setup( this );
+		varFloatTestX.SetRawData( localBlackboard.Alloc<idScriptFloat>( 8 )->GetRawData() );
+		varFloatTestX = 3.1427f * 2;
+		varBoolTestX.SetRawData( localBlackboard.Alloc<idScriptInt>( 8 )->GetRawData() );
+		varBoolTestX = 0;
+		varIntTestX.SetRawData( localBlackboard.Alloc<idScriptInt>( 8 )->GetRawData() );
+		varIntTestX = 31427 * 2;
+		varStringTestX.SetRawData( localBlackboard.Alloc( "StringVariableTestX" )->GetRawData() );
+		varVectorTestX.SetRawData( localBlackboard.Alloc<idScriptVector>( 24 )->GetRawData() );
+		varVectorTestX = idVec3( 1.1f, 2.3f, 3.3f );
 
-		auto* classNodeVarSet = static_cast<idClassNode*>( graph.CreateNode( new idClassNode() ) );
-		classNodeVarSet->type = idClassNode::Set;
-		classNodeVarSet->Setup( this );
 
-		auto* classNodeVarGet = static_cast<idClassNode*>( graph.CreateNode( new idClassNode() ) );
-		classNodeVarGet->type = idClassNode::Get;
-		classNodeVarGet->Setup( this );
-
-		//graph.AddLink( initNode->outputSockets[0], stateNode->inputSockets[0] );
-	}
-	else
-	{
-		idStr generatedFilename = "graphs/" + graphFile + ".bGrph";
-		idFileLocal inputFile( fileSystem->OpenFileRead( generatedFilename, "fs_basepath" ) );
-		if( inputFile )
+		if( graphFile.IsEmpty() )
 		{
-			graph.LoadBinary( inputFile, inputFile->Timestamp(), this );
-		}
+			auto* initNode = graphObject->CreateNode( new idGraphOnInitNode() );
+			initNode->Setup( this );
 
+			//auto* stateNode = static_cast<idStateNode*>(graphObject->CreateNode(new idStateNode()));
+			//stateNode->stateThread = &graphStateThread;
+			//stateNode->input_State = "State_Idle";
+			//stateNode->type = idStateNode::NodeType::Set;
+			//stateNode->Setup(this);
+
+			auto* classNode = static_cast<idClassNode*>( graphObject->CreateNode( new idClassNode() ) );
+			classNode->type = idClassNode::Call;
+			classNode->Setup( this );
+
+			auto* classNodeVarSet = static_cast<idClassNode*>( graphObject->CreateNode( new idClassNode() ) );
+			classNodeVarSet->type = idClassNode::Set;
+			classNodeVarSet->Setup( this );
+
+			auto* classNodeVarGet = static_cast<idClassNode*>( graphObject->CreateNode( new idClassNode() ) );
+			classNodeVarGet->type = idClassNode::Get;
+			classNodeVarGet->Setup( this );
+		}
 	}
+
 
 	BecomeInactive( TH_THINK );
 }
 
-void idGraphedEntity::SharedThink()
-{
-	if( thinkFlags & TH_THINK )
-	{
-		graph.SharedThink();
-	}
-}
 
 void idGraphedEntity::Think()
 {
 	if( thinkFlags & TH_THINK )
 	{
 		idEntity::Think();
-		stateThread.Execute();
 	}
 }
 
@@ -760,6 +889,10 @@ stateResult_t idGraphedEntity::State_Idle( stateParms_t* parms )
 
 void idGraphedEntity::Event_Activate( idEntity* activator )
 {
+	if( graphObject )
+	{
+		graphObject->Event_Activate( activator );
+	}
 	BecomeActive( TH_THINK );
 }
 
@@ -791,7 +924,10 @@ idGraphNodeSocket::~idGraphNodeSocket()
 
 			if( t == ev_string )
 			{
-				owner->graph->blackBoard.Free( ( idScriptStr* )var );
+				owner->graph->blackBoard.Free( ( idStr* )var->GetRawData() );
+				idStr* data = ( ( idScriptStr* )var )->GetData();
+				data->FreeData();
+				delete data;
 			}
 			else
 			{
@@ -830,7 +966,7 @@ idScriptVariableBase* VarFromFormatSpec( const char spec, GraphState* graph /*= 
 
 		case D_EVENT_ENTITY:
 		case D_EVENT_ENTITY_NULL:
-			ret = graph->blackBoard.Alloc<idScriptEntity>( 16 );
+			ret = graph->blackBoard.Alloc<idScriptEntity>( 8 );
 			break;
 		case D_EVENT_VOID:
 			//no var but valid
@@ -856,8 +992,9 @@ idScriptVariableBase* VarFromType( etype_t type, GraphState* graph /*= nullptr*/
 		case ev_vector:
 			ret = graph->blackBoard.Alloc<idScriptVector>( 3 * 8 ) ;
 			break;
+		case ev_object:
 		case ev_entity:
-			ret = graph->blackBoard.Alloc<idScriptEntity>( 16 );
+			ret = graph->blackBoard.Alloc<idScriptEntity>( 8 );
 			break;
 		case ev_boolean:
 		case ev_int:
@@ -873,11 +1010,10 @@ idScriptVariableBase* VarFromType( etype_t type, GraphState* graph /*= nullptr*/
 
 bool VarCopy( idScriptVariableBase* target, idScriptVariableBase* source )
 {
-	assert( target->GetType() == source->GetType() );
 	switch( target->GetType() )
 	{
 		case ev_string:
-			*( idScriptStr* )target = *( ( idScriptStr* )source )->GetData();
+			*( ( idScriptStr* )target )->GetData() = ( ( idScriptStr* )source )->GetData()->c_str();
 			break;
 		case ev_float:
 			*( idScriptFloat* )target = *( ( idScriptFloat* )source )->GetData();
@@ -885,10 +1021,12 @@ bool VarCopy( idScriptVariableBase* target, idScriptVariableBase* source )
 		case ev_vector:
 			*( idScriptVector* )target = *( ( idScriptVector* )source )->GetData();
 			break;
+		case ev_object:
 		case ev_entity:
-			gameLocal.Error( "idScriptEntity copy not implemented" );
-			//ret = graph->blackBoard.Alloc<idScriptEntity>(16);
-			break;
+		{
+			target->SetRawData( source->GetRawData() );
+		}
+		break;
 		case ev_int:
 			*( idScriptInteger* )target = *( ( idScriptInteger* )source )->GetData();
 			break;

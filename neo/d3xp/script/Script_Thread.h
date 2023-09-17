@@ -287,7 +287,7 @@ public:
 	void						Error( VERIFY_FORMAT_STRING const char* fmt, ... ) const;
 	void						Warning( VERIFY_FORMAT_STRING const char* fmt, ... ) const;
 
-	static idThread*				CurrentThread();
+	static idThread*			CurrentThread();
 	static int					CurrentThreadNum();
 	static bool					BeginMultiFrameEvent( idEntity* ent, const idEventDef* event );
 	static void					EndMultiFrameEvent( idEntity* ent, const idEventDef* event );

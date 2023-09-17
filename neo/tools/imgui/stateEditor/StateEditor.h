@@ -86,7 +86,7 @@ struct GraphNodePin
 		idGraphNodeSocket** value;
 		if( socketHashIdx.Get( id, &value ) && *value != NULL )
 		{
-			assert( 1 );
+			assert( 0 );
 		}
 		else
 		{
@@ -102,7 +102,7 @@ struct GraphNodePin
 		}
 		else
 		{
-			assert( 1 );
+			assert( 0 );
 		}
 
 	}
@@ -134,7 +134,7 @@ public:
 		GraphNode** value;
 		if( nodeHashIdx.Get( id, &value ) && *value != NULL )
 		{
-			assert( 1 );
+			assert( 0 );
 		}
 		else
 		{
@@ -150,7 +150,7 @@ public:
 		}
 		else
 		{
-			assert( 1 );
+			assert( 0 );
 		}
 
 	}
@@ -201,6 +201,20 @@ public:
 	void							ReadNode( idGraphNode* node, GraphNode& newNode );
 	void							ReadGraph( const GraphState* graph );
 	void							Clear();
+
+	int								NextNodeID()
+	{
+		return nextElementId++;
+	}
+	int								NextPinID()
+	{
+		return nextElementId++;
+	}
+	int								NextLinkID()
+	{
+		return nextElementId++;
+	}
+
 private:
 
 	void Handle_ContextMenus();
@@ -223,7 +237,7 @@ private:
 	bool				isShown;
 
 	//replace this with only the graph, editor does care about entity but not as parent of the graph.
-	idGraphedEntity* graphEnt;
+	idEntityPtr<idGraphedEntity> graphEnt;
 
 	idList<idGraphNode*> nodeTypes;
 };

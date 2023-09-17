@@ -111,17 +111,16 @@ void idStateNode::Setup( idClass* graphOwner )
 	newOutput.var = new idScriptInt( ( void* )&output_Result );
 	newOutput.freeData = false;
 
-	outputSockets.Condense();
-	inputSockets.Condense();
 }
 
-idGraphNode* idStateNode::QueryNodeContstruction( idStateGraph* targetGraph, idClass* graphOwner )
+idGraphNode* idStateNode::QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner )
 {
 	return nullptr;
 }
 
 //////////////////////////////////////////////////////////////////////////
 CLASS_DECLARATION( idGraphNode, idGraphOnInitNode )
+EVENT( EV_Activate, idGraphOnInitNode::OnActivate )
 END_CLASS
 
 idGraphOnInitNode::idGraphOnInitNode()
@@ -154,14 +153,14 @@ bool idGraphOnInitNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp, id
 void idGraphOnInitNode::Setup( idClass* graphOwner )
 {
 	idGraphNodeSocket& newOutput = CreateOutputSocket();
-	newOutput.active = true;
 	newOutput.name = "";
+	idGraphNodeSocket& newEntOutput = CreateOutputSocket();
+	newEntOutput.name = "Activator";
+	newEntOutput.var = VarFromType( ev_entity, graph );
 	done = false;
-	outputSockets.Condense();
-	inputSockets.Condense();
 }
 
-idGraphNode* idGraphOnInitNode::QueryNodeContstruction( idStateGraph* targetGraph, idClass* graphOwner )
+idGraphNode* idGraphOnInitNode::QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner )
 {
 	return nullptr;
 }
@@ -169,6 +168,13 @@ idGraphNode* idGraphOnInitNode::QueryNodeContstruction( idStateGraph* targetGrap
 idVec4 idGraphOnInitNode::NodeTitleBarColor()
 {
 	return idVec4( 1, 0, 1, 1 );
+}
+
+void idGraphOnInitNode::OnActivate( idEntity* activator )
+{
+	outputSockets[0].active = true;
+	*( ( idScriptEntity* )outputSockets[1].var )->GetData() = activator;
+	done = true;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -251,6 +257,11 @@ stateResult_t idClassNode::Exec( stateParms_t* parms )
 		auto socketVar =
 			[]( idGraphNodeSocket * inp, const idEventDef * targetEvent, GraphState * graph, const char spec, intptr_t& dataPtr ) -> bool
 		{
+			if( inp->connections.Num() && inp->connections[0]->var )
+			{
+				VarCopy( inp->var, inp->connections[0]->var );
+			}
+
 			switch( spec )
 			{
 				case D_EVENT_FLOAT:
@@ -290,14 +301,37 @@ stateResult_t idClassNode::Exec( stateParms_t* parms )
 		const char* formatspec = targetEvent->GetArgFormat();
 		for( int i = 1; i <= targetEvent->GetNumArgs(); i++ )
 		{
-			idGraphNodeSocket* inp = &inputSockets[i];
+			idGraphNodeSocket* inp = &inputSockets[i + 1];
 			if( !socketVar( inp, targetEvent, graph, formatspec[i - 1], eventData[i - 1] ) )
 			{
 				return SRESULT_ERROR;
 			}
 		}
 
-		( *nodeOwnerClass )->ProcessEventArgPtr( targetEvent, eventData );
+		idGraphNodeSocket& targetSocket = inputSockets[1];
+
+		if( targetSocket.connections.Num() == 1 )
+		{
+			VarCopy( targetSocket.var, targetSocket.connections[0]->var );
+
+			if( ( *nodeOwnerClass ) != *( ( idScriptClass* )targetSocket.var )->GetData() )
+			{
+				SetOwner( &*( ( idScriptClass* )targetSocket.var )->GetData() );
+			}
+		}
+
+		if( ( *nodeOwnerClass )->IsType( idEntity::Type ) )
+		{
+			if( ownerEntityPtr.IsValid() )
+			{
+				ownerEntityPtr.GetEntity()->ProcessEventArgPtr( targetEvent, eventData );
+			}
+		}
+		else
+		{
+			//UNSAFE
+			( *nodeOwnerClass )->ProcessEventArgPtr( targetEvent, eventData );
+		}
 
 		//Handle return var , if any!
 		auto retSocketVar =
@@ -345,16 +379,20 @@ stateResult_t idClassNode::Exec( stateParms_t* parms )
 
 		if( targetEvent->GetReturnType() != 0 )
 		{
-			retSocketVar( &outputSockets[0], targetEvent, graph, targetEvent->GetReturnType() );
+			retSocketVar( &outputSockets[1], targetEvent, graph, targetEvent->GetReturnType() );
 		}
+
+		outputSockets[0].active = true;
 
 		return SRESULT_DONE;
 	}
 	else if( type == Set )
 	{
-		if( inputSockets.Num() && inputSockets[1].connections[0]->var && targetVariable )
+		if( inputSockets.Num() && inputSockets[1].connections.Num()
+				&& inputSockets[1].connections[0]->var && targetVariable )
 		{
 			VarCopy( targetVariable, inputSockets[1].connections[0]->var );
+			outputSockets[0].active = true;
 		}
 		return SRESULT_DONE;
 	}
@@ -370,13 +408,19 @@ void idClassNode::Setup( idClass* graphOwner )
 	inputSockets.Clear();
 	outputSockets.Clear();
 	ownerClass = graphOwner;
-	nodeOwnerClass = &ownerClass;
+	SetOwner( &ownerClass );
 
 	idGraphNodeSocket* newInput = &CreateInputSocket();
 	newInput->name = "Call"; // hidden ; used as button with event or var name , alt click to activate this input
 
 	if( targetEvent )
 	{
+		idGraphNodeSocket& ownerInput = CreateInputSocket();
+		ownerInput.name = "idClass ( self )";
+		ownerInput.var = VarFromType( ev_object, graph );
+
+		*( ( idScriptClass* )ownerInput.var )->GetData() = ownerClass;
+
 		int numargs = targetEvent->GetNumArgs();
 		const char* formatspec = targetEvent->GetArgFormat();
 
@@ -389,6 +433,9 @@ void idClassNode::Setup( idClass* graphOwner )
 				inputSockets.RemoveIndexFast( inputSockets.Num() - 1 );
 			}
 		}
+
+		idGraphNodeSocket* outFlow = &CreateOutputSocket();
+		outFlow->name = "Out";
 
 		idGraphNodeSocket* out = &CreateOutputSocket();
 		out->var = VarFromFormatSpec( targetEvent->GetReturnType(), graph );
@@ -410,6 +457,8 @@ void idClassNode::Setup( idClass* graphOwner )
 			idGraphNodeSocket* inp = &CreateInputSocket();
 			inp->var = targetVariable;
 			inp->freeData = false;
+			idGraphNodeSocket* outFlow = &CreateOutputSocket();
+			outFlow->name = "Out";
 		}
 	}
 
@@ -430,11 +479,9 @@ void idClassNode::Setup( idClass* graphOwner )
 			nodeOwnerClass = ( ( idClass** )&scriptThread );
 		}
 	}
-	outputSockets.Condense();
-	inputSockets.Condense();
 }
 
-idGraphNode* idClassNode::QueryNodeContstruction( idStateGraph* targetGraph, idClass* graphOwner )
+idGraphNode* idClassNode::QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner )
 {
 	auto& graph = *targetGraph;
 	if( ImGui::MenuItem( "Call Event" ) )
@@ -459,6 +506,20 @@ idGraphNode* idClassNode::QueryNodeContstruction( idStateGraph* targetGraph, idC
 		return classNodeVarGet;
 	}
 	return nullptr;
+}
+
+void idClassNode::SetOwner( idClass** target )
+{
+	nodeOwnerClass = target;
+
+	if( ( *target )->IsType( idEntity::Type ) )
+	{
+		ownerEntityPtr = ( *target )->Cast<idEntity>();
+	}
+	else
+	{
+		ownerEntityPtr = nullptr;
+	}
 }
 
 void idClassNode::OnChangeDef( const idEventDef* eventDef )
@@ -527,7 +588,7 @@ const char* idClassNode::GetName()
 
 void idClassNode::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL */ )
 {
-	file->WriteBig( type );
+	file->WriteBig( ( int )type );
 	file->WriteString( targetEventName );
 	file->WriteString( targetVariableName );
 
@@ -538,7 +599,9 @@ bool idClassNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass*
 {
 	if( file != NULL )
 	{
-		file->ReadBig( type );
+		int newType = 0;
+		file->ReadBig( newType );
+		type = ( NodeType )newType;
 
 		file->ReadString( targetEventName );
 		if( !targetEventName.IsEmpty() )
@@ -566,6 +629,11 @@ bool idClassNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass*
 
 void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 {
+	if( !ownerEntityPtr.IsValid() )
+	{
+		return;
+	}
+
 	auto& node = *nodePtr;
 	namespace ed = ax::NodeEditor;
 	using namespace ImGuiTools;
@@ -609,8 +677,11 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 	{
 		if( type == NodeType::Call )
 		{
-			eventDefs = ( ( idClassNode* )nodeOwner )->ownerClass->GetType()->GetEventDefs();
-			threadEventDefs = ( ( idClassNode* )nodeOwner )->scriptThread->GetType()->GetEventDefs( false );
+			eventDefs = ( *nodeOwnerClass )->GetType()->GetEventDefs();
+			if( !( *nodeOwnerClass )->IsType( idThread::Type ) )
+			{
+				threadEventDefs = ( ( idClassNode* )nodeOwner )->scriptThread->GetType()->GetEventDefs( false );
+			}
 		}
 		else
 		{
@@ -634,10 +705,10 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 		int maxInputSockets = inputSockets.Num();
 		int maxOutputSockets = outputSockets.Num();
 		int maxSocket = idMath::Imax( maxInputSockets, maxOutputSockets );
-		int inputSocketIdx = 1, outputSocketIdx = 0;
+		int inputSocketIdx = 1, outputSocketIdx = ( type != NodeType::Get ) ? 1 : 0;
 
 		auto getVarWidth =
-			[]( idScriptVariableBase * var ) -> int
+			[]( idScriptVariableBase * var, bool isOutput ) -> int
 		{
 			etype_t type = var->GetType();
 
@@ -646,18 +717,26 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 				default:
 					return 1;
 					break;
-				case ev_string:
-					return 20;
-					break;
 				case ev_float:
 					return 10;
 					break;
 				case ev_vector:
 					return 20;
 					break;
+				case ev_string:
+				case ev_object:
 				case ev_entity:
-					return 20;
-					break;
+				{
+					if( isOutput )
+					{
+						return 1;
+					}
+					else
+					{
+						return 20;
+					}
+				}
+				break;
 				case ev_boolean:
 					return 5;
 					break;
@@ -677,7 +756,7 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 				if( inpSocket.var )
 
 				{
-					maxLengthIn = idMath::Imax( maxLengthIn, getVarWidth( inpSocket.var ) );
+					maxLengthIn = idMath::Imax( maxLengthIn, getVarWidth( inpSocket.var, false ) );
 				}
 				else
 				{
@@ -689,7 +768,7 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 				auto& outSocket = outputSockets[i];
 				if( outSocket.var )
 				{
-					maxLengthOut = idMath::Imax( maxLengthOut, getVarWidth( outSocket.var ) );
+					maxLengthOut = idMath::Imax( maxLengthOut, getVarWidth( outSocket.var, true ) );
 				}
 				else
 				{
@@ -709,6 +788,7 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 
 			ImGui::AlignTextToFramePadding();
 			ImGui::TableNextRow( 0 );
+
 			ImGui::PushID( maxSocket + 1 );
 			ImGui::TableSetColumnIndex( 1 );
 			ImGui::Dummy( ImVec2( 0.0f, 0.0f ) );
@@ -744,9 +824,30 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 			}
 			ImGui::PopID();
 
-			for( int i = 1; i <= maxSocket; i++ )
+
+			if( type != NodeType::Get  && node.Outputs.Num() )
+			{
+				ImGui::PushID( maxSocket + 2 );
+				ImGui::TableSetColumnIndex( 3 );
+				ed::BeginPin( node.Outputs[0]->ID, ed::PinKind::Output );
+				auto cursorPos = ImGui::GetCursorScreenPos();
+				auto drawList = ImGui::GetWindowDrawList();
+				ed::PinPivotAlignment( ImVec2( 0.25, 0.5f ) );
+				ed::PinPivotSize( ImVec2( 0, 0 ) );
+				ImGui::DrawIcon( ImGui::GetWindowDrawList(), cursorPos, cursorPos + ImVec2( 25, 25 ), ImGui::IconType::Flow, nodeOwner->outputSockets[0].connections.Num(), ImColor( 255, 255, 255 ), ImColor( 0, 0, 0, 0 ) );
+				ImGui::Dummy( ImVec2( 25, 25 ) );
+				ed::EndPin();
+				ImGui::PopID();
+			}
+
+			for( int i = type != NodeType::Get ? 2 : 1; i <= maxSocket; i++ )
 			{
 				ImGui::PushID( i );
+
+				if( type != NodeType::Get )
+				{
+					ImGui::TableNextRow( 0 );
+				}
 				if( outputSocketIdx < maxOutputSockets )
 				{
 					ImGui::TableSetColumnIndex( 2 );
@@ -757,15 +858,30 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 					ImGui::PushItemWidth( type != NodeType::Get ? TEXT_BASE_WIDTH* maxLengthOut : 1 );
 					idGraphNodeSocket& ownerSocket = nodeOwner->outputSockets[outputSocketIdx];
 					ImGui::IconItem icon = { ImGui::IconType::Flow , ownerSocket.connections.Num() > 0, ImColor( 255, 255, 255 ), ImColor( 0, 0, 0, 0 ) };
-					if( ownerSocket.var )
+					if( 0 ) //ownerSocket.var )
 					{
-						icon = ImGui::ImScriptVariable( idStr( reinterpret_cast<uintptr_t>( node.Outputs[outputSocketIdx]->ID.AsPointer() ) ), { ownerSocket.name.c_str(), "", ownerSocket.var }, type != NodeType::Get );
+						icon = ImGui::ImScriptVariable( idStr( reinterpret_cast<uintptr_t>( node.Outputs[outputSocketIdx]->ID.AsPointer() ) ), { ownerSocket.name.c_str(), ownerSocket.var }, type != NodeType::Get );
 						icon.filled = ownerSocket.connections.Num() > 0;
 					}
 					else
 					{
+						auto* tmpVar = VarFromType( ownerSocket.var->GetType(), graph );
+						icon = ImGui::ImScriptVariable( idStr(), { "", tmpVar }, false );
+						icon.filled = ownerSocket.connections.Num() > 0;
 						ImGui::GetWindowDrawList()->AddText( ImGui::GetCursorScreenPos() + ImVec2( 0, ImGui::GetStyle().ItemInnerSpacing.y ),
 															 ImColor( 50.0f, 45.0f, 255.0f, 255.0f ), ownerSocket.name.c_str() );
+						if( tmpVar->GetType() == ev_string )
+						{
+							graph->blackBoard.Free( ( idStr* )tmpVar->GetRawData() );
+							idStr* data = ( ( idScriptStr* )tmpVar )->GetData();
+							data->FreeData();
+							delete data;
+						}
+						else
+						{
+							graph->blackBoard.Free( tmpVar->GetRawData() );
+						}
+						delete tmpVar;
 					}
 					ImGui::PopItemWidth();
 					ImGui::TableSetColumnIndex( 3 );
@@ -783,7 +899,10 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 
 				if( inputSocketIdx < maxInputSockets )
 				{
-					ImGui::TableNextRow( 0 );
+					if( type == NodeType::Get )
+					{
+						ImGui::TableNextRow( 0 );
+					}
 					ImGui::TableSetColumnIndex( 1 );
 					ImGui::Dummy( ImVec2( 0.0f, 0.0f ) );
 					ImGui::PushItemWidth( TEXT_BASE_WIDTH * ( maxLengthIn + 1 ) );
@@ -791,7 +910,7 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 					ImGui::IconItem icon = { ImGui::IconType::Flow , ownerSocket.connections.Num() > 0, ImColor( 255, 255, 255 ), ImColor( 0, 0, 0, 0 ) };
 					if( ownerSocket.var )
 					{
-						icon = ImGui::ImScriptVariable( idStr( reinterpret_cast<uintptr_t>( node.Inputs[inputSocketIdx]->ID.AsPointer() ) ), { ownerSocket.name.c_str(), "", ownerSocket.var } );
+						icon = ImGui::ImScriptVariable( idStr( reinterpret_cast<uintptr_t>( node.Inputs[inputSocketIdx]->ID.AsPointer() ) ), { ownerSocket.name.c_str(), ownerSocket.var } );
 						icon.filled = ownerSocket.connections.Num() > 0;
 					}
 					else
@@ -864,7 +983,7 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 		{
 			if( ImGui::Button( def->GetName(), ImVec2( 180, 20 ) ) )
 			{
-				nodeOwnerClass = &ownerClass;
+				SetOwner( &ownerClass );
 				nodePtr->dirty = true;
 				nodePtr->Graph->DeleteAllPinsAndLinks( *nodePtr );
 				OnChangeDef( def );
@@ -877,7 +996,7 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 		{
 			if( ImGui::Button( def->GetName(), ImVec2( 180, 20 ) ) )
 			{
-				nodeOwnerClass = ( idClass** )&scriptThread;
+				SetOwner( ( idClass** )&scriptThread );
 				nodePtr->dirty = true;
 				nodePtr->Graph->DeleteAllPinsAndLinks( *nodePtr );
 				OnChangeDef( def );

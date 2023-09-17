@@ -269,7 +269,6 @@ public:
 	// cameras have custom code, and everything else just uses the axis orientation
 	virtual renderView_t* 	GetRenderView();
 
-	virtual void			SharedThink();
 	// thinking
 	virtual void			Think();
 	bool					CheckDormant();	// dormant == on the active list, but out of PVS
