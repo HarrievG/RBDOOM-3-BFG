@@ -48,7 +48,7 @@ using namespace ImGui;
 
 idHashTableT<int, idGraphNodeSocket*> GraphNodePin::socketHashIdx;
 idHashTableT<int, GraphNode*> GraphNode::nodeHashIdx;
-
+idList<idGraphNode*> StateGraphEditor::nodeTypes;
 static bool Splitter( bool split_vertically, float thickness, float* size1, float* size2, float min_size1, float min_size2, float splitter_long_axis_size = -1.0f )
 {
 	using namespace ImGui;
@@ -235,18 +235,21 @@ void StateGraphEditor::Init()
 	ed::Config config;
 	config.SettingsFile = "Simple.json";
 	EditorContext = ed::CreateEditor();
-	auto* childNode = idGraphNode::Type.node.GetChild();
-	if( childNode )
+	if( !nodeTypes.Num() )
 	{
-		nodeTypes.Append( static_cast<idGraphNode*>( childNode->CreateInstance() ) );
-		for( const idTypeInfo* c = childNode->node.GetSibling(); c != NULL; c = c->node.GetSibling() )
+		auto* childNode = idGraphNode::Type.node.GetChild();
+		if( childNode )
 		{
-			nodeTypes.Append( static_cast<idGraphNode*>( c->CreateInstance() ) );
+			nodeTypes.Append( static_cast<idGraphNode*>( childNode->CreateInstance() ) );
+			for( const idTypeInfo* c = childNode->node.GetSibling(); c != NULL; c = c->node.GetSibling() )
+			{
+				nodeTypes.Append( static_cast<idGraphNode*>( c->CreateInstance() ) );
+			}
 		}
-	}
-	else
-	{
-		assert( 0 );
+		else
+		{
+			assert( 0 );
+		}
 	}
 }
 
@@ -340,22 +343,32 @@ void StateGraphEditor::DrawGraphEntityTest()
 			{
 				ImGui::PushID( link.ID.Get() );
 				ed::Link( link.ID, link.StartPinID, link.EndPinID, link.Color, 2.0f );
+				ImGui::PopID();
+
+				idGraphNodeSocket** inputSocketPtr;
+				GraphNodePin::socketHashIdx.Get( link.EndPinID.Get(), &inputSocketPtr );
+				idGraphNodeSocket* inputSocket = *inputSocketPtr;
 				idGraphNodeSocket** outputSocketPtr;
 				GraphNodePin::socketHashIdx.Get( link.StartPinID.Get(), &outputSocketPtr );
 				idGraphNodeSocket* outputSocket = *outputSocketPtr;
-				if( outputSocket->active )
+
+				int last = gameLocal.previousTime;
+
+				if( ( outputSocket->lastActivated > last ) && inputSocket->lastActivated > last )
 				{
 					ed::Flow( link.ID );
 				}
-				ImGui::PopID();
+
 			}
-			Handle_ContextMenus();
-			Handle_NodeEvents();
+
 		}
 		else
 		{
 			Clear();
 		}
+
+		Handle_ContextMenus();
+		Handle_NodeEvents();
 
 		ed::End();
 		ImGui::EndChild();
@@ -721,7 +734,7 @@ void StateGraphEditor::DrawLeftPane( float paneWidth )
 			{
 				ImGui::TextDisabled( "Pick Type:" );
 				ImGui::BeginChild( "popup_scroller", ImVec2( 200, 150 ), true );
-				extern idScriptVariableBase* VarFromType( etype_t type, GraphState* graph = nullptr );
+				//extern idScriptVariableBase * VarFromType(etype_t type, GraphState * graphState);
 				if( ImGui::MenuItem( "Boolean" ) )
 				{
 					graphEnt->graphObject->CreateVariable( "newBoolean", ev_boolean );
@@ -793,6 +806,7 @@ void StateGraphEditor::Handle_ContextMenus()
 			{
 				auto& newNode = *( nodeList.Alloc() = new GraphNode( NextNodeID(), createdNode->GetName(), createdNode ) );
 				ReadNode( createdNode, newNode );
+				ed::SetNodePosition( newNode.ID, openPopupPosition );
 			}
 		}
 		ImGui::EndPopup();
@@ -882,13 +896,8 @@ void StateGraphEditor::Handle_NodeEvents()
 					}
 					else if( !( inputSocket->var == nullptr && outputSocket->var == nullptr ) )
 					{
-						if( inputSocket->var->GetType() == ev_entity && outputSocket->var->GetType() == ev_object
-								|| inputSocket->var->GetType() == ev_object && outputSocket->var->GetType() == ev_entity )
-						{
-							//insert cast node?
-						}
-						else if( ( inputSocket->var && !outputSocket->var || !inputSocket->var && outputSocket->var )
-								 || inputSocket->var->GetType() != outputSocket->var->GetType() )
+						if( ( inputSocket->var && !outputSocket->var || !inputSocket->var && outputSocket->var )
+								|| inputSocket->var->GetType() != outputSocket->var->GetType() )
 						{
 							ed::RejectNewItem( ImColor( 255, 0, 0 ), 2.0f );
 						}
@@ -899,6 +908,7 @@ void StateGraphEditor::Handle_NodeEvents()
 								if( connection == inputSocket )
 								{
 									ed::RejectNewItem( ImColor( 255, 0, 0 ), 2.0f );
+									break;
 								}
 							}
 						}
@@ -910,8 +920,15 @@ void StateGraphEditor::Handle_NodeEvents()
 							if( connection == inputSocket )
 							{
 								ed::RejectNewItem( ImColor( 255, 0, 0 ), 2.0f );
+								break;
 							}
 						}
+					}
+					if( inputSocket->var && outputSocket->var
+							&& ( inputSocket->var->GetType() == ev_entity || outputSocket->var->GetType() == ev_entity )
+							&& ( inputSocket->var->GetType() == ev_object || outputSocket->var->GetType() == ev_object ) )
+					{
+						//insert cast node?
 					}
 				}
 			}

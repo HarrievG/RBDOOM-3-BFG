@@ -37,32 +37,50 @@ If you have questions concerning this license or the applicable additional terms
 
 CLASS_DECLARATION( idClass, idStateGraph )
 EVENT( EV_Activate, idStateGraph::Event_Activate )
+EVENT( EV_Thread_Wait, idStateGraph::Event_Wait )
+EVENT( EV_Thread_WaitFrame, idStateGraph::Event_WaitFrame )
 END_CLASS
+
+idList<int> idStateGraph::GraphThreadEventMap;
+bool idStateGraph::GraphThreadEventMapInitDone = false;
+
+
+void idStateGraph::Event_Wait( float time )
+{
+	localGraphState[GetLocalState( "GRAPH_MAIN" )].waitMS = time;
+}
+
+void idStateGraph::Event_WaitFrame()
+{
+	Event_Wait( 1 );
+}
 
 void idStateGraph::Event_Activate( idEntity* activator )
 {
-	for (auto& state : localGraphState)
+	for( auto& state : localGraphState )
 	{
-		for (auto* node : state.nodes)
+		for( auto* node : state.nodes )
 		{
-			node->ProcessEvent(&EV_Activate, activator);
+			node->ProcessEvent( &EV_Activate, activator );
 		}
 	}
 }
 
 idStateGraph::idStateGraph()
 {
-	GetLocalState( "GRAPH_MAIN" );
-	localGraphState[0].stateThread = new rvStateThread();
-	localGraphState[0].owner = nullptr;
+	localGraphState[GetLocalState( "GRAPH_MAIN" )].stateThread = new rvStateThread();
+
+	if( !GraphThreadEventMapInitDone )
+	{
+		GraphThreadEventMap.Alloc() = EV_Thread_Wait.GetEventNum();
+		GraphThreadEventMap.Alloc() = EV_Thread_WaitFrame.GetEventNum();
+		GraphThreadEventMapInitDone = true;
+	}
 }
 
 idStateGraph::~idStateGraph()
 {
-	if( !localGraphState[0].owner )
-	{
-		delete localGraphState[0].stateThread;
-	}
+	delete localGraphState[0].stateThread;
 }
 
 void idStateGraph::Clear()
@@ -98,15 +116,13 @@ int idStateGraph::CreateSubState( const char* name, idList<idScriptVariableInsta
 void idStateGraph::Think()
 {
 	auto& graph = localGraphState[0];
-	if( !graph.owner )
+
+	graph.stateThread->SetOwner( this );
+	if( graph.stateThread->IsIdle() )
 	{
-		graph.stateThread->SetOwner( this );
-		if(	graph.stateThread->IsIdle() )
-		{
-			graph.stateThread->SetState( "State_Update" );
-		}
-		graph.stateThread->Execute();
+		graph.stateThread->SetState( "State_Update" );
 	}
+	graph.stateThread->Execute();
 }
 
 void idStateGraph::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL*/ )
@@ -274,7 +290,7 @@ stateResult_t idStateGraph::State_Update( stateParms_t* parms )
 
 	if( currentActiveNodes.Num() )
 	{
-		currentGraphState.stateThread->PostState( "State_Exec" );
+		currentGraphState.stateThread->PostState( "State_Exec", 0, currentGraphState.waitMS );
 		return SRESULT_DONE;
 	}
 
@@ -285,19 +301,39 @@ stateResult_t idStateGraph::State_Exec( stateParms_t* parms )
 {
 	auto& currentGraphState = localGraphState[parms->stage];
 	auto& currentActiveNodes = currentGraphState.activeNodes;
+	auto lastActiveNodes = currentActiveNodes;
 
 	stateResult_t result = SRESULT_DONE;
 	idList<idGraphNode*> waitingNodes;
 
 	for( idGraphNode* node : currentActiveNodes )
 	{
-		stateResult_t nodeResult = node->Exec( parms );
-		if( nodeResult == SRESULT_WAIT )
+		if( !parms->substage )
 		{
-			waitingNodes.Alloc() = node;
+			stateResult_t nodeResult = node->Exec( parms );
+			if( nodeResult == SRESULT_WAIT )
+			{
+				waitingNodes.Alloc() = node;
+			}
+			node->DeactivateInputs();
+		}
+		else
+		{
+			node->outputSockets[0].active = true;
+			node->outputSockets[0].lastActivated = gameLocal.GetTime();
+			parms->substage = 0;
+		}
+		if( currentGraphState.waitMS )
+		{
+			currentActiveNodes = lastActiveNodes;
+			parms->Wait( ( 1.0f / 1000.0f ) * currentGraphState.waitMS );
+			currentGraphState.waitMS = 0.0f;
+			parms->substage = 1;
+			node->outputSockets[0].active = false;
+			return SRESULT_WAIT;
 		}
 		node->ActivateOutputConnections();
-		node->DeactivateInputs();
+		lastActiveNodes.RemoveIndex( 0 );
 	}
 
 	currentActiveNodes = waitingNodes;
@@ -331,7 +367,9 @@ int idStateGraph::GetLocalState( const char* newStateName )
 
 	i = localStates.Append( newStateName );
 	localStateHash.Add( hash, i );
-	localGraphState.Alloc();
+	auto& newState = localGraphState.Alloc();
+	newState.graph = this;
+	newState.waitMS = 0.0f;
 
 	return i;
 
@@ -373,11 +411,11 @@ void idStateGraph::DeleteLocalStateNode( const char* stateName, idGraphNode* nod
 
 idGraphNode* idStateGraph::CreateLocalStateNode( int stateIndex, idGraphNode* node )
 {
-	GraphState& stateNodes = localGraphState[stateIndex];
+	GraphState& localState = localGraphState[stateIndex];
 
-	node->graph = &stateNodes;
-	auto* retNode = stateNodes.nodes.Alloc() = node;
-	node->nodeIndex = stateNodes.nodes.Num() - 1;
+	node->graphState = &localState;
+	auto* retNode = localState.nodes.Alloc() = node;
+	node->nodeIndex = localState.nodes.Num() - 1;
 	return retNode;
 }
 
@@ -409,7 +447,7 @@ void idGraphNode::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL */ )
 {
 	if( file )
 	{
-		assert( graph );
+		assert( graphState );
 
 		auto writeSockets =
 			[]( idFile * file, idList<idGraphNodeSocket>& socketList )
@@ -463,7 +501,7 @@ bool idGraphNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass*
 {
 	if( file )
 	{
-		assert( graph );
+		assert( graphState );
 		auto readSockets =
 			[this]( idFile * file, idList<idGraphNodeSocket>& socketList, bool isInput )
 		{
@@ -785,9 +823,11 @@ void idGraphNode::ActivateOutputConnections()
 	{
 		if( output.active )
 		{
+			output.lastActivated = gameLocal.GetTime();
 			for( idGraphNodeSocket* input : output.connections )
 			{
 				input->active = true;
+				input->lastActivated = gameLocal.GetTime();
 			}
 			output.active = false;
 		}
@@ -872,7 +912,6 @@ void idGraphedEntity::Spawn()
 	BecomeInactive( TH_THINK );
 }
 
-
 void idGraphedEntity::Think()
 {
 	if( thinkFlags & TH_THINK )
@@ -907,9 +946,11 @@ idGraphNodeSocket& idGraphNodeSocket::operator=( idGraphNodeSocket&& other )
 	nodeIndex = other.nodeIndex;
 	freeData = other.freeData;
 	isOutput = other.isOutput;
+	lastActivated = other.lastActivated;
 
 	other.owner = nullptr;
 	other.var = nullptr;
+	other.lastActivated = -1;
 
 	return *this;
 }
@@ -924,14 +965,14 @@ idGraphNodeSocket::~idGraphNodeSocket()
 
 			if( t == ev_string )
 			{
-				owner->graph->blackBoard.Free( ( idStr* )var->GetRawData() );
+				owner->graphState->blackBoard.Free( ( idStr* )var->GetRawData() );
 				idStr* data = ( ( idScriptStr* )var )->GetData();
 				data->FreeData();
 				delete data;
 			}
-			else
+			else if( t != ev_entity || t == ev_object )
 			{
-				owner->graph->blackBoard.Free( var->GetRawData() );
+				owner->graphState->blackBoard.Free( var->GetRawData() );
 			}
 			delete var;
 		}
@@ -943,30 +984,30 @@ idGraphNodeSocket::~idGraphNodeSocket()
 
 }
 
-idScriptVariableBase* VarFromFormatSpec( const char spec, GraphState* graph /*= nullptr*/ )
+idScriptVariableBase* VarFromFormatSpec( const char spec, GraphState* graphState )
 {
 	idScriptVariableBase* ret = nullptr;
 
 	switch( spec )
 	{
 		case D_EVENT_FLOAT:
-			ret = graph->blackBoard.Alloc<idScriptFloat>( 8 );
+			ret = graphState->blackBoard.Alloc<idScriptFloat>( 8 );
 			break;
 		case D_EVENT_INTEGER:
-			ret = graph->blackBoard.Alloc<idScriptInteger>( 8 );
+			ret = graphState->blackBoard.Alloc<idScriptInteger>( 8 );
 			break;
 
 		case D_EVENT_VECTOR:
-			ret = graph->blackBoard.Alloc<idScriptVector>( 3 * 8 );
+			ret = graphState->blackBoard.Alloc<idScriptVector>( 3 * 8 );
 			break;
 
 		case D_EVENT_STRING:
-			ret = graph->blackBoard.Alloc( "" );
+			ret = graphState->blackBoard.Alloc( "" );
 			break;
 
 		case D_EVENT_ENTITY:
 		case D_EVENT_ENTITY_NULL:
-			ret = graph->blackBoard.Alloc<idScriptEntity>( 8 );
+			ret = graphState->blackBoard.Alloc<idScriptEntity>( 8 );
 			break;
 		case D_EVENT_VOID:
 			//no var but valid
@@ -978,27 +1019,27 @@ idScriptVariableBase* VarFromFormatSpec( const char spec, GraphState* graph /*= 
 	return ret;
 }
 
-idScriptVariableBase* VarFromType( etype_t type, GraphState* graph /*= nullptr*/ )
+idScriptVariableBase* VarFromType( etype_t type, GraphState* graphState )
 {
 	idScriptVariableBase* ret = nullptr;
 	switch( type )
 	{
 		case ev_string:
-			ret = graph->blackBoard.Alloc( "" );
+			ret = graphState->blackBoard.Alloc( "" );
 			break;
 		case ev_float:
-			ret = graph->blackBoard.Alloc<idScriptFloat>( 8 );
+			ret = graphState->blackBoard.Alloc<idScriptFloat>( 8 );
 			break;
 		case ev_vector:
-			ret = graph->blackBoard.Alloc<idScriptVector>( 3 * 8 ) ;
+			ret = graphState->blackBoard.Alloc<idScriptVector>( 3 * 8 ) ;
 			break;
 		case ev_object:
 		case ev_entity:
-			ret = graph->blackBoard.Alloc<idScriptEntity>( 8 );
+			ret = graphState->blackBoard.Alloc<idScriptEntity>( 8 );
 			break;
 		case ev_boolean:
 		case ev_int:
-			ret = graph->blackBoard.Alloc<idScriptInteger>( 8 );
+			ret = graphState->blackBoard.Alloc<idScriptInteger>( 8 );
 			break;
 		default:
 			gameLocal.Error( "idClassNode::Setup : Invalid arg format '%s' for event.", idTypeInfo::GetEnumTypeInfo( "etype_t", type ) );

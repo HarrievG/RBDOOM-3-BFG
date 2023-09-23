@@ -239,7 +239,7 @@ private:
 	//replace this with only the graph, editor does care about entity but not as parent of the graph.
 	idEntityPtr<idGraphedEntity> graphEnt;
 
-	idList<idGraphNode*> nodeTypes;
+	static idList<idGraphNode*> nodeTypes;
 };
 
 inline void StateGraphEditor::ShowIt( bool show )

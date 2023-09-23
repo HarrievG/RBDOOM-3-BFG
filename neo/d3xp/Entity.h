@@ -200,7 +200,6 @@ public:
 
 	///HvG
 	idStateGraph*			graphObject;
-	rvStateThread			graphStateThread;
 	///
 
 	int						thinkFlags;				// TH_? flags

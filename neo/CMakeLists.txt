@@ -818,7 +818,8 @@ set(GAMED3XP_INCLUDES
 	d3xp/Weapon.h
 	d3xp/WorldSpawn.h
 	d3xp/StateGraph.h
-	d3xp/StateGraphNodes.h)
+	d3xp/StateGraphNodes.h
+	d3xp/GraphThread.h)
 
 set(GAMED3XP_SOURCES
 	d3xp/Achievements.cpp
@@ -858,7 +859,9 @@ set(GAMED3XP_SOURCES
 	d3xp/Weapon.cpp
 	d3xp/WorldSpawn.cpp
 	d3xp/StateGraph.cpp
-	d3xp/StateGraphNodes.cpp)
+	d3xp/StateGraphNodes.cpp
+	d3xp/ClassNode_Draw.cpp
+	d3xp/GraphThread.cpp)
 
 file(GLOB RC_INCLUDES d3xp/roidc/*.h)
 file(GLOB RC_SOURCES d3xp/roidc/*.cpp)
@@ -1658,6 +1661,9 @@ if(MSVC)
 	
 	list(APPEND RBDOOM3_SOURCES ${WIN32_RESOURCES})
 	
+	# add natvis
+	list(APPEND RBDOOM3_SOURCES "idStuff.natvis")
+
 	add_executable(DoomIcedHellfire WIN32 ${RBDOOM3_INCLUDES} ${RBDOOM3_SOURCES})
 
 	add_dependencies(DoomIcedHellfire idlib typeinfogen)

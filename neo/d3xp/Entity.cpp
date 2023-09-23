@@ -738,8 +738,8 @@ void idEntity::Spawn()
 	if( spawnArgs.GetString( "graphObject", NULL, &graphObjectName ) )
 	{
 		graphObject = new idStateGraph();
-		graphStateThread.SetOwner( this );
-		graphObject->localGraphState[0].targetStateThread = &graphStateThread;
+		int main = graphObject->GetLocalState( "GRAPH_MAIN" );
+		graphObject->localGraphState[main].stateThread->SetOwner( this );
 		idStr generatedFilename = idStr( "graphs/" ) + graphObjectName + ".bGrph";
 		idFileLocal inputFile( fileSystem->OpenFileRead( generatedFilename, "fs_basepath" ) );
 		if( inputFile )
@@ -772,7 +772,6 @@ idEntity::~idEntity()
 
 	if( graphObject )
 	{
-		graphStateThread.Clear();
 		delete graphObject;
 	}
 	// we have to set back the default physics object before unbinding because the entity
@@ -6494,7 +6493,7 @@ void idAnimatedEntity::Think()
 	UpdateAnimation();
 	if( graphObject )
 	{
-		graphStateThread.Execute();
+		graphObject->Think();
 	}
 	Present();
 	UpdateDamageEffects();

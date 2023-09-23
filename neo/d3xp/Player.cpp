@@ -9080,7 +9080,7 @@ void idPlayer::Think()
 
 		if( graphObject )
 		{
-			graphStateThread.Execute();
+			graphObject->Think();
 		}
 		// service animations
 		if( !spectating && !af.IsActive() && !gameLocal.inCinematic )

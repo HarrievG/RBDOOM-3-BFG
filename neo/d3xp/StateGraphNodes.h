@@ -57,7 +57,7 @@ class idStateNode : public idGraphNode
 
 	idStr			input_State;
 	NodeType		type;
-	rvStateThread*	stateThread;
+	rvStateThread**	stateThread;
 	stateResult_t	output_Result;
 };
 
@@ -97,6 +97,7 @@ public:
 private:
 	idClass* ownerClass;
 	idClass** nodeOwnerClass;
+	void SetOwner( const idEventDef& def,  idClass** target );
 	void SetOwner( idClass** target );
 };
 

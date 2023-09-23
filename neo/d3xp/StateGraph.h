@@ -33,8 +33,8 @@ If you have questions concerning this license or the applicable additional terms
 
 
 class GraphState;
-idScriptVariableBase* VarFromFormatSpec( const char spec, GraphState* graph = nullptr );
-idScriptVariableBase* VarFromType( etype_t type, GraphState* graph = nullptr );
+idScriptVariableBase* VarFromFormatSpec( const char spec, GraphState* graphState );
+idScriptVariableBase* VarFromType( etype_t type, GraphState* graphState );
 bool VarCopy( idScriptVariableBase* target, idScriptVariableBase* source );
 
 class idBlackBoard
@@ -103,12 +103,13 @@ public:
 	idGraphNodeSocket& operator=( idGraphNodeSocket&& );
 	~idGraphNodeSocket();
 	idGraphNodeSocket() :
-		owner( nullptr ), var( nullptr ), active( false ), name( "" ), socketIndex( -1 ),
+		owner( nullptr ), var( nullptr ), active( false ), lastActivated( -1 ), name( "" ), socketIndex( -1 ),
 		nodeIndex( -1 ), freeData( true ), isOutput( false ) {}
 	idList<idGraphNodeSocket*> connections;
 	idGraphNode* owner;
 	idScriptVariableBase* var;
 	bool active;
+	int lastActivated;
 	idStr name;
 	int socketIndex;
 	int nodeIndex;
@@ -124,11 +125,11 @@ public:
 	idList<idGraphNode*> activeNodes;
 	//should only be used in editor.
 	idList<idGraphNodeSocket::Link_t>  links;
-	idClass* owner;
-	rvStateThread* targetStateThread;
 	idBlackBoard blackBoard;
-protected:
 	rvStateThread* stateThread;
+	idStateGraph* graph;
+	int waitMS;
+protected:
 	idList<idScriptVariableInstance_t> localVariables;
 };
 
@@ -159,9 +160,8 @@ public:
 
 	idList<idGraphNodeSocket> inputSockets;
 	idList<idGraphNodeSocket> outputSockets;
-	GraphState* graph;
+	GraphState* graphState;
 	int nodeIndex;
-
 private:
 	idGraphNodeSocket& CreateSocket( idList<idGraphNodeSocket>& socketList );
 };
@@ -174,6 +174,13 @@ public:
 	friend class idStateEditor;
 
 	CLASS_PROTOTYPE( idStateGraph );
+
+
+	//////////////////////////////////////////////////////////////////////////
+	//Taking over from idThread
+	void								Event_Wait( float time );
+	void								Event_WaitFrame();
+	//////////////////////////////////////////////////////////////////////////
 
 	void								Event_Activate( idEntity* activator );
 	idStateGraph();
@@ -209,6 +216,10 @@ public:
 	idStrList							localStates;
 	idHashIndex							localStateHash;
 	idList<GraphState>					localGraphState;
+
+	static idList<int>	GraphThreadEventMap;
+	static bool			GraphThreadEventMapInitDone;
+
 private:
 	void								DeleteLocalStateNode( int stateIndex, idGraphNode* node );
 	void								DeleteLocalStateNode( const char* stateName, idGraphNode* node );
