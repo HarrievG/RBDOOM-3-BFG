@@ -39,6 +39,7 @@ If you have questions concerning this license or the applicable additional terms
 
 # define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui_internal.h"
+#include "framework/Common_local.h"
 
 namespace ed = ax::NodeEditor;
 namespace ImGuiTools
@@ -65,7 +66,7 @@ static bool Splitter( bool split_vertically, float thickness, float* size1, floa
 
 StateGraphEditor::~StateGraphEditor()
 {
-	ed::DestroyEditor( EditorContext );
+	ed::DestroyEditor( Context.Editor );
 }
 
 StateGraphEditor::StateGraphEditor()
@@ -74,10 +75,10 @@ StateGraphEditor::StateGraphEditor()
 
 }
 
-const int StateGraphEditor::GetLinkIndexByID( ed::LinkId& id )
+const int StateGraphEditor::GetLinkIndexByID( ed::LinkId& id, StateEditContext& graphContext )
 {
 	int index = -1;
-	for( auto& link : linkList )
+	for( auto& link : graphContext.linkList )
 	{
 		++index;
 		if( link.ID == id )
@@ -88,20 +89,20 @@ const int StateGraphEditor::GetLinkIndexByID( ed::LinkId& id )
 	return index;
 }
 
-idList<StateGraphEditor::Link*> StateGraphEditor::GetAllLinks( const GraphNode& target )
+idList<GraphLink*> StateGraphEditor::GetAllLinks( const GraphNode& target, StateEditContext& graphContext )
 {
-	idList<StateGraphEditor::Link*> result;
+	idList<GraphLink*> result;
 
-	if( !linkList.Num() )
+	if( !graphContext.linkList.Num() )
 	{
 		return result;
 	}
 
 	int foundLinks = 0;
 	int linkIdx = 0;
-	while( linkIdx < linkList.Num() )
+	while( linkIdx < graphContext.linkList.Num() )
 	{
-		auto& link = linkList[linkIdx];
+		auto& link = graphContext.linkList[linkIdx];
 
 		for( GraphNodePin* pin : target.Inputs )
 		{
@@ -128,20 +129,20 @@ idList<StateGraphEditor::Link*> StateGraphEditor::GetAllLinks( const GraphNode& 
 	return result;
 }
 
-void StateGraphEditor::DeleteAllPinsAndLinks( GraphNode& target )
+void StateGraphEditor::DeleteAllPinsAndLinks( GraphNode& target, StateEditContext& graphContext )
 {
-	auto links = GetAllLinks( target );
+	auto links = GetAllLinks( target, graphContext );
 	for( auto* link : links )
 	{
-		DeleteLink( *link );
+		DeleteLink( *link, graphContext );
 	}
 	target.Inputs.DeleteContents();
 	target.Outputs.DeleteContents();
 }
 
-void StateGraphEditor::DeleteLink( StateGraphEditor::Link& link )
+void StateGraphEditor::DeleteLink( GraphLink& link, StateEditContext& graphContext )
 {
-	int idx = GetLinkIndexByID( link.ID );
+	int idx = GetLinkIndexByID( link.ID, graphContext );
 
 	idGraphNodeSocket** inputSocketPtr;
 	idGraphNodeSocket** outputSocketPtr;
@@ -153,27 +154,27 @@ void StateGraphEditor::DeleteLink( StateGraphEditor::Link& link )
 
 	if( outputSocket->isOutput )
 	{
-		graphEnt->graphObject->RemoveLink( outputSocket, inputSocket );
+		graphContext.graphObject->RemoveLink( outputSocket, inputSocket );
 	}
 	else
 	{
-		graphEnt->graphObject->RemoveLink( inputSocket, outputSocket );
+		graphContext.graphObject->RemoveLink( inputSocket, outputSocket );
 	}
 
-	linkList.RemoveIndexFast( idx );
+	graphContext.linkList.RemoveIndexFast( idx );
 }
 
-void StateGraphEditor::DeleteNode( GraphNode* node )
+void StateGraphEditor::DeleteNode( GraphNode* node, StateEditContext& graphContext )
 {
-	DeleteAllPinsAndLinks( *node );
-	graphEnt->graphObject->RemoveNode( node->Owner );
-	nodeList.Remove( node );
+	DeleteAllPinsAndLinks( *node, graphContext );
+	graphContext.graphObject->RemoveNode( node->Owner );
+	graphContext.nodeList.Remove( node );
 	delete node;
 }
 
-void StateGraphEditor::ReadNode( idGraphNode* node, GraphNode& newNode )
+void StateGraphEditor::ReadNode( idGraphNode* node, GraphNode& newNode , StateEditContext& graphContext )
 {
-	DeleteAllPinsAndLinks( newNode );
+	DeleteAllPinsAndLinks( newNode, graphContext );
 
 	for( auto& socket : node->inputSockets )
 	{
@@ -188,53 +189,47 @@ void StateGraphEditor::ReadNode( idGraphNode* node, GraphNode& newNode )
 	newNode.Graph = this;
 }
 
-void StateGraphEditor::ReadGraph( const GraphState* graph )
+void StateGraphEditor::LoadGraph( StateEditContext& graphContext )
 {
-	for( auto node : graph->nodes )
+	if( graphContext.Loaded )
 	{
-		auto& newNode = *( nodeList.Alloc() = new GraphNode( NextNodeID(), node->GetName(), node ) );
-		ReadNode( node, newNode );
-	}
-	for( idGraphNodeSocket::Link_t& link : graph->links )
-	{
-		auto& inputNode = *nodeList[link.end->nodeIndex];
-		auto& outputNode = *nodeList[link.start->nodeIndex];
-		Link& newLink = linkList.Alloc();
-		newLink.ID			= ed::LinkId( NextLinkID() );
-		newLink.StartPinID	= outputNode.Outputs[link.start->socketIndex]->ID;
-		newLink.EndPinID	= inputNode.Inputs[link.end->socketIndex]->ID;
-		auto* var = inputNode.Owner->inputSockets[link.end->socketIndex].var;
-		if( var )
+		auto& graphState = graphContext.graphObject->localGraphState[0];
+
+		for( auto node : graphState.nodes )
 		{
-			ImGui::IconItem icon = ImGui::ImScriptVariable( "", { "", var }, false );
-			newLink.Color = icon.color;
+			auto& newNode = *( graphContext.nodeList.Alloc() = new GraphNode( NextNodeID(), node->GetName(), node ) );
+			ReadNode( node, newNode, graphContext );
 		}
-	};
+		for( idGraphNodeSocket::Link_t& link : graphState.links )
+		{
+			auto& inputNode = *graphContext.nodeList[link.end->nodeIndex];
+			auto& outputNode = *graphContext.nodeList[link.start->nodeIndex];
+			GraphLink& newLink = graphContext.linkList.Alloc();
+			newLink.ID			= ed::LinkId( NextLinkID() );
+			newLink.StartPinID	= outputNode.Outputs[link.start->socketIndex]->ID;
+			newLink.EndPinID	= inputNode.Inputs[link.end->socketIndex]->ID;
+			auto* var = inputNode.Owner->inputSockets[link.end->socketIndex].var;
+			if( var )
+			{
+				ImGui::IconItem icon = ImGui::ImScriptVariable( "", { "", var }, false );
+				newLink.Color = icon.color;
+			}
+		};
+	}
 }
 
-void StateGraphEditor::Clear()
+void StateGraphEditor::Clear( StateEditContext& graphContext )
 {
-	nodeList.Clear();
-	linkList.Clear();
+	graphContext.nodeList.Clear();
+	graphContext.linkList.Clear();
 	nextElementId = 1;
-}
-
-const ImGuiTools::StateGraphEditor::Link& StateGraphEditor::GetLinkByID( ed::LinkId& id )
-{
-	for( auto& link : linkList )
-	{
-		if( link.ID == id )
-		{
-			return link;
-		}
-	}
 }
 
 void StateGraphEditor::Init()
 {
 	ed::Config config;
 	config.SettingsFile = "Simple.json";
-	EditorContext = ed::CreateEditor();
+	Context.Editor = ed::CreateEditor();
 	if( !nodeTypes.Num() )
 	{
 		auto* childNode = idGraphNode::Type.node.GetChild();
@@ -258,23 +253,24 @@ void StateGraphEditor::DrawGraphEntityTest()
 	auto& io = ImGui::GetIO();
 	{
 		ImVec2 currentWidowSize = ImGui::GetWindowSize();
+		ed::SetCurrentEditor( Context.Editor );
 
-		ImGui::Text( "FPS: %.2f (%.2gms) %s ", io.Framerate, io.Framerate ? 1000.0f / io.Framerate : 0.0f, io.KeyCtrl ? "CTRL" : "" );
-
-		ImGui::Separator();
-
-		ed::SetCurrentEditor( EditorContext );
-
-		if( ImGui::Button( "Zoom to Content" ) )
+		DrawEditorButtonBar( Context );
+		if( ImGui::Button( "Load Graph Bin" ) )
 		{
-			ed::NavigateToContent();
+			if( !graphEnt )
+			{
+				idDict args;
+				args.Set( "graphObject", "graphBin" );
+				graphEnt = static_cast<idGraphedEntity*>( gameLocal.SpawnEntityType( idGraphedEntity::Type, &args ) );
+				graphEnt->PostEventMS( &EV_Activate, 0, graphEnt.GetEntity() );
+				Context.graphObject = graphEnt->graphObject;
+				Context.graphOwner = graphEnt;
+				Context.Loaded = true;
+				Context.File = "graphs/graphBin.bGrph";
+				LoadGraph( Context );
+			}
 		}
-		ImGui::SameLine();
-		if( ImGui::Button( "Zoom to Selection" ) )
-		{
-			ed::NavigateToSelection( true );
-		}
-
 		ImGui::SameLine();
 		if( ImGui::Button( "SpawnGraphEntity" ) )
 		{
@@ -286,60 +282,128 @@ void StateGraphEditor::DrawGraphEntityTest()
 				args.Set( "graphObject", "" );
 				graphEnt = static_cast<idGraphedEntity*>( gameLocal.SpawnEntityType( idGraphedEntity::Type, &args ) );
 				graphEnt->PostEventMS( &EV_Activate, 0, graphEnt.GetEntity() );
-				ReadGraph( &graphEnt->graphObject->localGraphState[0] );
+				LoadGraph( Context );
 			}
 		}
-		ImGui::SameLine();
-		if( ImGui::Button( "Write Graph Bin" ) )
-		{
-			if( graphEnt )
-			{
-				idFileLocal outputFile( fileSystem->OpenFileWrite( "graphs/graphBin.bGrph", "fs_basepath" ) );
-				graphEnt->graphObject->WriteBinary( outputFile );
-			}
-		}
-		if( ImGui::Button( "Load Graph Bin" ) )
-		{
-			if( !graphEnt )
-			{
-				idDict args;
-				args.Set( "graphObject", "graphBin" );
-				graphEnt = static_cast<idGraphedEntity*>( gameLocal.SpawnEntityType( idGraphedEntity::Type, &args ) );
-				graphEnt->PostEventMS( &EV_Activate, 0, graphEnt.GetEntity() );
-				ReadGraph( &graphEnt->graphObject->localGraphState[0] );
-			}
-		}
-		ImGui::SameLine();
-		if( ImGui::Button( "Clear Graph" ) )
-		{
-			Clear();
-		}
+
 		static float leftPaneWidth = 400.0f;
 		static float rightPaneWidth = 800.0f;
 		Splitter( true, 4.0f, &leftPaneWidth, &rightPaneWidth, 50.0f, 50.0f );
 
-
-		DrawLeftPane( leftPaneWidth - 4.0f );
+		DrawLeftPane( leftPaneWidth - 4.0f , Context );
 		ImGui::BeginChild( "CONTENT" );
 		//ImGui::SameLine(0.0f, 12.0f);
 		ed::Begin( "My Editor" );
 
 		if( graphEnt.IsValid() )
 		{
-			for( auto* nodePtr : nodeList )
+			for( auto* nodePtr : Context.nodeList )
 			{
 				auto& node = *nodePtr;
 				ImGui::PushID( node.ID.Get() );
 				if( node.dirty )
 				{
-					ReadNode( node.Owner, node );
+					ReadNode( node.Owner, node, Context );
 					node.dirty = false;
 				}
 				node.Owner->Draw( &node );
 				ImGui::PopID();
 			}
 
-			for( auto& link : linkList )
+			for( auto& link : Context.linkList )
+			{
+				ImGui::PushID( link.ID.Get() );
+				ed::Link( link.ID, link.StartPinID, link.EndPinID, link.Color, 2.0f );
+				ImGui::PopID();
+
+				idGraphNodeSocket** inputSocketPtr;
+				GraphNodePin::socketHashIdx.Get( link.EndPinID.Get(), &inputSocketPtr );
+				idGraphNodeSocket* inputSocket = *inputSocketPtr;
+				idGraphNodeSocket** outputSocketPtr;
+				GraphNodePin::socketHashIdx.Get( link.StartPinID.Get(), &outputSocketPtr );
+				idGraphNodeSocket* outputSocket = *outputSocketPtr;
+
+				int last = gameLocal.previousTime;
+
+				if( ( outputSocket->lastActivated > last ) && inputSocket->lastActivated > last )
+				{
+					ed::Flow( link.ID );
+				}
+			}
+		}
+		else
+		{
+			Clear( Context );
+		}
+
+		Handle_ContextMenus( Context );
+		Handle_NodeEvents( Context );
+
+		ed::End();
+		ImGui::EndChild();
+		ed::SetCurrentEditor( nullptr );
+	}
+}
+
+void StateGraphEditor::DrawMapGraph()
+{
+	static StateEditContext MapGraphContext;
+	if( MapGraphContext.Editor == nullptr )
+	{
+		idStr currentMap  = commonLocal.GetCurrentMapName();
+		if( !currentMap.IsEmpty() )
+		{
+			MapGraphContext.File = "maps/" + currentMap.SetFileExtension( ".bgrph" );
+		}
+
+		MapGraphContext.Config.SettingsFile = MapGraphContext.File;
+		MapGraphContext.Editor = ed::CreateEditor( &MapGraphContext.Config );
+
+		idEntityPtr<idEntity> worldEnt;
+		worldEnt = gameLocal.entities[ENTITYNUM_WORLD];
+
+		if( worldEnt && worldEnt->graphObject )
+		{
+			MapGraphContext.graphOwner = worldEnt;
+			MapGraphContext.graphObject = worldEnt->graphObject;
+			MapGraphContext.Loaded = true;
+			LoadGraph( MapGraphContext );
+		}
+		return;
+	}
+
+	auto& io = ImGui::GetIO();
+	{
+		ImVec2 currentWidowSize = ImGui::GetWindowSize();
+
+		ed::SetCurrentEditor( MapGraphContext.Editor );
+
+		DrawEditorButtonBar( MapGraphContext );
+		static float leftPaneWidth = 400.0f;
+		static float rightPaneWidth = 800.0f;
+		Splitter( true, 4.0f, &leftPaneWidth, &rightPaneWidth, 50.0f, 50.0f );
+
+		DrawLeftPane( leftPaneWidth - 4.0f, MapGraphContext );
+		ImGui::BeginChild( "MAPCONTENT" );
+		//ImGui::SameLine(0.0f, 12.0f);
+		ed::Begin( "MapGraph Editor" );
+
+		if( MapGraphContext.graphOwner.IsValid() )
+		{
+			for( auto* nodePtr : MapGraphContext.nodeList )
+			{
+				auto& node = *nodePtr;
+				ImGui::PushID( node.ID.Get() );
+				if( node.dirty )
+				{
+					ReadNode( node.Owner, node , MapGraphContext );
+					node.dirty = false;
+				}
+				node.Owner->Draw( &node );
+				ImGui::PopID();
+			}
+
+			for( auto& link : MapGraphContext.linkList )
 			{
 				ImGui::PushID( link.ID.Get() );
 				ed::Link( link.ID, link.StartPinID, link.EndPinID, link.Color, 2.0f );
@@ -364,21 +428,16 @@ void StateGraphEditor::DrawGraphEntityTest()
 		}
 		else
 		{
-			Clear();
+			Clear( MapGraphContext );
 		}
 
-		Handle_ContextMenus();
-		Handle_NodeEvents();
+		Handle_ContextMenus( MapGraphContext );
+		Handle_NodeEvents( MapGraphContext );
 
 		ed::End();
 		ImGui::EndChild();
 		ed::SetCurrentEditor( nullptr );
 	}
-}
-
-void StateGraphEditor::DrawMapGraph()
-{
-
 }
 
 void StateGraphEditor::Draw()
@@ -398,12 +457,11 @@ void StateGraphEditor::Draw()
 			if( ImGui::BeginTabItem( "idGraphedEntity [ TEST ]" ) )
 			{
 				DrawGraphEntityTest();
-
 				ImGui::EndTabItem();
 			}
 			if( ImGui::BeginTabItem( "MapGraph" ) )
 			{
-
+				DrawMapGraph();
 				ImGui::EndTabItem();
 			}
 			if( ImGui::BeginTabItem( "idPlayer" ) )
@@ -450,15 +508,7 @@ void StateGraphEditor::Enable( const idCmdArgs& args )
 	StateGraphEditor::Instance().ShowIt( true );
 }
 
-void StateGraphEditor::GetAllStateThreads()
-{
-
-	idTypeInfo* a = idClass::GetClass( "idAnimated" );
-	//auto* b = idTypeInfo::GetClassTypeInfo("idAnimated");
-	DebugBreak();
-}
-
-void StateGraphEditor::DrawLeftPane( float paneWidth )
+void StateGraphEditor::DrawLeftPane( float paneWidth, StateEditContext& graphContext )
 {
 	auto& io = ImGui::GetIO();
 	const float TEXT_BASE_WIDTH = ImGui::CalcTextSize( "A" ).x;
@@ -467,15 +517,6 @@ void StateGraphEditor::DrawLeftPane( float paneWidth )
 	ImGui::BeginChild( "Selection", ImVec2( paneWidth, 0 ) );
 
 	paneWidth = ImGui::GetContentRegionAvail().x;
-
-	static bool showStyleEditor = false;
-	if( ImGui::Button( "Show Flow" ) )
-	{
-		for( auto& link : linkList )
-		{
-			ed::Flow( link.ID );
-		}
-	}
 
 	std::vector<ed::NodeId> selectedNodes;
 	std::vector<ed::LinkId> selectedLinks;
@@ -507,7 +548,7 @@ void StateGraphEditor::DrawLeftPane( float paneWidth )
 	ImGui::GetWindowDrawList()->AddText( cursorScreenPos, ImColor( 50.0f, 45.0f, 255.0f, 255.0f ), "Nodes" );
 
 	ImGui::Indent();
-	for( auto* nodePtr : nodeList )
+	for( auto* nodePtr : graphContext.nodeList )
 	{
 		auto& node = *nodePtr;
 
@@ -623,7 +664,7 @@ void StateGraphEditor::DrawLeftPane( float paneWidth )
 	ImGui::Unindent();
 
 	if( ImGui::IsKeyPressed( ImGui::GetKeyIndex( ImGuiKey_Z ) ) )
-		for( auto& link : linkList )
+		for( auto& link : graphContext.linkList )
 		{
 			ed::Flow( link.ID );
 		}
@@ -636,16 +677,16 @@ void StateGraphEditor::DrawLeftPane( float paneWidth )
 	ImGui::Separator();
 
 
-	if( graphEnt.IsValid() )
+	if( graphContext.graphOwner.IsValid() )
 	{
 		if( ImGui::CollapsingHeader( "States" ) )
 		{
 			if( ImGui::Button( "Create New" ) )
 			{
-				graphEnt->graphObject->CreateSubState( "New Function", {}, {} );
+				graphContext.graphObject->CreateSubState( "New Function", {}, {} );
 			}
-			auto& graphState = graphEnt->graphObject->localGraphState;
-			auto& graphNames = graphEnt->graphObject->localStates;
+			auto& graphState = graphContext.graphObject->localGraphState;
+			auto& graphNames = graphContext.graphObject->localStates;
 			if( graphState.Num() > 1 )
 			{
 				for( int i = 1; i < graphState.Num(); i++ )
@@ -658,10 +699,10 @@ void StateGraphEditor::DrawLeftPane( float paneWidth )
 		{
 			if( ImGui::Button( "Create New" ) )
 			{
-				graphEnt->graphObject->CreateSubState( "New Function", {}, {} );
+				graphContext.graphObject->CreateSubState( "New Function", {}, {} );
 			}
-			auto& graphState = graphEnt->graphObject->localGraphState;
-			auto& graphNames = graphEnt->graphObject->localStates;
+			auto& graphState = graphContext.graphObject->localGraphState;
+			auto& graphNames = graphContext.graphObject->localStates;
 			if( graphState.Num() > 1 )
 			{
 				for( int i = 1; i < graphState.Num(); i++ )
@@ -673,10 +714,10 @@ void StateGraphEditor::DrawLeftPane( float paneWidth )
 
 		if( ImGui::CollapsingHeader( "Variables" ) )
 		{
-			ImGui::TextDisabled( "Self ( %s )", graphEnt->GetClassname() );
+			ImGui::TextDisabled( "Self ( %s )", graphContext.graphOwner->GetClassname() );
 			ImGui::Separator();
 			idList<idScriptVariableInstance_t> thisVars;
-			graphEnt->GetType()->GetScriptVariables( graphEnt, thisVars );
+			graphContext.graphOwner->GetType()->GetScriptVariables( graphContext.graphOwner , thisVars );
 
 			static ImGuiTableFlags flags = ImGuiTableFlags_NoHostExtendX | ImGuiTableFlags_SizingStretchProp;
 			if( ImGui::BeginTable( "selfVars", 3, flags ) )
@@ -709,7 +750,7 @@ void StateGraphEditor::DrawLeftPane( float paneWidth )
 				ImGui::TableSetupColumn( "", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_IndentDisable, TEXT_BASE_WIDTH * 20 );
 				ImGui::TableSetupColumn( "", ImGuiTableColumnFlags_IndentDisable );
 
-				const idList<idScriptVariableInstance_t>& vars = graphEnt->graphObject->GetVariables();
+				const idList<idScriptVariableInstance_t>& vars = graphContext.graphObject->GetVariables();
 				for( auto& var : vars )
 				{
 					ImGui::TableNextRow( 0 );
@@ -737,7 +778,7 @@ void StateGraphEditor::DrawLeftPane( float paneWidth )
 				//extern idScriptVariableBase * VarFromType(etype_t type, GraphState * graphState);
 				if( ImGui::MenuItem( "Boolean" ) )
 				{
-					graphEnt->graphObject->CreateVariable( "newBoolean", ev_boolean );
+					graphContext.graphObject->CreateVariable( "newBoolean", ev_boolean );
 					//localVars. VarFromType(ev_boolean, &graphEnt->graph.CreateVar);
 					//return ;
 				}
@@ -771,7 +812,41 @@ void StateGraphEditor::DrawLeftPane( float paneWidth )
 	SameLine();
 }
 
-void StateGraphEditor::Handle_ContextMenus()
+void StateGraphEditor::DrawEditorButtonBar( StateEditContext& graphContext )
+{
+	auto& io = ImGui::GetIO();
+	ImGui::Text( "FPS: %.2f (%.2gms) %s ", io.Framerate, io.Framerate ? 1000.0f / io.Framerate : 0.0f, io.KeyCtrl ? "CTRL" : "" );
+
+	ImGui::Separator();
+
+	if( ImGui::Button( "Zoom to Content" ) )
+	{
+		ed::NavigateToContent();
+	}
+	ImGui::SameLine();
+	if( ImGui::Button( "Zoom to Selection" ) )
+	{
+		ed::NavigateToSelection( true );
+	}
+	ImGui::SameLine();
+	if( ImGui::Button( "Clear Graph" ) )
+	{
+		Clear( graphContext );
+	}
+	ImGui::SameLine();
+	if( ImGui::Button( "Write Graph Bin" ) )
+	{
+		if( graphContext.graphObject )
+		{
+			// "graphs/graphBin.bGrph"
+			idFileLocal outputFile( fileSystem->OpenFileWrite( graphContext.File, "fs_basepath" ) );
+			graphContext.graphObject->WriteBinary( outputFile );
+		}
+	}
+
+}
+
+void StateGraphEditor::Handle_ContextMenus( StateEditContext& graphContext )
 {
 	static ed::NodeId contextNodeId = 0;
 	static ed::LinkId contextLinkId = 0;
@@ -801,11 +876,11 @@ void StateGraphEditor::Handle_ContextMenus()
 		idList<int> classNums;
 		for( auto* nodePtr : nodeTypes )
 		{
-			idGraphNode* createdNode = nodePtr->QueryNodeConstruction( graphEnt->graphObject, graphEnt );
+			idGraphNode* createdNode = nodePtr->QueryNodeConstruction( graphContext.graphObject, graphContext.graphOwner );
 			if( createdNode != nullptr )
 			{
-				auto& newNode = *( nodeList.Alloc() = new GraphNode( NextNodeID(), createdNode->GetName(), createdNode ) );
-				ReadNode( createdNode, newNode );
+				auto& newNode = *( graphContext.nodeList.Alloc() = new GraphNode( NextNodeID(), createdNode->GetName(), createdNode ) );
+				ReadNode( createdNode, newNode , graphContext );
 				ed::SetNodePosition( newNode.ID, openPopupPosition );
 			}
 		}
@@ -816,7 +891,7 @@ void StateGraphEditor::Handle_ContextMenus()
 	ed::Resume();
 }
 
-void StateGraphEditor::Handle_NodeEvents()
+void StateGraphEditor::Handle_NodeEvents( StateEditContext& graphContext )
 {
 	auto showLabel = []( const char* label, ImColor color )
 	{
@@ -869,14 +944,14 @@ void StateGraphEditor::Handle_NodeEvents()
 				{
 					if( outputSocket->isOutput )
 					{
-						graphEnt->graphObject->AddLink( *outputSocket, *inputSocket );
+						graphContext.graphObject->AddLink( *outputSocket, *inputSocket );
 					}
 					else
 					{
-						graphEnt->graphObject->AddLink( *inputSocket, *outputSocket );
+						graphContext.graphObject->AddLink( *inputSocket, *outputSocket );
 					}
 
-					Link& newLink = linkList.Alloc();
+					GraphLink& newLink = graphContext.linkList.Alloc();
 					newLink.ID = ed::LinkId( NextLinkID() );
 					newLink.StartPinID = startPinId;
 					newLink.EndPinID = endPinId;
@@ -969,10 +1044,10 @@ void StateGraphEditor::Handle_NodeEvents()
 			// If you agree that link can be deleted, accept deletion.
 			if( ed::AcceptDeletedItem() )
 			{
-				int idx = GetLinkIndexByID( deletedLinkId );
+				int idx = GetLinkIndexByID( deletedLinkId , graphContext );
 				if( idx >= 0 )
 				{
-					DeleteLink( linkList[idx] );
+					DeleteLink( graphContext.linkList[idx] , graphContext );
 				}
 			}
 
@@ -988,7 +1063,7 @@ void StateGraphEditor::Handle_NodeEvents()
 
 				GraphNode** targetNode;
 				GraphNode::nodeHashIdx.Get( nodeId.Get(), &targetNode );
-				DeleteNode( *targetNode );
+				DeleteNode( *targetNode , graphContext );
 			}
 		}
 	}

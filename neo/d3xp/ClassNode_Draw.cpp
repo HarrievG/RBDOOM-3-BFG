@@ -397,7 +397,6 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 			{
 				SetOwner( *def, &ownerClass );
 				nodePtr->dirty = true;
-				nodePtr->Graph->DeleteAllPinsAndLinks( *nodePtr );
 				OnChangeDef( def );
 				popup_text = def->GetName();
 				ImGui::CloseCurrentPopup();
@@ -412,7 +411,6 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 			{
 				SetOwner( *def, ( idClass** )&scriptThread );
 				nodePtr->dirty = true;
-				nodePtr->Graph->DeleteAllPinsAndLinks( *nodePtr );
 				OnChangeDef( def );
 				popup_text = def->GetName();
 				ImGui::CloseCurrentPopup();
@@ -436,7 +434,6 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 			if( ImGui::Button( var.varName, ImVec2( 180, 20 ) ) )
 			{
 				nodePtr->dirty = true;
-				nodePtr->Graph->DeleteAllPinsAndLinks( *nodePtr );
 				OnChangeVar( var );
 				popup_text = var.varName;
 				ImGui::CloseCurrentPopup();  // These calls revoke the popup open state, which was set by OpenPopup above.

@@ -157,27 +157,39 @@ public:
 	static idHashTableT<int, GraphNode*> nodeHashIdx;
 };
 
+struct GraphLink
+{
+	ed::LinkId ID;
+
+	ed::PinId StartPinID;
+	ed::PinId EndPinID;
+
+	ImColor Color;
+
+	GraphLink() :
+		ID( -1 ), StartPinID( -1 ), EndPinID( -1 ), Color( 255, 255, 255 )
+	{
+	}
+	GraphLink( ed::LinkId id, ed::PinId startPinId, ed::PinId endPinId ) :
+		ID( id ), StartPinID( startPinId ), EndPinID( endPinId ), Color( 255, 255, 255 )
+	{
+	}
+};
+
 class StateGraphEditor
 {
 public:
-
-	struct Link
+	struct StateEditContext
 	{
-		ed::LinkId ID;
+		ed::EditorContext* Editor = nullptr;
+		ed::Config Config;
 
-		ed::PinId StartPinID;
-		ed::PinId EndPinID;
-
-		ImColor Color;
-
-		Link() :
-			ID( -1 ), StartPinID( -1 ), EndPinID( -1 ), Color( 255, 255, 255 )
-		{
-		}
-		Link( ed::LinkId id, ed::PinId startPinId, ed::PinId endPinId ) :
-			ID( id ), StartPinID( startPinId ), EndPinID( endPinId ), Color( 255, 255, 255 )
-		{
-		}
+		idStateGraph*			graphObject = nullptr;
+		idEntityPtr<idEntity>	graphOwner;
+		idList<GraphNode*>		nodeList;
+		idList<GraphLink>		linkList;
+		bool Loaded = false;
+		idStr File;
 	};
 
 	StateGraphEditor();
@@ -192,15 +204,15 @@ public:
 	static StateGraphEditor&		Instance();
 	static void						Enable( const idCmdArgs& args );
 
-	const Link&						GetLinkByID( ed::LinkId& id );
-	const int						GetLinkIndexByID( ed::LinkId& id );
-	idList<Link*>					GetAllLinks( const GraphNode& target );
-	void							DeleteAllPinsAndLinks( GraphNode& target );
-	void							DeleteLink( StateGraphEditor::Link& id );
-	void							DeleteNode( GraphNode* node );
-	void							ReadNode( idGraphNode* node, GraphNode& newNode );
-	void							ReadGraph( const GraphState* graph );
-	void							Clear();
+	const int						GetLinkIndexByID( ed::LinkId& i, StateEditContext& graphContext );
+	idList<GraphLink*>				GetAllLinks( const GraphNode& target, StateEditContext& graphContext );
+	void							DeleteAllPinsAndLinks( GraphNode& target, StateEditContext& graphContext );
+	void							DeleteLink( GraphLink& id, StateEditContext& graphContext );
+	void							DeleteNode( GraphNode* node , StateEditContext& graphContext );
+	void							ReadNode( idGraphNode* node, GraphNode& newNode, StateEditContext& graphContext );
+	void							LoadGraph( StateEditContext& graphContext );
+
+	void							Clear( StateEditContext& graphContext );
 
 	int								NextNodeID()
 	{
@@ -217,22 +229,16 @@ public:
 
 private:
 
-	void Handle_ContextMenus();
-	void Handle_NodeEvents();
+	void Handle_ContextMenus( StateEditContext& graphContext );
+	void Handle_NodeEvents( StateEditContext& graphContext );
 	void DrawGraphEntityTest();
 	void DrawMapGraph();
-	void GetAllStateThreads();
 
-	void DrawLeftPane( float paneWidth );
+	void DrawLeftPane( float paneWidth, StateEditContext& graphContext );
+	void DrawEditorButtonBar( StateEditContext& graphContext );
 
-	idBlackBoard bb;
-
-	ed::EditorContext*	EditorContext;
+	StateEditContext	Context;
 	int					nextElementId = 1;
-
-
-	idList<GraphNode*>	nodeList;
-	idList<Link>		linkList;
 
 	bool				isShown;
 
