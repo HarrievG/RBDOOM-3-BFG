@@ -91,9 +91,7 @@ void idWorldspawn::Spawn()
 		graphName.SetFileExtension( ".bgrph" );
 		if( fileSystem->ReadFile( graphName, NULL, NULL ) > 0 )
 		{
-			graphObject = new idStateGraph();
-			int main = graphObject->GetLocalState( "GRAPH_MAIN" );
-			graphObject->localGraphState[main].stateThread->SetOwner( this );
+			graphObject = new idStateGraph( this );
 			idFileLocal file( fileSystem->OpenFileRead( graphName ) );
 			if( !graphObject->LoadBinary( file, file->Timestamp(), this ) )
 			{

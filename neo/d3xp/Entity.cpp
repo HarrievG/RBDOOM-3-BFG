@@ -737,9 +737,7 @@ void idEntity::Spawn()
 
 	if( spawnArgs.GetString( "graphObject", NULL, &graphObjectName ) )
 	{
-		graphObject = new idStateGraph();
-		int main = graphObject->GetLocalState( "GRAPH_MAIN" );
-		graphObject->localGraphState[main].stateThread->SetOwner( this );
+		graphObject = new idStateGraph( this );
 		idStr generatedFilename = idStr( "graphs/" ) + graphObjectName + ".bGrph";
 		idFileLocal inputFile( fileSystem->OpenFileRead( generatedFilename, "fs_basepath" ) );
 		if( inputFile )

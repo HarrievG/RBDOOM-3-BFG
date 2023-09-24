@@ -183,7 +183,7 @@ public:
 	//////////////////////////////////////////////////////////////////////////
 
 	void								Event_Activate( idEntity* activator );
-	idStateGraph();
+	idStateGraph( idClass* Owner = nullptr );
 
 	~idStateGraph();
 	virtual void						Think();

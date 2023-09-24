@@ -66,9 +66,11 @@ void idStateGraph::Event_Activate( idEntity* activator )
 	}
 }
 
-idStateGraph::idStateGraph()
+idStateGraph::idStateGraph( idClass* Owner /* = nullptr*/ )
 {
-	localGraphState[GetLocalState( "GRAPH_MAIN" )].stateThread = new rvStateThread();
+	auto& mainState = localGraphState[GetLocalState( "GRAPH_MAIN" )];
+	mainState.stateThread = new rvStateThread();
+	mainState.stateThread->SetOwner( Owner );
 
 	if( !GraphThreadEventMapInitDone )
 	{
