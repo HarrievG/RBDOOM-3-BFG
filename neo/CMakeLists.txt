@@ -1514,8 +1514,8 @@ endif()
 add_definitions(-D__DOOM__
 				#-DBUILD_FREETYPE
 				#-DFT2_BUILD_LIBRARY
-				)
-				
+				-DIMGUI_USER_CONFIG="libs/imgui/imconfig.h"
+				)		
 
 include_directories(
 			.

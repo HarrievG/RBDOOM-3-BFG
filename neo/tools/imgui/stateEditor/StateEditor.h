@@ -72,90 +72,6 @@ enum class NodeType
 	Houdini
 };
 
-struct GraphNodePin
-{
-	ed::PinId			ID;
-	GraphNode*			ParentNode;
-	std::string			Name;
-	PinType				Type;
-	PinKind				Kind;
-
-	GraphNodePin( int id, const char* name, PinType type, PinKind kind, idGraphNodeSocket* ownerSocket, GraphNode* parentNode ) :
-		ID( id ), ParentNode( parentNode ), Name( name ), Type( type ), Kind( kind )
-	{
-		idGraphNodeSocket** value;
-		if( socketHashIdx.Get( id, &value ) && *value != NULL )
-		{
-			assert( 0 );
-		}
-		else
-		{
-			socketHashIdx.Set( id, ownerSocket );
-		}
-	}
-	~GraphNodePin()
-	{
-		idGraphNodeSocket** value;
-		if( socketHashIdx.Get( ID.Get(), &value ) )
-		{
-			socketHashIdx.Remove( ID.Get() );
-		}
-		else
-		{
-			assert( 0 );
-		}
-
-	}
-	static idHashTableT<int, idGraphNodeSocket*> socketHashIdx;
-};
-
-struct GraphNode
-{
-public:
-	bool dirty;
-	ed::NodeId ID;
-	idStr Name;
-	idList<GraphNodePin*> Inputs;
-	idList<GraphNodePin*> Outputs;
-
-	ImColor Color;
-	NodeType Type;
-	ImVec2 Size;
-
-	idStr State;
-	idStr SavedState;
-	bool FirstDraw;
-
-	idGraphNode* Owner;
-	StateGraphEditor* Graph;
-	GraphNode( int id, const char* name, idGraphNode* owner = nullptr, ImColor color = ImColor( 255, 255, 255 ) ) :
-		dirty( false ), ID( id ), Name( name ), Color( color ), Type( NodeType::Tree ), Size( 0, 0 ), FirstDraw( true ), Owner( owner ), Graph( nullptr )
-	{
-		GraphNode** value;
-		if( nodeHashIdx.Get( id, &value ) && *value != NULL )
-		{
-			assert( 0 );
-		}
-		else
-		{
-			nodeHashIdx.Set( id, this );
-		}
-	}
-	~GraphNode()
-	{
-		GraphNode** value;
-		if( nodeHashIdx.Get( ID.Get(), &value ) )
-		{
-			nodeHashIdx.Remove( ID.Get() );
-		}
-		else
-		{
-			assert( 0 );
-		}
-
-	}
-	static idHashTableT<int, GraphNode*> nodeHashIdx;
-};
 
 struct GraphLink
 {
@@ -176,22 +92,116 @@ struct GraphLink
 	}
 };
 
+struct StateEditContext
+{
+	ed::EditorContext* Editor = nullptr;
+	ed::Config Config;
+
+	idStateGraph* graphObject = nullptr;
+	idEntityPtr<idEntity>	graphOwner;
+	idList<GraphNode*>		nodeList;
+	idList<GraphLink>		linkList;
+	bool Loaded = false;
+	idStr File;
+	int nextElementId = 1;
+	idHashTableT<int, idGraphNodeSocket*> socketHashIdx;
+	idHashTableT<int, GraphNode*> nodeHashIdx;
+	idStr saveState;
+};
+
+
+struct GraphNodePin
+{
+	ed::PinId			ID;
+	GraphNode*			ParentNode;
+	std::string			Name;
+	PinType				Type;
+	PinKind				Kind;
+	StateEditContext& targetContext;
+
+	GraphNodePin( StateEditContext& graphContext, int id, const char* name, PinType type, PinKind kind, idGraphNodeSocket* ownerSocket, GraphNode* parentNode ) :
+		ID( id ), ParentNode( parentNode ), Name( name ), Type( type ), Kind( kind ), targetContext( graphContext )
+	{
+		idGraphNodeSocket** value;
+		if( targetContext.socketHashIdx.Get( id, &value ) && *value != NULL )
+		{
+			assert( 0 );
+		}
+		else
+		{
+			targetContext.socketHashIdx.Set( id, ownerSocket );
+		}
+	}
+	~GraphNodePin()
+	{
+		idGraphNodeSocket** value;
+		if( targetContext.socketHashIdx.Get( ID.Get(), &value ) )
+		{
+			targetContext.socketHashIdx.Remove( ID.Get() );
+		}
+		else
+		{
+			assert( 0 );
+		}
+
+	}
+};
+
+struct GraphNode
+{
+public:
+	bool dirty;
+	ed::NodeId ID;
+	idStr Name;
+	idList<GraphNodePin*> Inputs;
+	idList<GraphNodePin*> Outputs;
+
+	ImColor Color;
+	NodeType Type;
+	ImVec2 Size;
+
+	idStr State;
+	idStr SavedState;
+	bool FirstDraw;
+	ImVec2 Position;
+
+	idGraphNode* Owner;
+	StateGraphEditor* Graph;
+	StateEditContext& targetContext;
+	ImDrawList* drawList;
+	GraphNode( StateEditContext& graphContext, int id, const char* name, idGraphNode* owner = nullptr, ImColor color = ImColor( 255, 255, 255 ) ) :
+		dirty( false ), ID( id ), Name( name ), Color( color ), Type( NodeType::Tree ), Size( 0, 0 ), FirstDraw( false ), Position( ImVec2( 0, 0 ) ), Owner( owner ), Graph( nullptr )
+		, targetContext( graphContext ), drawList( nullptr )
+	{
+		GraphNode** value;
+		if( targetContext.nodeHashIdx.Get( id, &value ) && *value != NULL )
+		{
+			assert( 0 );
+		}
+		else
+		{
+			targetContext.nodeHashIdx.Set( id, this );
+		}
+	}
+	~GraphNode()
+	{
+		GraphNode** value;
+		if( targetContext.nodeHashIdx.Get( ID.Get(), &value ) )
+		{
+			targetContext.nodeHashIdx.Remove( ID.Get() );
+		}
+		else
+		{
+			assert( 0 );
+		}
+
+	}
+};
+
+
 class StateGraphEditor
 {
 public:
-	struct StateEditContext
-	{
-		ed::EditorContext* Editor = nullptr;
-		ed::Config Config;
-
-		idStateGraph*			graphObject = nullptr;
-		idEntityPtr<idEntity>	graphOwner;
-		idList<GraphNode*>		nodeList;
-		idList<GraphLink>		linkList;
-		bool Loaded = false;
-		idStr File;
-	};
-
 	StateGraphEditor();
 	virtual	~StateGraphEditor();
 	StateGraphEditor( StateGraphEditor const& ) = delete;
@@ -214,17 +224,17 @@ public:
 
 	void							Clear( StateEditContext& graphContext );
 
-	int								NextNodeID()
+	int								NextNodeID( StateEditContext& graphContext )
 	{
-		return nextElementId++;
+		return graphContext.nextElementId++;
 	}
-	int								NextPinID()
+	int								NextPinID( StateEditContext& graphContext )
 	{
-		return nextElementId++;
+		return graphContext.nextElementId++;
 	}
-	int								NextLinkID()
+	int								NextLinkID( StateEditContext& graphContext )
 	{
-		return nextElementId++;
+		return graphContext.nextElementId++;
 	}
 
 private:

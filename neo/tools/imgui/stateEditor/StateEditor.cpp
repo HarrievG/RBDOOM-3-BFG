@@ -46,9 +46,6 @@ namespace ImGuiTools
 {
 using namespace ImGui;
 
-
-idHashTableT<int, idGraphNodeSocket*> GraphNodePin::socketHashIdx;
-idHashTableT<int, GraphNode*> GraphNode::nodeHashIdx;
 idList<idGraphNode*> StateGraphEditor::nodeTypes;
 static bool Splitter( bool split_vertically, float thickness, float* size1, float* size2, float min_size1, float min_size2, float splitter_long_axis_size = -1.0f )
 {
@@ -146,8 +143,8 @@ void StateGraphEditor::DeleteLink( GraphLink& link, StateEditContext& graphConte
 
 	idGraphNodeSocket** inputSocketPtr;
 	idGraphNodeSocket** outputSocketPtr;
-	GraphNodePin::socketHashIdx.Get( link.StartPinID.Get(), &outputSocketPtr );
-	GraphNodePin::socketHashIdx.Get( link.EndPinID.Get(), &inputSocketPtr );
+	graphContext.socketHashIdx.Get( link.StartPinID.Get(), &outputSocketPtr );
+	graphContext.socketHashIdx.Get( link.EndPinID.Get(), &inputSocketPtr );
 
 	idGraphNodeSocket* inputSocket = *inputSocketPtr;
 	idGraphNodeSocket* outputSocket = *outputSocketPtr;
@@ -178,12 +175,12 @@ void StateGraphEditor::ReadNode( idGraphNode* node, GraphNode& newNode , StateEd
 
 	for( auto& socket : node->inputSockets )
 	{
-		newNode.Inputs.Alloc() = new GraphNodePin( NextPinID(), socket.name, PinType::Flow, PinKind::Input, &socket, &newNode );
+		newNode.Inputs.Alloc() = new GraphNodePin( graphContext, NextPinID( graphContext ), socket.name, PinType::Flow, PinKind::Input, &socket, &newNode );
 	}
 
 	for( auto& socket : node->outputSockets )
 	{
-		newNode.Outputs.Alloc() = new GraphNodePin( NextPinID(), socket.name, PinType::Flow, PinKind::Output, &socket, &newNode );
+		newNode.Outputs.Alloc() = new GraphNodePin( graphContext, NextPinID( graphContext ), socket.name, PinType::Flow, PinKind::Output, &socket, &newNode );
 	}
 
 	newNode.Graph = this;
@@ -195,17 +192,37 @@ void StateGraphEditor::LoadGraph( StateEditContext& graphContext )
 	{
 		auto& graphState = graphContext.graphObject->localGraphState[0];
 
+		idStr posInfoFilename = graphContext.File;
+		posInfoFilename.SetFileExtension( "bnpos" );
+		idFileLocal posInfoFile( fileSystem->OpenFileRead( posInfoFilename, "fs_basepath" ) );
+		idList<idVec2> nodePositions;
+		if( posInfoFile )
+		{
+			for( int i = 0; i < graphState.nodes.Num(); i++ )
+			{
+				posInfoFile->ReadVec2( nodePositions.Alloc() );
+			}
+		}
+
+		int posIndex = 0;
 		for( auto node : graphState.nodes )
 		{
-			auto& newNode = *( graphContext.nodeList.Alloc() = new GraphNode( NextNodeID(), node->GetName(), node ) );
+			auto& newNode = *( graphContext.nodeList.Alloc() = new GraphNode( graphContext, NextNodeID( graphContext ), node->GetName(), node ) );
 			ReadNode( node, newNode, graphContext );
+
+			if( posInfoFile )
+			{
+				newNode.Position = nodePositions[posIndex].ToFloatPtr();
+				newNode.FirstDraw = true;
+				posIndex++;
+			}
 		}
 		for( idGraphNodeSocket::Link_t& link : graphState.links )
 		{
 			auto& inputNode = *graphContext.nodeList[link.end->nodeIndex];
 			auto& outputNode = *graphContext.nodeList[link.start->nodeIndex];
 			GraphLink& newLink = graphContext.linkList.Alloc();
-			newLink.ID			= ed::LinkId( NextLinkID() );
+			newLink.ID			= ed::LinkId( NextLinkID( graphContext ) );
 			newLink.StartPinID	= outputNode.Outputs[link.start->socketIndex]->ID;
 			newLink.EndPinID	= inputNode.Inputs[link.end->socketIndex]->ID;
 			auto* var = inputNode.Owner->inputSockets[link.end->socketIndex].var;
@@ -225,11 +242,74 @@ void StateGraphEditor::Clear( StateEditContext& graphContext )
 	nextElementId = 1;
 }
 
+bool SaveConfig( const char* data, size_t size, ed::SaveReasonFlags reason, void* userPointer )
+{
+	auto* editorContext = static_cast<StateEditContext*>( userPointer );
+
+	//common->Printf("SaveConfig %s\n", editorContext->File.c_str());
+	//common->Printf("\t%s\n", data);
+
+	if( !editorContext->File.IsEmpty() )
+	{
+		editorContext->saveState = data;
+		idFileLocal outputFile( fileSystem->OpenFileWrite( editorContext->File + ".json", "fs_basepath" ) );
+
+		outputFile->Printf( editorContext->saveState );
+	}
+
+	return true;
+}
+
+size_t LoadConfig( char* data, void* userPointer )
+{
+	auto* editorContext = static_cast<StateEditContext*>( userPointer );
+	//common->Printf("LoadConfig %s\n", static_cast<StateEditContext*>(userPointer)->File.c_str());
+	idFileLocal inFile( fileSystem->OpenFileReadMemory( editorContext->File + ".json" ) );
+	if( inFile != NULL && inFile->Length() > 0 )
+	{
+		if( data )
+		{
+			inFile->Read( data, inFile->Length() );
+		}
+		return inFile->Length();
+	}
+
+	return 0;
+}
+
+bool SaveNode( ed::NodeId nodeId, const char* data, size_t size, ed::SaveReasonFlags reason, void* userPointer )
+{
+	//common->Printf("SaveNode %s\n", static_cast<StateEditContext*>(userPointer)->File.c_str());
+	//common->Printf("\t%s\n", data);
+	return true;
+}
+
+size_t LoadNode( ed::NodeId nodeId, char* data, void* userPointer )
+{
+	//common->Printf("LoadNode %s\n", static_cast<StateEditContext*>(userPointer)->File.c_str());
+	//common->Printf("\t%s\n", data);
+	return 0;
+}
+
+void  ConfigSession( void* userPointer )
+{
+	//common->Printf("ConfigEditorSession %s\n" , static_cast<StateEditContext*>(userPointer)->File.c_str());
+}
+
 void StateGraphEditor::Init()
 {
 	ed::Config config;
 	config.SettingsFile = "Simple.json";
-	Context.Editor = ed::CreateEditor();
+
+	config.BeginSaveSession = ConfigSession;
+	config.EndSaveSession = ConfigSession;
+	config.SaveSettings = SaveConfig;
+	config.LoadSettings = LoadConfig;
+	config.SaveNodeSettings = SaveNode;
+	config.LoadNodeSettings = LoadNode;
+	config.UserPointer = &Context;
+
+	Context.Editor = ed::CreateEditor( &config );
 	if( !nodeTypes.Num() )
 	{
 		auto* childNode = idGraphNode::Type.node.GetChild();
@@ -246,6 +326,8 @@ void StateGraphEditor::Init()
 			assert( 0 );
 		}
 	}
+
+
 }
 
 void StateGraphEditor::DrawGraphEntityTest()
@@ -285,13 +367,13 @@ void StateGraphEditor::DrawGraphEntityTest()
 				LoadGraph( Context );
 			}
 		}
-
+		ImGui::BeginChild( "CONTENT" );
 		static float leftPaneWidth = 400.0f;
 		static float rightPaneWidth = 800.0f;
 		Splitter( true, 4.0f, &leftPaneWidth, &rightPaneWidth, 50.0f, 50.0f );
 
 		DrawLeftPane( leftPaneWidth - 4.0f , Context );
-		ImGui::BeginChild( "CONTENT" );
+
 		//ImGui::SameLine(0.0f, 12.0f);
 		ed::Begin( "My Editor" );
 
@@ -306,7 +388,21 @@ void StateGraphEditor::DrawGraphEntityTest()
 					ReadNode( node.Owner, node, Context );
 					node.dirty = false;
 				}
+
 				node.Owner->Draw( &node );
+				if( node.FirstDraw )
+				{
+					ed::SetNodePosition( node.ID, node.Position );
+					node.FirstDraw = false;
+				}
+				if( ImGui::IsItemVisible() )
+				{
+					node.drawList = ed::GetNodeBackgroundDrawList( node.ID );
+				}
+				else
+				{
+					node.drawList = nullptr;
+				}
 				ImGui::PopID();
 			}
 
@@ -317,10 +413,10 @@ void StateGraphEditor::DrawGraphEntityTest()
 				ImGui::PopID();
 
 				idGraphNodeSocket** inputSocketPtr;
-				GraphNodePin::socketHashIdx.Get( link.EndPinID.Get(), &inputSocketPtr );
+				Context.socketHashIdx.Get( link.EndPinID.Get(), &inputSocketPtr );
 				idGraphNodeSocket* inputSocket = *inputSocketPtr;
 				idGraphNodeSocket** outputSocketPtr;
-				GraphNodePin::socketHashIdx.Get( link.StartPinID.Get(), &outputSocketPtr );
+				Context.socketHashIdx.Get( link.StartPinID.Get(), &outputSocketPtr );
 				idGraphNodeSocket* outputSocket = *outputSocketPtr;
 
 				int last = gameLocal.previousTime;
@@ -355,6 +451,14 @@ void StateGraphEditor::DrawMapGraph()
 		{
 			MapGraphContext.File = "maps/" + currentMap.SetFileExtension( ".bgrph" );
 		}
+
+		MapGraphContext.Config.BeginSaveSession = ConfigSession;
+		MapGraphContext.Config.EndSaveSession = ConfigSession;
+		MapGraphContext.Config.SaveSettings = SaveConfig;
+		MapGraphContext.Config.LoadSettings = LoadConfig;
+		MapGraphContext.Config.SaveNodeSettings = SaveNode;
+		MapGraphContext.Config.LoadNodeSettings = LoadNode;
+		MapGraphContext.Config.UserPointer = &MapGraphContext;
 
 		MapGraphContext.Config.SettingsFile = MapGraphContext.File;
 		MapGraphContext.Editor = ed::CreateEditor( &MapGraphContext.Config );
@@ -393,6 +497,7 @@ void StateGraphEditor::DrawMapGraph()
 			for( auto* nodePtr : MapGraphContext.nodeList )
 			{
 				auto& node = *nodePtr;
+
 				ImGui::PushID( node.ID.Get() );
 				if( node.dirty )
 				{
@@ -400,6 +505,19 @@ void StateGraphEditor::DrawMapGraph()
 					node.dirty = false;
 				}
 				node.Owner->Draw( &node );
+				if( node.FirstDraw )
+				{
+					ed::SetNodePosition( node.ID, node.Position );
+					node.FirstDraw = false;
+				}
+				if( ImGui::IsItemVisible() )
+				{
+					node.drawList = ed::GetNodeBackgroundDrawList( node.ID );
+				}
+				else
+				{
+					node.drawList = nullptr;
+				}
 				ImGui::PopID();
 			}
 
@@ -410,10 +528,10 @@ void StateGraphEditor::DrawMapGraph()
 				ImGui::PopID();
 
 				idGraphNodeSocket** inputSocketPtr;
-				GraphNodePin::socketHashIdx.Get( link.EndPinID.Get(), &inputSocketPtr );
+				MapGraphContext.socketHashIdx.Get( link.EndPinID.Get(), &inputSocketPtr );
 				idGraphNodeSocket* inputSocket = *inputSocketPtr;
 				idGraphNodeSocket** outputSocketPtr;
-				GraphNodePin::socketHashIdx.Get( link.StartPinID.Get(), &outputSocketPtr );
+				MapGraphContext.socketHashIdx.Get( link.StartPinID.Get(), &outputSocketPtr );
 				idGraphNodeSocket* outputSocket = *outputSocketPtr;
 
 				int last = gameLocal.previousTime;
@@ -841,6 +959,14 @@ void StateGraphEditor::DrawEditorButtonBar( StateEditContext& graphContext )
 			// "graphs/graphBin.bGrph"
 			idFileLocal outputFile( fileSystem->OpenFileWrite( graphContext.File, "fs_basepath" ) );
 			graphContext.graphObject->WriteBinary( outputFile );
+			idStr posOutFilename = graphContext.File;
+			posOutFilename.SetFileExtension( "bnpos" );
+			idFileLocal posOutputFile( fileSystem->OpenFileWrite( posOutFilename, "fs_basepath" ) );
+			for( auto* node : graphContext.nodeList )
+			{
+				auto imVec = ed::GetNodePosition( node->ID );
+				posOutputFile->WriteVec2( idVec2( imVec.x, imVec.y ) );
+			}
 		}
 	}
 
@@ -879,7 +1005,7 @@ void StateGraphEditor::Handle_ContextMenus( StateEditContext& graphContext )
 			idGraphNode* createdNode = nodePtr->QueryNodeConstruction( graphContext.graphObject, graphContext.graphOwner );
 			if( createdNode != nullptr )
 			{
-				auto& newNode = *( graphContext.nodeList.Alloc() = new GraphNode( NextNodeID(), createdNode->GetName(), createdNode ) );
+				auto& newNode = *( graphContext.nodeList.Alloc() = new GraphNode( graphContext, NextNodeID( graphContext ), createdNode->GetName(), createdNode ) );
 				ReadNode( createdNode, newNode , graphContext );
 				ed::SetNodePosition( newNode.ID, openPopupPosition );
 			}
@@ -933,8 +1059,8 @@ void StateGraphEditor::Handle_NodeEvents( StateEditContext& graphContext )
 			{
 				idGraphNodeSocket** inputSocketPtr;
 				idGraphNodeSocket** outputSocketPtr;
-				GraphNodePin::socketHashIdx.Get( startPinId.Get(), &outputSocketPtr );
-				GraphNodePin::socketHashIdx.Get( endPinId.Get(), &inputSocketPtr );
+				graphContext.socketHashIdx.Get( startPinId.Get(), &outputSocketPtr );
+				graphContext.socketHashIdx.Get( endPinId.Get(), &inputSocketPtr );
 
 				idGraphNodeSocket* inputSocket = *inputSocketPtr;
 				idGraphNodeSocket* outputSocket = *outputSocketPtr;
@@ -952,7 +1078,7 @@ void StateGraphEditor::Handle_NodeEvents( StateEditContext& graphContext )
 					}
 
 					GraphLink& newLink = graphContext.linkList.Alloc();
-					newLink.ID = ed::LinkId( NextLinkID() );
+					newLink.ID = ed::LinkId( NextLinkID( graphContext ) );
 					newLink.StartPinID = startPinId;
 					newLink.EndPinID = endPinId;
 
@@ -1013,7 +1139,7 @@ void StateGraphEditor::Handle_NodeEvents( StateEditContext& graphContext )
 		if( ed::QueryNewNode( &pinId ) )
 		{
 			idGraphNodeSocket** newSocket;
-			GraphNodePin::socketHashIdx.Get( pinId.Get(), &newSocket );
+			graphContext.socketHashIdx.Get( pinId.Get(), &newSocket );
 			idGraphNodeSocket* newSocketPtr = *newSocket;
 			if( newSocketPtr )
 			{
@@ -1062,7 +1188,7 @@ void StateGraphEditor::Handle_NodeEvents( StateEditContext& graphContext )
 			{
 
 				GraphNode** targetNode;
-				GraphNode::nodeHashIdx.Get( nodeId.Get(), &targetNode );
+				graphContext.nodeHashIdx.Get( nodeId.Get(), &targetNode );
 				DeleteNode( *targetNode , graphContext );
 			}
 		}
