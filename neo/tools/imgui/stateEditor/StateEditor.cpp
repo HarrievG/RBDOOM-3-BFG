@@ -35,11 +35,14 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "../d3xp/Game_local.h"
 #include "../extern/imgui-node-editor/imgui_node_editor.h"
+#include "../extern/imgui-node-editor/imgui_node_editor_internal.h"
 #include "../d3xp/StateGraph.h"
 
 # define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui_internal.h"
 #include "framework/Common_local.h"
+
+idCVar graph_autoSaveLayout( "graph_autoSaveEditorContext", "30000", CVAR_TOOL | CVAR_INTEGER, "timeout in ms between automatic saves of ed::EditorContext " );
 
 namespace ed = ax::NodeEditor;
 namespace ImGuiTools
@@ -192,7 +195,7 @@ void StateGraphEditor::LoadGraph( StateEditContext& graphContext )
 	{
 		auto& graphState = graphContext.graphObject->localGraphState[0];
 
-		idStr posInfoFilename = graphContext.File;
+		idStr posInfoFilename = graphContext.file;
 		posInfoFilename.SetFileExtension( "bnpos" );
 		idFileLocal posInfoFile( fileSystem->OpenFileRead( posInfoFilename, "fs_basepath" ) );
 		idList<idVec2> nodePositions;
@@ -244,17 +247,21 @@ void StateGraphEditor::Clear( StateEditContext& graphContext )
 
 bool SaveConfig( const char* data, size_t size, ed::SaveReasonFlags reason, void* userPointer )
 {
-	auto* editorContext = static_cast<StateEditContext*>( userPointer );
+	auto* editorContext = static_cast< StateEditContext* >( userPointer );
 
-	//common->Printf("SaveConfig %s\n", editorContext->File.c_str());
-	//common->Printf("\t%s\n", data);
-
-	if( !editorContext->File.IsEmpty() )
+	if( editorContext->lastSave + graph_autoSaveLayout.GetInteger() < gameLocal.GetTime() || !editorContext->lastSave )
 	{
-		editorContext->saveState = data;
-		idFileLocal outputFile( fileSystem->OpenFileWrite( editorContext->File + ".json", "fs_basepath" ) );
+		//common->Printf("SaveConfig %s\n", editorContext->File.c_str());
+		//common->Printf("\t%s\n", data);
 
-		outputFile->Printf( editorContext->saveState );
+		if( !editorContext->file.IsEmpty( ) )
+		{
+			editorContext->saveState = data;
+			idFileLocal outputFile( fileSystem->OpenFileWrite( editorContext->file + ".json", "fs_basepath" ) );
+
+			outputFile->Printf( editorContext->saveState );
+		}
+		editorContext->lastSave = gameLocal.GetTime();
 	}
 
 	return true;
@@ -264,7 +271,7 @@ size_t LoadConfig( char* data, void* userPointer )
 {
 	auto* editorContext = static_cast<StateEditContext*>( userPointer );
 	//common->Printf("LoadConfig %s\n", static_cast<StateEditContext*>(userPointer)->File.c_str());
-	idFileLocal inFile( fileSystem->OpenFileReadMemory( editorContext->File + ".json" ) );
+	idFileLocal inFile( fileSystem->OpenFileReadMemory( editorContext->file + ".json" ) );
 	if( inFile != NULL && inFile->Length() > 0 )
 	{
 		if( data )
@@ -332,112 +339,41 @@ void StateGraphEditor::Init()
 
 void StateGraphEditor::DrawGraphEntityTest()
 {
-	auto& io = ImGui::GetIO();
+	if( ImGui::Button( "Load Graph Bin" ) )
 	{
-		ImVec2 currentWidowSize = ImGui::GetWindowSize();
-		ed::SetCurrentEditor( Context.Editor );
-
-		DrawEditorButtonBar( Context );
-		if( ImGui::Button( "Load Graph Bin" ) )
+		if( !graphEnt )
 		{
-			if( !graphEnt )
-			{
-				idDict args;
-				args.Set( "graphObject", "graphBin" );
-				graphEnt = static_cast<idGraphedEntity*>( gameLocal.SpawnEntityType( idGraphedEntity::Type, &args ) );
-				graphEnt->PostEventMS( &EV_Activate, 0, graphEnt.GetEntity() );
-				Context.graphObject = graphEnt->graphObject;
-				Context.graphOwner = graphEnt;
-				Context.Loaded = true;
-				Context.File = "graphs/graphBin.bGrph";
-				LoadGraph( Context );
-			}
+			idDict args;
+			args.Set( "graphObject", "graphBin" );
+			graphEnt = static_cast< idGraphedEntity* >( gameLocal.SpawnEntityType( idGraphedEntity::Type, &args ) );
+			graphEnt->PostEventMS( &EV_Activate, 0, graphEnt.GetEntity( ) );
+			Context.graphObject = graphEnt->graphObject;
+			Context.graphOwner = graphEnt;
+			Context.Loaded = true;
+			Context.file = "graphs/graphBin.bGrph";
+			Context.name = "GraphEntityTest";
+			LoadGraph( Context );
 		}
-		ImGui::SameLine();
-		if( ImGui::Button( "SpawnGraphEntity" ) )
+	}
+
+	ImGui::SameLine( );
+	if( ImGui::Button( "SpawnGraphEntity" ) )
+	{
+		if( !graphEnt.IsValid( ) )
 		{
-			if( !graphEnt.IsValid() )
-			{
-				idDict	args;
-				args.Set( "entkey", "idGraphedEntity__80" );
-				args.Set( "intkey", "1234" );
-				args.Set( "graphObject", "" );
-				graphEnt = static_cast<idGraphedEntity*>( gameLocal.SpawnEntityType( idGraphedEntity::Type, &args ) );
-				graphEnt->PostEventMS( &EV_Activate, 0, graphEnt.GetEntity() );
-				LoadGraph( Context );
-			}
+			idDict	args;
+			args.Set( "entkey", "idGraphedEntity__80" );
+			args.Set( "intkey", "1234" );
+			args.Set( "graphObject", "" );
+			graphEnt = static_cast< idGraphedEntity* >( gameLocal.SpawnEntityType( idGraphedEntity::Type, &args ) );
+			graphEnt->PostEventMS( &EV_Activate, 0, graphEnt.GetEntity( ) );
+			LoadGraph( Context );
 		}
-		ImGui::BeginChild( "CONTENT" );
-		static float leftPaneWidth = 400.0f;
-		static float rightPaneWidth = 800.0f;
-		Splitter( true, 4.0f, &leftPaneWidth, &rightPaneWidth, 50.0f, 50.0f );
+	}
 
-		DrawLeftPane( leftPaneWidth - 4.0f , Context );
-
-		//ImGui::SameLine(0.0f, 12.0f);
-		ed::Begin( "My Editor" );
-
-		if( graphEnt.IsValid() )
-		{
-			for( auto* nodePtr : Context.nodeList )
-			{
-				auto& node = *nodePtr;
-				ImGui::PushID( node.ID.Get() );
-				if( node.dirty )
-				{
-					ReadNode( node.Owner, node, Context );
-					node.dirty = false;
-				}
-
-				node.Owner->Draw( &node );
-				if( node.FirstDraw )
-				{
-					ed::SetNodePosition( node.ID, node.Position );
-					node.FirstDraw = false;
-				}
-				if( ImGui::IsItemVisible() )
-				{
-					node.drawList = ed::GetNodeBackgroundDrawList( node.ID );
-				}
-				else
-				{
-					node.drawList = nullptr;
-				}
-				ImGui::PopID();
-			}
-
-			for( auto& link : Context.linkList )
-			{
-				ImGui::PushID( link.ID.Get() );
-				ed::Link( link.ID, link.StartPinID, link.EndPinID, link.Color, 2.0f );
-				ImGui::PopID();
-
-				idGraphNodeSocket** inputSocketPtr;
-				Context.socketHashIdx.Get( link.EndPinID.Get(), &inputSocketPtr );
-				idGraphNodeSocket* inputSocket = *inputSocketPtr;
-				idGraphNodeSocket** outputSocketPtr;
-				Context.socketHashIdx.Get( link.StartPinID.Get(), &outputSocketPtr );
-				idGraphNodeSocket* outputSocket = *outputSocketPtr;
-
-				int last = gameLocal.previousTime;
-
-				if( ( outputSocket->lastActivated > last ) && inputSocket->lastActivated > last )
-				{
-					ed::Flow( link.ID );
-				}
-			}
-		}
-		else
-		{
-			Clear( Context );
-		}
-
-		Handle_ContextMenus( Context );
-		Handle_NodeEvents( Context );
-
-		ed::End();
-		ImGui::EndChild();
-		ed::SetCurrentEditor( nullptr );
+	if( graphEnt.IsValid( ) )
+	{
+		Draw( Context );
 	}
 }
 
@@ -449,7 +385,7 @@ void StateGraphEditor::DrawMapGraph()
 		idStr currentMap  = commonLocal.GetCurrentMapName();
 		if( !currentMap.IsEmpty() )
 		{
-			MapGraphContext.File = "maps/" + currentMap.SetFileExtension( ".bgrph" );
+			MapGraphContext.file = "maps/" + currentMap.SetFileExtension( ".bgrph" );
 		}
 
 		MapGraphContext.Config.BeginSaveSession = ConfigSession;
@@ -459,8 +395,9 @@ void StateGraphEditor::DrawMapGraph()
 		MapGraphContext.Config.SaveNodeSettings = SaveNode;
 		MapGraphContext.Config.LoadNodeSettings = LoadNode;
 		MapGraphContext.Config.UserPointer = &MapGraphContext;
+		MapGraphContext.name = "MapGraph";
 
-		MapGraphContext.Config.SettingsFile = MapGraphContext.File;
+		MapGraphContext.Config.SettingsFile = MapGraphContext.file;
 		MapGraphContext.Editor = ed::CreateEditor( &MapGraphContext.Config );
 
 		idEntityPtr<idEntity> worldEnt;
@@ -476,86 +413,7 @@ void StateGraphEditor::DrawMapGraph()
 		return;
 	}
 
-	auto& io = ImGui::GetIO();
-	{
-		ImVec2 currentWidowSize = ImGui::GetWindowSize();
-
-		ed::SetCurrentEditor( MapGraphContext.Editor );
-
-		DrawEditorButtonBar( MapGraphContext );
-		static float leftPaneWidth = 400.0f;
-		static float rightPaneWidth = 800.0f;
-		Splitter( true, 4.0f, &leftPaneWidth, &rightPaneWidth, 50.0f, 50.0f );
-
-		DrawLeftPane( leftPaneWidth - 4.0f, MapGraphContext );
-		ImGui::BeginChild( "MAPCONTENT" );
-		//ImGui::SameLine(0.0f, 12.0f);
-		ed::Begin( "MapGraph Editor" );
-
-		if( MapGraphContext.graphOwner.IsValid() )
-		{
-			for( auto* nodePtr : MapGraphContext.nodeList )
-			{
-				auto& node = *nodePtr;
-
-				ImGui::PushID( node.ID.Get() );
-				if( node.dirty )
-				{
-					ReadNode( node.Owner, node , MapGraphContext );
-					node.dirty = false;
-				}
-				node.Owner->Draw( &node );
-				if( node.FirstDraw )
-				{
-					ed::SetNodePosition( node.ID, node.Position );
-					node.FirstDraw = false;
-				}
-				if( ImGui::IsItemVisible() )
-				{
-					node.drawList = ed::GetNodeBackgroundDrawList( node.ID );
-				}
-				else
-				{
-					node.drawList = nullptr;
-				}
-				ImGui::PopID();
-			}
-
-			for( auto& link : MapGraphContext.linkList )
-			{
-				ImGui::PushID( link.ID.Get() );
-				ed::Link( link.ID, link.StartPinID, link.EndPinID, link.Color, 2.0f );
-				ImGui::PopID();
-
-				idGraphNodeSocket** inputSocketPtr;
-				MapGraphContext.socketHashIdx.Get( link.EndPinID.Get(), &inputSocketPtr );
-				idGraphNodeSocket* inputSocket = *inputSocketPtr;
-				idGraphNodeSocket** outputSocketPtr;
-				MapGraphContext.socketHashIdx.Get( link.StartPinID.Get(), &outputSocketPtr );
-				idGraphNodeSocket* outputSocket = *outputSocketPtr;
-
-				int last = gameLocal.previousTime;
-
-				if( ( outputSocket->lastActivated > last ) && inputSocket->lastActivated > last )
-				{
-					ed::Flow( link.ID );
-				}
-
-			}
-
-		}
-		else
-		{
-			Clear( MapGraphContext );
-		}
-
-		Handle_ContextMenus( MapGraphContext );
-		Handle_NodeEvents( MapGraphContext );
-
-		ed::End();
-		ImGui::EndChild();
-		ed::SetCurrentEditor( nullptr );
-	}
+	Draw( MapGraphContext );
 }
 
 void StateGraphEditor::Draw()
@@ -612,6 +470,86 @@ void StateGraphEditor::Draw()
 		isShown = showTool;
 		impl::SetReleaseToolMouse( false );
 	}
+}
+
+void StateGraphEditor::Draw( StateEditContext& graphContext )
+{
+	ed::SetCurrentEditor( graphContext.Editor );
+
+	DrawEditorButtonBar( graphContext );
+
+	ImGui::BeginChild( graphContext.name );
+	static float leftPaneWidth = 400.0f;
+	static float rightPaneWidth = 800.0f;
+	Splitter( true, 4.0f, &leftPaneWidth, &rightPaneWidth, 50.0f, 50.0f );
+
+	DrawLeftPane( leftPaneWidth - 4.0f , graphContext );
+
+	//ImGui::SameLine(0.0f, 12.0f);
+	ed::Begin( graphContext.name + "_editor" );
+
+	if( graphContext.graphOwner.IsValid() )
+	{
+		for( auto* nodePtr : graphContext.nodeList )
+		{
+			auto& node = *nodePtr;
+			ImGui::PushID( node.ID.Get() );
+			if( node.dirty )
+			{
+				ReadNode( node.Owner, node, graphContext );
+				node.dirty = false;
+			}
+
+			node.Owner->Draw( &node );
+			if( node.FirstDraw )
+			{
+				ed::SetNodePosition( node.ID, node.Position );
+				node.FirstDraw = false;
+			}
+			if( ImGui::IsItemVisible() )
+			{
+				node.drawList = ed::GetNodeBackgroundDrawList( node.ID );
+			}
+			else
+			{
+				node.drawList = nullptr;
+			}
+			ImGui::PopID();
+		}
+
+		for( auto& link : graphContext.linkList )
+		{
+			ImGui::PushID( link.ID.Get() );
+			ed::Link( link.ID, link.StartPinID, link.EndPinID, link.Color, 2.0f );
+			ImGui::PopID();
+
+			idGraphNodeSocket** inputSocketPtr;
+			graphContext.socketHashIdx.Get( link.EndPinID.Get(), &inputSocketPtr );
+			idGraphNodeSocket* inputSocket = *inputSocketPtr;
+			idGraphNodeSocket** outputSocketPtr;
+			graphContext.socketHashIdx.Get( link.StartPinID.Get(), &outputSocketPtr );
+			idGraphNodeSocket* outputSocket = *outputSocketPtr;
+
+			int last = gameLocal.previousTime;
+
+			if( ( outputSocket->lastActivated > last ) && inputSocket->lastActivated > last )
+			{
+				ed::Flow( link.ID );
+			}
+		}
+	}
+	else
+	{
+		Clear( graphContext );
+	}
+
+	Handle_ContextMenus( graphContext );
+	Handle_NodeEvents( graphContext );
+
+	ed::End();
+	ImGui::EndChild();
+
+	ed::SetCurrentEditor( nullptr );
 }
 
 ImGuiTools::StateGraphEditor& StateGraphEditor::Instance()
@@ -956,10 +894,9 @@ void StateGraphEditor::DrawEditorButtonBar( StateEditContext& graphContext )
 	{
 		if( graphContext.graphObject )
 		{
-			// "graphs/graphBin.bGrph"
-			idFileLocal outputFile( fileSystem->OpenFileWrite( graphContext.File, "fs_basepath" ) );
+			idFileLocal outputFile( fileSystem->OpenFileWrite( graphContext.file, "fs_basepath" ) );
 			graphContext.graphObject->WriteBinary( outputFile );
-			idStr posOutFilename = graphContext.File;
+			idStr posOutFilename = graphContext.file;
 			posOutFilename.SetFileExtension( "bnpos" );
 			idFileLocal posOutputFile( fileSystem->OpenFileWrite( posOutFilename, "fs_basepath" ) );
 			for( auto* node : graphContext.nodeList )
@@ -967,6 +904,10 @@ void StateGraphEditor::DrawEditorButtonBar( StateEditContext& graphContext )
 				auto imVec = ed::GetNodePosition( node->ID );
 				posOutputFile->WriteVec2( idVec2( imVec.x, imVec.y ) );
 			}
+			//HVG Todo:
+			//Zoomlevel is not correctly set in the data!
+			graphContext.lastSave = 0;
+			SaveConfig( graphContext.saveState, graphContext.saveState.Allocated( ), ed::SaveReasonFlags::None, &graphContext );
 		}
 	}
 

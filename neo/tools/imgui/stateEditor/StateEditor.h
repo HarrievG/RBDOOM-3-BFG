@@ -32,6 +32,8 @@ If you have questions concerning this license or the applicable additional terms
 #include "../../edit_public.h"
 #include "d3xp/script/Script_Program.h"
 #include "../extern/imgui-node-editor/imgui_node_editor.h"
+#include "../extern/imgui-node-editor/imgui_node_editor_internal.h"
+
 #include "d3xp/StateGraph.h"
 
 namespace ImGuiTools
@@ -97,16 +99,18 @@ struct StateEditContext
 	ed::EditorContext* Editor = nullptr;
 	ed::Config Config;
 
+	idStr name;
 	idStateGraph* graphObject = nullptr;
 	idEntityPtr<idEntity>	graphOwner;
 	idList<GraphNode*>		nodeList;
 	idList<GraphLink>		linkList;
 	bool Loaded = false;
-	idStr File;
+	idStr file;
 	int nextElementId = 1;
 	idHashTableT<int, idGraphNodeSocket*> socketHashIdx;
 	idHashTableT<int, GraphNode*> nodeHashIdx;
 	idStr saveState;
+	int lastSave = 0;
 };
 
 
@@ -211,6 +215,8 @@ public:
 	void							ShowIt( bool show );
 	bool							IsShown() const;
 	void							Draw();
+
+	void							Draw( StateEditContext& graphContext );
 	static StateGraphEditor&		Instance();
 	static void						Enable( const idCmdArgs& args );
 
