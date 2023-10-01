@@ -170,7 +170,7 @@ private:
 class idStateGraph : public idClass
 {
 public:
-
+	static constexpr const char* MAIN = "GRAPH_MAIN";
 	friend class idStateEditor;
 
 	CLASS_PROTOTYPE( idStateGraph );
@@ -202,7 +202,8 @@ public:
 	stateResult_t						State_Exec( stateParms_t* parms );
 
 	stateResult_t						State_LocalExec( stateParms_t* parms );
-	int									GetLocalState( const char* newStateName );
+	int									GetLocalStateIndex( const char* stateName );
+	GraphState* 						GetLocalState( const char* stateName );
 
 	template<class T>
 	T* CreateStateNode( int stateIndex, T* node );

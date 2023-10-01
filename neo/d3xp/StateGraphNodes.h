@@ -104,14 +104,17 @@ private:
 class idGraphOnInitNode : public idGraphNode
 {
 public:
+	enum NodeType
+	{
+		Construct,
+		Activate
+	};
+
 	CLASS_PROTOTYPE( idGraphOnInitNode );
 
 	idGraphOnInitNode();
 	stateResult_t Exec( stateParms_t* parms ) override;
-	const char* GetName() override
-	{
-		return "On Activate";
-	}
+	const char* GetName() override;
 	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL ) override;
 	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass* owner = nullptr ) override;
 	void Setup( idClass* graphOwner );
@@ -119,7 +122,10 @@ public:
 
 	idVec4 NodeTitleBarColor() override;
 	void OnActivate( idEntity* activator );
+
+	NodeType type;
 private:
+
 	bool done;
 };
 

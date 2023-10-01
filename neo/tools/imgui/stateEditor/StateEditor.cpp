@@ -416,6 +416,126 @@ void StateGraphEditor::DrawMapGraph()
 	Draw( MapGraphContext );
 }
 
+void StateGraphEditor::DrawIdPlayer( )
+{
+	constexpr int max_idPlayerGraphContexts = 5;
+	static idStaticList< idStr, max_idPlayerGraphContexts > idPlayerContextNames =
+	{
+		"idEntity",
+		"idActor",
+		"idAnimState_Head",
+		"idAnimState_Chest",
+		"idAnimState_Legs",
+	};
+
+	static StateEditContext idPlayerContext[max_idPlayerGraphContexts] ;
+	static int idPlayerGraphId = 0;
+
+	idPlayer* player = gameLocal.GetLocalPlayer( );
+
+	if( player )
+	{
+		if( idPlayerContext[idPlayerGraphId].Editor == nullptr )
+		{
+			StateEditContext& contextIt = idPlayerContext[idPlayerGraphId];
+
+			idStr& contextName = idPlayerContextNames[idPlayerGraphId];
+
+			const char*	graphObjectName;
+			player->spawnArgs.GetString( "graphObject", NULL, &graphObjectName );
+
+			idStr objectName = graphObjectName;
+
+			if( objectName.IsEmpty( ) )
+			{
+				objectName = player->GetEntityDefName( );
+			}
+
+			idStr name = idStr( "graphs/" + objectName );
+
+			//No idEntity as suffix
+			if( idPlayerGraphId && !contextName.IsEmpty() )
+			{
+				name += "_" + contextName;
+			}
+
+			contextIt.file = name;
+			contextIt.file.SetFileExtension( ".bgrph" );
+
+			contextIt.Config.BeginSaveSession = ConfigSession;
+			contextIt.Config.EndSaveSession = ConfigSession;
+			contextIt.Config.SaveSettings = SaveConfig;
+			contextIt.Config.LoadSettings = LoadConfig;
+			contextIt.Config.SaveNodeSettings = SaveNode;
+			contextIt.Config.LoadNodeSettings = LoadNode;
+			contextIt.Config.UserPointer = &contextIt;
+			contextIt.name = name;
+
+			contextIt.Config.SettingsFile = contextIt.file;
+			contextIt.Editor = ed::CreateEditor( &contextIt.Config );
+
+			GraphState* mainState = player->graphObject->GetLocalState( idStateGraph::MAIN );
+
+			assert( mainState );
+
+			if( !mainState->nodes.Num() )
+			{
+				idGraphOnInitNode* initNode = new idGraphOnInitNode( );
+				player->graphObject->CreateNode( initNode );
+				initNode->type = idGraphOnInitNode::NodeType::Construct;
+				initNode->Setup( player );
+
+				auto* onActivate = player->graphObject->CreateNode( new idGraphOnInitNode( ) );
+				onActivate->Setup( player );
+			}
+
+			if( idPlayerGraphId == 0 ) //idEntity
+			{
+				if( player->graphObject )
+				{
+					contextIt.graphOwner = player;
+					contextIt.graphObject = player->graphObject;
+					contextIt.Loaded = true;
+					LoadGraph( contextIt );
+				}
+			}
+		}
+
+		for( int i = 0; i < max_idPlayerGraphContexts; i++ )
+		{
+			idStr& name = idPlayerContextNames[i];
+			int prevIndex = idPlayerGraphId;
+			if( idPlayerGraphId == i )
+			{
+				ImGui::PushStyleColor( ImGuiCol_Button, ImVec4( ImColor( 114, 144, 154 ) ) );
+				ImGui::PushStyleColor( ImGuiCol_ButtonHovered, ImVec4( ImColor( 123, 153, 180 ) ) );
+				ImGui::PushStyleColor( ImGuiCol_ButtonActive, ImVec4( ImColor( 153, 183, 204 ) ) );
+			}
+
+			if( ImGui::Button( name ) )
+			{
+				idPlayerGraphId = i;
+			}
+
+
+			if( prevIndex == i )
+			{
+				ImGui::PopStyleColor( 3 );
+			}
+			if( i + 1 < max_idPlayerGraphContexts )
+			{
+				ImGui::SameLine( );
+			}
+		}
+
+		if( idPlayerContext[idPlayerGraphId].graphObject && idPlayerContext[idPlayerGraphId].graphOwner.IsValid() )
+		{
+			Draw( idPlayerContext[idPlayerGraphId] );
+		}
+
+	}
+}
+
 void StateGraphEditor::Draw()
 {
 	bool showTool = isShown;
@@ -442,9 +562,10 @@ void StateGraphEditor::Draw()
 			}
 			if( ImGui::BeginTabItem( "idPlayer" ) )
 			{
-				ImGui::Text( "Should create 4 idGraph's; 1 for the actor rvStateThread and 1 for each animState rvStateThread" );
+				//ImGui::Text( "Should create 4 idGraph's; 1 for the actor rvStateThread and 1 for each animState rvStateThread" );
 				//DrawPlayer();
 
+				DrawIdPlayer();
 				ImGui::EndTabItem();
 			}
 			if( ImGui::BeginTabItem( "idWeapon" ) )
@@ -840,22 +961,31 @@ void StateGraphEditor::DrawLeftPane( float paneWidth, StateEditContext& graphCon
 				}
 				if( ImGui::MenuItem( "Float" ) )
 				{
+					graphContext.graphObject->CreateVariable( "newFloat", ev_float );
 					//return ev_float;
 				}
 				if( ImGui::MenuItem( "Integer" ) )
 				{
+					graphContext.graphObject->CreateVariable( "newInteger", ev_int );
 					//return ev_int;
 				}
 				if( ImGui::MenuItem( "3d Vector" ) )
 				{
+					graphContext.graphObject->CreateVariable( "newVector", ev_vector );
 					//return ev_vector;
 				}
 				if( ImGui::MenuItem( "String" ) )
 				{
+					graphContext.graphObject->CreateVariable( "newString", ev_string );
 					//return ev_string;
 				}
 				if( ImGui::MenuItem( "Entity" ) )
 				{
+					graphContext.graphObject->CreateVariable( "newEntityPtr" , ev_entity );
+				}
+				if( ImGui::MenuItem( "Object" ) )
+				{
+					graphContext.graphObject->CreateVariable( "newObjectPtr", ev_object );
 				}
 
 				ImGui::EndChild();

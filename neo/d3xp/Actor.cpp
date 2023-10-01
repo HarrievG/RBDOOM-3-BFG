@@ -753,7 +753,26 @@ void idActor::FinishSetup()
 
 		ConstructScriptObject();
 	}
+	const char*			graphObjectName;
+	if( spawnArgs.GetString( "graphObject", NULL, &graphObjectName ) )
+	{
+		idStr objectName = GetEntityDefName( );
 
+		if( idStr::Length( graphObjectName ) )
+		{
+			objectName = graphObjectName;
+		}
+
+		graphObject = new idStateGraph( this );
+		idStr generatedFilename = idStr( "graphs/" ) + objectName + ".bGrph";
+		idFileLocal inputFile( fileSystem->OpenFileRead( generatedFilename, "fs_basepath" ) );
+		if( inputFile )
+		{
+			graphObject->LoadBinary( inputFile, inputFile->Timestamp( ), this );
+		}
+
+
+	}
 	SetupBody();
 }
 

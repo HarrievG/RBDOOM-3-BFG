@@ -47,7 +47,7 @@ bool idStateGraph::GraphThreadEventMapInitDone = false;
 
 void idStateGraph::Event_Wait( float time )
 {
-	localGraphState[GetLocalState( "GRAPH_MAIN" )].waitMS = time;
+	localGraphState[GetLocalStateIndex( MAIN )].waitMS = time;
 }
 
 void idStateGraph::Event_WaitFrame()
@@ -68,7 +68,7 @@ void idStateGraph::Event_Activate( idEntity* activator )
 
 idStateGraph::idStateGraph( idClass* Owner /* = nullptr*/ )
 {
-	auto& mainState = localGraphState[GetLocalState( "GRAPH_MAIN" )];
+	auto& mainState = localGraphState[GetLocalStateIndex( MAIN )];
 	mainState.stateThread = new rvStateThread();
 	mainState.stateThread->SetOwner( Owner );
 
@@ -93,7 +93,7 @@ void idStateGraph::Clear()
 
 int idStateGraph::CreateSubState( const char* name, idList<idScriptVariableInstance_t> inputs, idList< idScriptVariableInstance_t> ouputs )
 {
-	int stateIndex = GetLocalState( name );
+	int stateIndex = GetLocalStateIndex( name );
 	auto* graphInputs = CreateStateNode( stateIndex, new idGraphInputOutputNode() );
 	graphInputs->nodeType = idGraphInputOutputNode::NodeType::Input;
 
@@ -213,7 +213,7 @@ idList<idScriptVariableInstance_t>& idStateGraph::GetVariables()
 
 idScriptVariableInstance_t& idStateGraph::CreateVariable( const char* variableName, etype_t type )
 {
-	int stateIndex = GetLocalState( "GRAPH_MAIN" );
+	int stateIndex = GetLocalStateIndex( MAIN );
 	GraphState& stateNodes = localGraphState[stateIndex];
 
 	auto& newInstance = stateNodes.localVariables.Alloc();
@@ -225,12 +225,12 @@ idScriptVariableInstance_t& idStateGraph::CreateVariable( const char* variableNa
 
 void idStateGraph::RemoveNode( idGraphNode* node )
 {
-	DeleteLocalStateNode( "GRAPH_MAIN", node );
+	DeleteLocalStateNode( MAIN , node );
 }
 
 idGraphNode* idStateGraph::CreateNode( idGraphNode* node )
 {
-	return CreateLocalStateNode( "GRAPH_MAIN", node );
+	return CreateLocalStateNode( MAIN , node );
 }
 
 void idStateGraph::RemoveLink( idGraphNodeSocket* start, idGraphNodeSocket* end )
@@ -354,20 +354,20 @@ stateResult_t idStateGraph::State_LocalExec( stateParms_t* parms )
 	return SRESULT_ERROR;
 }
 
-int idStateGraph::GetLocalState( const char* newStateName )
+int idStateGraph::GetLocalStateIndex( const char* stateName )
 {
 	int i, hash;
 
-	hash = localStateHash.GenerateKey( newStateName );
+	hash = localStateHash.GenerateKey( stateName );
 	for( i = localStateHash.First( hash ); i != -1; i = localStateHash.Next( i ) )
 	{
-		if( localStates[i].Cmp( newStateName ) == 0 )
+		if( localStates[i].Cmp( stateName ) == 0 )
 		{
 			return i;
 		}
 	}
 
-	i = localStates.Append( newStateName );
+	i = localStates.Append( stateName );
 	localStateHash.Add( hash, i );
 	auto& newState = localGraphState.Alloc();
 	newState.graph = this;
@@ -375,6 +375,20 @@ int idStateGraph::GetLocalState( const char* newStateName )
 
 	return i;
 
+}
+
+GraphState* idStateGraph::GetLocalState( const char* stateName )
+{
+	int hashIndex, hash;
+
+	hash = localStateHash.GenerateKey( stateName );
+	hashIndex = localStateHash.First( hash );
+	if( hashIndex == -1 )
+	{
+		return nullptr;
+	}
+
+	return &localGraphState[hashIndex];
 }
 
 void idStateGraph::DeleteLocalStateNode( int stateIndex, idGraphNode* node )
@@ -407,7 +421,7 @@ void idStateGraph::DeleteLocalStateNode( int stateIndex, idGraphNode* node )
 
 void idStateGraph::DeleteLocalStateNode( const char* stateName, idGraphNode* node )
 {
-	int stateIndex = GetLocalState( stateName );
+	int stateIndex = GetLocalStateIndex( stateName );
 	DeleteLocalStateNode( stateIndex, node );
 }
 
@@ -423,13 +437,13 @@ idGraphNode* idStateGraph::CreateLocalStateNode( int stateIndex, idGraphNode* no
 
 idGraphNode* idStateGraph::CreateLocalStateNode( const char* stateName, idGraphNode* node )
 {
-	int stateIndex = GetLocalState( stateName );
+	int stateIndex = GetLocalStateIndex( stateName );
 	return CreateLocalStateNode( stateIndex, node );
 }
 
 idList<idScriptVariableInstance_t>& idStateGraph::GetLocalVariables()
 {
-	int stateIndex = GetLocalState( "GRAPH_MAIN" );
+	int stateIndex = GetLocalStateIndex( MAIN );
 	return localGraphState[stateIndex].localVariables;
 }
 

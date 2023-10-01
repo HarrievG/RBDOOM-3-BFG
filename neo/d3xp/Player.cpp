@@ -1964,6 +1964,13 @@ void idPlayer::Init()
 	// execute the script so the script object's constructor takes effect immediately
 	scriptThread->Execute();
 
+	if( graphObject )
+	{
+		//HvgTodo: reset graph
+		//graphOnConstruct!
+		graphObject->Think( );
+	}
+
 	forceScoreBoard		= false;
 
 	privateCameraView	= NULL;
@@ -9082,6 +9089,7 @@ void idPlayer::Think()
 		{
 			graphObject->Think();
 		}
+
 		// service animations
 		if( !spectating && !af.IsActive() && !gameLocal.inCinematic )
 		{
@@ -12825,7 +12833,6 @@ stateResult_t idPlayer::State_Idle( stateParms_t* parms )
 	common->Printf( "%s is Idling! %i\n ", name.c_str(), gameLocal.GetTime() );
 	return SRESULT_WAIT;
 }
-
 
 stateResult_t idPlayer::Legs_Idle( stateParms_t* parms )
 {

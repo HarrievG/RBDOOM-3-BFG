@@ -126,6 +126,7 @@ END_CLASS
 
 idGraphOnInitNode::idGraphOnInitNode()
 {
+	type = NodeType::Activate;
 }
 
 stateResult_t idGraphOnInitNode::Exec( stateParms_t* parms )
@@ -133,10 +134,23 @@ stateResult_t idGraphOnInitNode::Exec( stateParms_t* parms )
 	return SRESULT_DONE;
 }
 
+const char* idGraphOnInitNode::GetName( )
+{
+	if( type == NodeType::Activate )
+	{
+		return "On Activate";
+	}
+	else
+	{
+		return "On Construct";
+	}
+}
+
 void idGraphOnInitNode::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL*/ )
 {
 	if( file != NULL )
 	{
+		file->WriteBig( ( int )type );
 		idGraphNode::WriteBinary( file, _timeStamp );
 	}
 }
@@ -145,8 +159,12 @@ bool idGraphOnInitNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp, id
 {
 	if( file != NULL )
 	{
+		int newType = 0;
+		file->ReadBig( newType );
+		type = ( NodeType ) newType;
+
 		Setup( owner );
-		return idGraphNode::LoadBinary( file, _timeStamp );
+		return idGraphNode::LoadBinary( file, _timeStamp, owner );
 	}
 	return false;
 }
@@ -155,9 +173,16 @@ void idGraphOnInitNode::Setup( idClass* graphOwner )
 {
 	idGraphNodeSocket& newOutput = CreateOutputSocket();
 	newOutput.name = "";
-	idGraphNodeSocket& newEntOutput = CreateOutputSocket();
-	newEntOutput.name = "Activator";
-	newEntOutput.var = VarFromType( ev_entity, graphState );
+	if( type == NodeType::Construct )
+	{
+		newOutput.active = true;
+	}
+	else
+	{
+		idGraphNodeSocket& newEntOutput = CreateOutputSocket( );
+		newEntOutput.name = "Activator";
+		newEntOutput.var = VarFromType( ev_entity, graphState );
+	}
 	done = false;
 }
 
@@ -168,14 +193,26 @@ idGraphNode* idGraphOnInitNode::QueryNodeConstruction( idStateGraph* targetGraph
 
 idVec4 idGraphOnInitNode::NodeTitleBarColor()
 {
-	return idVec4( 1, 0, 1, 1 );
+	if( type == NodeType::Activate )
+	{
+		return idVec4( 1.0f, 0.0f, 1.0f, 1.0f );
+	}
+	else
+	{
+		return idVec4( 0.7f, 0.3f, 1.0f, 1.0f );
+	}
+
 }
 
 void idGraphOnInitNode::OnActivate( idEntity* activator )
 {
-	outputSockets[0].active = true;
-	*( ( idScriptEntity* )outputSockets[1].var )->GetData() = activator;
-	done = true;
+	if( type == NodeType::Activate )
+	{
+		outputSockets[0].active = true;
+		*( ( idScriptEntity* ) outputSockets[1].var )->GetData( ) = activator;
+		done = true;
+	}
+
 }
 
 //////////////////////////////////////////////////////////////////////////

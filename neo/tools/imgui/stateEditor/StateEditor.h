@@ -250,6 +250,8 @@ private:
 	void DrawGraphEntityTest();
 	void DrawMapGraph();
 
+	void DrawIdPlayer();
+
 	void DrawLeftPane( float paneWidth, StateEditContext& graphContext );
 	void DrawEditorButtonBar( StateEditContext& graphContext );
 

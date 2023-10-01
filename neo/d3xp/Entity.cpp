@@ -725,24 +725,38 @@ void idEntity::Spawn()
 	}
 
 	// setup script object
-	if( ShouldConstructScriptObjectAtSpawn() && spawnArgs.GetString( "scriptobject", NULL, &scriptObjectName ) )
+	if( ShouldConstructScriptObjectAtSpawn() )
 	{
-		if( !scriptObject.SetType( scriptObjectName ) )
+		if( spawnArgs.GetString( "scriptobject", NULL, &scriptObjectName ) )
 		{
-			gameLocal.Error( "Script object '%s' not found on entity '%s'.", scriptObjectName, name.c_str() );
+			if( !scriptObject.SetType( scriptObjectName ) )
+			{
+				gameLocal.Error( "Script object '%s' not found on entity '%s'.", scriptObjectName, name.c_str( ) );
+			}
+
+			ConstructScriptObject( );
 		}
 
-		ConstructScriptObject();
-	}
 
-	if( spawnArgs.GetString( "graphObject", NULL, &graphObjectName ) )
-	{
-		graphObject = new idStateGraph( this );
-		idStr generatedFilename = idStr( "graphs/" ) + graphObjectName + ".bGrph";
-		idFileLocal inputFile( fileSystem->OpenFileRead( generatedFilename, "fs_basepath" ) );
-		if( inputFile )
+
+		if( spawnArgs.GetString( "graphObject", NULL, &graphObjectName ) )
 		{
-			graphObject->LoadBinary( inputFile, inputFile->Timestamp(), this );
+			idStr objectName = GetEntityDefName( );
+
+			if( idStr::Length( graphObjectName ) )
+			{
+				objectName = graphObjectName;
+			}
+
+			graphObject = new idStateGraph( this );
+			idStr generatedFilename = idStr( "graphs/" ) + objectName + ".bGrph";
+			idFileLocal inputFile( fileSystem->OpenFileRead( generatedFilename, "fs_basepath" ) );
+			if( inputFile )
+			{
+				graphObject->LoadBinary( inputFile, inputFile->Timestamp( ), this );
+			}
+
+
 		}
 	}
 
