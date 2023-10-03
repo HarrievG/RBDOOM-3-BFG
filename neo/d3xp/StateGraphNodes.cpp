@@ -50,7 +50,8 @@ stateResult_t idStateNode::Exec( stateParms_t* parms )
 
 	if( inputSockets[1].active )
 	{
-		input_State = *( idScriptString* )( strSocket.var );
+		__debugbreak();
+		//input_State = *( idScriptString* )( strSocket.var );
 	}
 
 	if( inputSockets[0].active )
@@ -274,12 +275,13 @@ idClassNode::idClassNode()
 {
 	targetEvent = nullptr;
 	targetVariable = nullptr;
+	isLocalvar = false;
+
 	scriptThread = nullptr;
 
 	ownerClass = nullptr;
 	nodeOwnerClass = nullptr;
 
-	NodeType type;
 	const idEventDef* targetEvent = nullptr;
 	idScriptVariableBase* targetVariable = nullptr;
 	idThread* scriptThread = nullptr;//for sys events;
@@ -643,7 +645,24 @@ void idClassNode::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL */ )
 {
 	file->WriteBig( ( int )type );
 	file->WriteString( targetEventName );
-	file->WriteString( targetVariableName );
+
+	int index = 0;
+	idStr outVarName = targetVariableName;
+
+	idEntity* entPtr = ownerClass->Cast<idEntity>();
+	assert( entPtr );
+	for( auto& localVar : graphState->localVariables )
+	{
+		if( localVar.varName == targetVariableName )
+		{
+			outVarName.Format( "%s_%s_localVar_%i", entPtr->GetEntityDefName( ), graphState->name.c_str(), index );
+			break;
+		}
+		index++;
+	}
+
+	file->WriteString( outVarName );
+	file->WriteBool( isLocalvar );
 
 	idGraphNode::WriteBinary( file, _timeStamp );
 }
@@ -663,16 +682,32 @@ bool idClassNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass*
 		}
 
 		file->ReadString( targetVariableName );
+		file->ReadBool( isLocalvar );
 		if( !targetVariableName.IsEmpty() )
 		{
-			idList<idScriptVariableInstance_t> searchVar;
-			idScriptVariableInstance_t& var = searchVar.Alloc();
-			var.varName = targetVariableName.c_str();
-			var.scriptVariable = nullptr;
-			owner->GetType()->GetScriptVariables( owner, searchVar );
-			targetVariable = var.scriptVariable;
+			if( isLocalvar )
+			{
+				int index = 0;
+				for( auto& localVar : graphState->localVariables )
+				{
+					if( localVar.varName == targetVariableName )
+					{
+						targetVariable = localVar.scriptVariable;
+						break;
+					}
+					index++;
+				}
+			}
+			else
+			{
+				idList<idScriptVariableInstance_t> searchVar;
+				idScriptVariableInstance_t& var = searchVar.Alloc( );
+				var.varName = targetVariableName.c_str( );
+				var.scriptVariable = nullptr;
+				owner->GetType( )->GetScriptVariables( owner, searchVar );
+				targetVariable = var.scriptVariable;
+			}
 		}
-
 
 		Setup( owner );
 		return idGraphNode::LoadBinary( file, _timeStamp, owner );

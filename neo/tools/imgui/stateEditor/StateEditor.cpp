@@ -193,17 +193,45 @@ void StateGraphEditor::LoadGraph( StateEditContext& graphContext )
 {
 	if( graphContext.Loaded )
 	{
-		auto& graphState = graphContext.graphObject->localGraphState[0];
+		auto& graphState = *graphContext.graphObject->GetLocalState( idStateGraph::MAIN ) ;
 
-		idStr posInfoFilename = graphContext.file;
-		posInfoFilename.SetFileExtension( "bnpos" );
-		idFileLocal posInfoFile( fileSystem->OpenFileRead( posInfoFilename, "fs_basepath" ) );
+		idStr infoFilename = graphContext.file;
+		infoFilename.Append( ".binfo" );
+		idFileLocal infoFile( fileSystem->OpenFileRead( infoFilename, "fs_basepath" ) );
 		idList<idVec2> nodePositions;
-		if( posInfoFile )
+		if( infoFile )
 		{
 			for( int i = 0; i < graphState.nodes.Num(); i++ )
 			{
-				posInfoFile->ReadVec2( nodePositions.Alloc() );
+				infoFile->ReadVec2( nodePositions.Alloc() );
+			}
+
+			for( int i = 0; i < graphState.localVariables.Num( ); i++ )
+			{
+				idStr varName;
+				infoFile->ReadString( varName );
+				idStr tmpName;
+				idEntity* entPtr = graphContext.graphOwner.GetEntity();
+				assert( entPtr );
+				tmpName.Format( "%s_%s_localVar_%i", entPtr->GetEntityDefName( ), graphState.name.c_str(), i );
+				idStrPtr nameStr = graphState.blackBoard.GetAllocatedStr( tmpName );
+				assert( nameStr );
+				*nameStr = varName;
+
+				//patch node var names
+				for( auto* node : graphState.nodes )
+				{
+					if( auto* classNode = node->Cast<idClassNode>() )
+					{
+						if( classNode->isLocalvar )
+						{
+							if( classNode->targetVariableName == tmpName )
+							{
+								classNode->targetVariableName = *nameStr;
+							}
+						}
+					}
+				}
 			}
 		}
 
@@ -213,13 +241,14 @@ void StateGraphEditor::LoadGraph( StateEditContext& graphContext )
 			auto& newNode = *( graphContext.nodeList.Alloc() = new GraphNode( graphContext, NextNodeID( graphContext ), node->GetName(), node ) );
 			ReadNode( node, newNode, graphContext );
 
-			if( posInfoFile )
+			if( infoFile )
 			{
 				newNode.Position = nodePositions[posIndex].ToFloatPtr();
 				newNode.FirstDraw = true;
 				posIndex++;
 			}
 		}
+
 		for( idGraphNodeSocket::Link_t& link : graphState.links )
 		{
 			auto& inputNode = *graphContext.nodeList[link.end->nodeIndex];
@@ -231,8 +260,7 @@ void StateGraphEditor::LoadGraph( StateEditContext& graphContext )
 			auto* var = inputNode.Owner->inputSockets[link.end->socketIndex].var;
 			if( var )
 			{
-				ImGui::IconItem icon = ImGui::ImScriptVariable( "", { "", var }, false );
-				newLink.Color = icon.color;
+				newLink.Color = ImGui::ImScriptVariable( "", { "", var }, false ).color;
 			}
 		};
 	}
@@ -956,36 +984,37 @@ void StateGraphEditor::DrawLeftPane( float paneWidth, StateEditContext& graphCon
 				if( ImGui::MenuItem( "Boolean" ) )
 				{
 					graphContext.graphObject->CreateVariable( "newBoolean", ev_boolean );
-					//localVars. VarFromType(ev_boolean, &graphEnt->graph.CreateVar);
-					//return ;
+					ImGui::CloseCurrentPopup( );
 				}
 				if( ImGui::MenuItem( "Float" ) )
 				{
 					graphContext.graphObject->CreateVariable( "newFloat", ev_float );
-					//return ev_float;
+					ImGui::CloseCurrentPopup( );
 				}
 				if( ImGui::MenuItem( "Integer" ) )
 				{
 					graphContext.graphObject->CreateVariable( "newInteger", ev_int );
-					//return ev_int;
+					ImGui::CloseCurrentPopup( );
 				}
 				if( ImGui::MenuItem( "3d Vector" ) )
 				{
 					graphContext.graphObject->CreateVariable( "newVector", ev_vector );
-					//return ev_vector;
+					ImGui::CloseCurrentPopup( );
 				}
 				if( ImGui::MenuItem( "String" ) )
 				{
 					graphContext.graphObject->CreateVariable( "newString", ev_string );
-					//return ev_string;
+					ImGui::CloseCurrentPopup( );
 				}
 				if( ImGui::MenuItem( "Entity" ) )
 				{
 					graphContext.graphObject->CreateVariable( "newEntityPtr" , ev_entity );
+					ImGui::CloseCurrentPopup( );
 				}
 				if( ImGui::MenuItem( "Object" ) )
 				{
 					graphContext.graphObject->CreateVariable( "newObjectPtr", ev_object );
+					ImGui::CloseCurrentPopup( );
 				}
 
 				ImGui::EndChild();
@@ -1026,14 +1055,21 @@ void StateGraphEditor::DrawEditorButtonBar( StateEditContext& graphContext )
 		{
 			idFileLocal outputFile( fileSystem->OpenFileWrite( graphContext.file, "fs_basepath" ) );
 			graphContext.graphObject->WriteBinary( outputFile );
-			idStr posOutFilename = graphContext.file;
-			posOutFilename.SetFileExtension( "bnpos" );
-			idFileLocal posOutputFile( fileSystem->OpenFileWrite( posOutFilename, "fs_basepath" ) );
+			idStr infoFilename = graphContext.file;
+			infoFilename.Append( ".binfo" );
+			idFileLocal infoOutput( fileSystem->OpenFileWrite( infoFilename, "fs_basepath" ) );
 			for( auto* node : graphContext.nodeList )
 			{
 				auto imVec = ed::GetNodePosition( node->ID );
-				posOutputFile->WriteVec2( idVec2( imVec.x, imVec.y ) );
+				infoOutput->WriteVec2( idVec2( imVec.x, imVec.y ) );
 			}
+
+			//variable names
+			for( auto& var : graphContext.graphObject->GetVariables() )
+			{
+				infoOutput->WriteString( var.varName );
+			}
+
 			//HVG Todo:
 			//Zoomlevel is not correctly set in the data!
 			graphContext.lastSave = 0;

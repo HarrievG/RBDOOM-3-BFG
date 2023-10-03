@@ -35,6 +35,9 @@ If you have questions concerning this license or the applicable additional terms
 # define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui_internal.h"
 
+void WriteVar( idScriptVariableBase* var, idFile* file, ID_TIME_T* _timeStamp /*= NULL */ );
+void ReadVar( idScriptVariableBase* var, idFile* file, const ID_TIME_T _timeStamp );
+
 CLASS_DECLARATION( idClass, idStateGraph )
 EVENT( EV_Activate, idStateGraph::Event_Activate )
 EVENT( EV_Thread_Wait, idStateGraph::Event_Wait )
@@ -129,16 +132,23 @@ void idStateGraph::Think()
 
 void idStateGraph::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL*/ )
 {
-	auto& currentGraphState = localGraphState[0];
+	auto& currentGraphState = *GetLocalState( MAIN );
 	auto& nodes = currentGraphState.nodes;
 	auto& links = currentGraphState.links;
 
-	//First write all nodes and sockets.
+	//First write all local variables
+	//then all nodes and sockets.
 	//as last all socket connections;
 	if( file != nullptr )
 	{
-		file->WriteBig( nodes.Num() );
+		file->WriteBig( currentGraphState.localVariables.Num( ) );
+		for( idScriptVariableInstance_t& var : currentGraphState.localVariables )
+		{
+			file->WriteBig( var.scriptVariable->GetType( ) );
+			WriteVar( var.scriptVariable, file, _timeStamp );
+		}
 
+		file->WriteBig( nodes.Num() );
 		for( idGraphNode* node : nodes )
 		{
 			idTypeInfo* c = node->GetType();
@@ -169,6 +179,20 @@ bool idStateGraph::LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass
 		auto& currentGraphState = localGraphState[0];
 		auto& nodes = currentGraphState.nodes;
 		auto& links = currentGraphState.links;
+
+		int totalLocalVars;
+		file->ReadBig( totalLocalVars );
+		idStr tmpName;
+		idEntity* entPtr = owner->Cast<idEntity>( );
+		assert( entPtr );
+		for( int i = 0; i < totalLocalVars; i++ )
+		{
+			int type;
+			file->ReadBig( type );
+			tmpName.Format( "%s_%s_localVar_%i", entPtr->GetEntityDefName(), currentGraphState.name.c_str(), i );
+			auto& newInstance = currentGraphState.graph->CreateVariable( tmpName, ( etype_t ) type );
+			ReadVar( newInstance.scriptVariable, file, _timeStamp );
+		}
 
 		int totalNodes;
 		file->ReadBig( totalNodes );
@@ -214,12 +238,14 @@ idList<idScriptVariableInstance_t>& idStateGraph::GetVariables()
 idScriptVariableInstance_t& idStateGraph::CreateVariable( const char* variableName, etype_t type )
 {
 	int stateIndex = GetLocalStateIndex( MAIN );
-	GraphState& stateNodes = localGraphState[stateIndex];
+	GraphState& graphState = localGraphState[stateIndex];
 
-	auto& newInstance = stateNodes.localVariables.Alloc();
+	idStr& nameVar =  *graphState.blackBoard.Alloc( "" )->GetData();
+	nameVar = variableName;
 
-	newInstance.varName = variableName;
-	newInstance.scriptVariable = VarFromType( type, &stateNodes );
+	auto& newInstance = graphState.localVariables.Alloc();
+	newInstance.varName = nameVar;
+	newInstance.scriptVariable = VarFromType( type, &graphState );
 	return newInstance;
 }
 
@@ -372,7 +398,7 @@ int idStateGraph::GetLocalStateIndex( const char* stateName )
 	auto& newState = localGraphState.Alloc();
 	newState.graph = this;
 	newState.waitMS = 0.0f;
-
+	newState.name = stateName;
 	return i;
 
 }
@@ -459,6 +485,39 @@ T* idStateGraph::CreateNode( int stateIndex )
 	return static_cast<T*>( CreateLocalStateNode( stateIndex, new T() ) );
 }
 
+
+void WriteVar( idScriptVariableBase* var, idFile* file, ID_TIME_T* _timeStamp /*= NULL */ )
+{
+	switch( var->GetType() )
+	{
+		case ev_string:
+			file->WriteString( *( ( idScriptStr* )var )->GetData() );
+			break;
+		case ev_float:
+			file->WriteFloat( *( ( idScriptFloat* )var )->GetData() );
+			break;
+		case ev_vector:
+			file->WriteVec3( *( ( idScriptVector* )var )->GetData() );
+			break;
+		case ev_entity:
+		{
+			gameLocal.Warning( "idClassNode::WriteBinary : ev_entity not implemented" );
+			//idEntityPtr<idEntity> tmpEntPtr;
+			//tmpEntPtr = (*((idScriptEntity*)socket.var)->GetData());
+			//file->WriteInt(tmpEntPtr.GetSpawnId());
+		}
+		break;
+		case ev_int:
+			file->WriteInt( *( ( idScriptInteger* )var )->GetData() );
+			break;
+		case ev_boolean:
+			file->WriteBool( *( ( idScriptBool* )var )->GetData() );
+		default:
+			gameLocal.Warning( "idClassNode::WriteBinary : Invalid arg format '%s' ", idTypeInfo::GetEnumTypeInfo( "etype_t", var->GetType() ) );
+			break;
+	}
+}
+
 void idGraphNode::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL */ )
 {
 	if( file )
@@ -466,7 +525,7 @@ void idGraphNode::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL */ )
 		assert( graphState );
 
 		auto writeSockets =
-			[]( idFile * file, idList<idGraphNodeSocket>& socketList )
+			[]( idFile * file, idList<idGraphNodeSocket>& socketList, ID_TIME_T * _timeStamp )
 		{
 			file->WriteBig( socketList.Num() );
 			for( auto& socket : socketList )
@@ -476,41 +535,58 @@ void idGraphNode::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL */ )
 				file->WriteBool( writeSocketData );
 				if( writeSocketData )
 				{
-					switch( socket.var->GetType() )
-					{
-						case ev_string:
-							file->WriteString( *( ( idScriptStr* )socket.var )->GetData() );
-							break;
-						case ev_float:
-							file->WriteFloat( *( ( idScriptFloat* )socket.var )->GetData() );
-							break;
-						case ev_vector:
-							file->WriteVec3( *( ( idScriptVector* )socket.var )->GetData() );
-							break;
-						case ev_entity:
-						{
-							gameLocal.Warning( "idClassNode::WriteBinary : ev_entity not implemented" );
-							//idEntityPtr<idEntity> tmpEntPtr;
-							//tmpEntPtr = (*((idScriptEntity*)socket.var)->GetData());
-							//file->WriteInt(tmpEntPtr.GetSpawnId());
-						}
-						break;
-						case ev_int:
-							file->WriteInt( *( ( idScriptInteger* )socket.var )->GetData() );
-							break;
-						case ev_boolean:
-							file->WriteBool( *( ( idScriptBool* )socket.var )->GetData() );
-						default:
-							gameLocal.Warning( "idClassNode::WriteBinary : Invalid arg format '%s' ", idTypeInfo::GetEnumTypeInfo( "etype_t", socket.var->GetType() ) );
-							break;
-					}
+					WriteVar( socket.var, file, _timeStamp );
 				}
 			}
 		};
 
-		writeSockets( file, inputSockets );
-		writeSockets( file, outputSockets );
+		writeSockets( file, inputSockets, _timeStamp );
+		writeSockets( file, outputSockets, _timeStamp );
 	}
+}
+
+void ReadVar( idScriptVariableBase* var, idFile* file, const ID_TIME_T _timeStamp )
+{
+	switch( var->GetType() )
+	{
+		case ev_string:
+		{
+			file->ReadString( *static_cast< idScriptStr* >( var )->GetData( ) );
+		}
+		break;
+		case ev_float:
+		{
+			file->ReadFloat( *static_cast< idScriptFloat* >( var )->GetData( ) );
+		}
+		break;
+		case ev_vector:
+		{
+			file->ReadVec3( *static_cast< idScriptVector* >( var )->GetData( ) );
+		}
+		break;
+		//case ev_object:
+		//	//classtype?
+		//	break;
+		//case ev_entity:
+		//	//entity nr?
+		//	//ret = graph->blackBoard.Alloc<idScriptEntity>(16);
+		//	break;
+		case ev_boolean:
+		{
+			bool readVar;
+			file->ReadBool( readVar );
+			*static_cast< idScriptBool* >( var ) = readVar;
+		}
+		break;
+		case ev_int:
+		{
+			file->ReadInt( *static_cast< idScriptInteger* >( var )->GetData( ) );
+		}
+		break;
+		default:
+			gameLocal.Warning( "ReadVar : Invalid arg format '%s' ", idTypeInfo::GetEnumTypeInfo( "etype_t", var->GetType() ) );
+			break;
+	};
 }
 
 bool idGraphNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass* owner )
@@ -519,7 +595,7 @@ bool idGraphNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass*
 	{
 		assert( graphState );
 		auto readSockets =
-			[this]( idFile * file, idList<idGraphNodeSocket>& socketList, bool isInput )
+			[this]( idFile * file, idList<idGraphNodeSocket>& socketList, const ID_TIME_T _timeStamp, bool isInput )
 		{
 			int numSockets;
 			file->ReadBig( numSockets );
@@ -532,67 +608,16 @@ bool idGraphNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass*
 				file->ReadBool( readData );
 				if( typeNum != ev_void )
 				{
-					switch( typeNum )
+					if( readData )
 					{
-						case ev_string:
-						{
-							if( readData )
-							{
-								file->ReadString( *static_cast<idScriptStr*>( socket.var )->GetData() );
-							}
-						}
-						break;
-						case ev_float:
-						{
-							if( readData )
-							{
-								file->ReadFloat( *static_cast<idScriptFloat*>( socket.var )->GetData() );
-							}
-						}
-						break;
-						case ev_vector:
-						{
-							if( readData )
-							{
-								file->ReadVec3( *static_cast<idScriptVector*>( socket.var )->GetData() );
-							}
-						}
-						break;
-						//case ev_object:
-						//	//classtype?
-						//	break;
-						//case ev_entity:
-						//	//entity nr?
-						//	//ret = graph->blackBoard.Alloc<idScriptEntity>(16);
-						//	break;
-						case ev_boolean:
-						{
-							if( readData )
-							{
-								bool readVar;
-								file->ReadBool( readVar );
-								*static_cast<idScriptBool*>( socket.var ) = readVar;
-							}
-						}
-						break;
-						case ev_int:
-						{
-							if( readData )
-							{
-								file->ReadInt( *static_cast<idScriptInteger*>( socket.var )->GetData() );
-							}
-						}
-						break;
-						default:
-							gameLocal.Warning( "idGraphNode::LoadBinary : Invalid arg format '%s' ", idTypeInfo::GetEnumTypeInfo( "etype_t", typeNum ) );
-							break;
-					};
+						ReadVar( socket.var, file, _timeStamp );
+					}
 				}
 			}
 		};
 
-		readSockets( file, inputSockets, true );
-		readSockets( file, outputSockets, false );
+		readSockets( file, inputSockets, _timeStamp, true );
+		readSockets( file, outputSockets, _timeStamp, false );
 	}
 	return true;
 }

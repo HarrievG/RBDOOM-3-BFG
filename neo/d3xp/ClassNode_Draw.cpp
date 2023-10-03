@@ -388,7 +388,6 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 	// This is the actual popup Gui drawing section.
 	if( ImGui::BeginPopup( "popup_defpicker" ) )
 	{
-
 		ImGuiContext& g = *GImGui;
 		// Note: if it weren't for the child window, we would have to PushItemWidth() here to avoid a crash!
 		ImGui::TextDisabled( "Pick One:" );
@@ -433,6 +432,21 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 		ImGui::TextDisabled( "Pick One:" );
 		ImGui::BeginChild( "popup_scroller", ImVec2( 200, 200 ), true, ImGuiWindowFlags_AlwaysVerticalScrollbar );
 
+		ImGui::TextDisabled( " - Local - " );
+		auto& locaVars = node.targetContext.graphObject->GetVariables( );
+		for( auto& var : locaVars )
+		{
+			if( ImGui::Button( var.varName, ImVec2( 180, 20 ) ) )
+			{
+				nodePtr->dirty = true;
+				OnChangeVar( var );
+				popup_text = var.varName;
+				ImGui::CloseCurrentPopup( );  // These calls revoke the popup open state, which was set by OpenPopup above.
+				isLocalvar = true;
+			}
+		}
+
+		ImGui::TextDisabled( " - " + idStr( node.targetContext.graphOwner.GetEntity( )->GetEntityDefName( ) ) + " - " );
 		for( auto& var : scriptVars )
 		{
 			if( ImGui::Button( var.varName, ImVec2( 180, 20 ) ) )
@@ -441,6 +455,7 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 				OnChangeVar( var );
 				popup_text = var.varName;
 				ImGui::CloseCurrentPopup();  // These calls revoke the popup open state, which was set by OpenPopup above.
+				isLocalvar = false;
 			}
 		}
 

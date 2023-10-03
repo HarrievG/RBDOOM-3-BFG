@@ -61,6 +61,18 @@ public:
 		return new idScriptStr( ( void* )strList[strList.Num() - 1] );
 	}
 
+	idStrPtr GetAllocatedStr( const char* str )
+	{
+		for( auto& strPtr : strList )
+		{
+			if( *strPtr == str )
+			{
+				return strPtr;
+			}
+		}
+		return nullptr;
+	}
+
 	void Free( idStr* var )
 	{
 		strList.Remove( var );
@@ -119,7 +131,6 @@ public:
 class idStateGraph;
 class GraphState
 {
-	friend class idStateGraph;
 public:
 	idList<idGraphNode*> nodes;
 	idList<idGraphNode*> activeNodes;
@@ -129,8 +140,8 @@ public:
 	rvStateThread* stateThread;
 	idStateGraph* graph;
 	int waitMS;
-protected:
 	idList<idScriptVariableInstance_t> localVariables;
+	idStr name;
 };
 
 class idGraphNode : public idClass

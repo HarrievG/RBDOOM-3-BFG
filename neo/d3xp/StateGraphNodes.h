@@ -91,6 +91,7 @@ public:
 	idStr targetEventName;
 	idScriptVariableBase* targetVariable;
 	idStr targetVariableName;
+	bool isLocalvar;
 	idThread* scriptThread;//for sys events;
 	idStr currentTitle;
 
