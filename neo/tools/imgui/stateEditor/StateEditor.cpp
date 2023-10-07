@@ -968,6 +968,7 @@ void StateGraphEditor::DrawLeftPane( float paneWidth, StateEditContext& graphCon
 					int cursorY = ImGui::GetCursorPosY();
 					if( activeButton == index )
 					{
+						idStr org = var.varName;
 						if( ImGui::InputText( idStr( "##" ) + index, graphContext.localVarNames[index]->GetData() ) )
 						{
 							for( auto* node : graphContext.graphObject->GetLocalState( idStateGraph::MAIN )->nodes )
@@ -976,14 +977,14 @@ void StateGraphEditor::DrawLeftPane( float paneWidth, StateEditContext& graphCon
 								{
 									if( classNode->isLocalvar )
 									{
-										if( classNode->targetVariableName == var.varName )
+										if( classNode->targetVariableName == org )
 										{
 											classNode->targetVariableName = graphContext.localVarNames[index]->GetData()->c_str();
-											var.varName = classNode->targetVariableName;
 										}
 									}
 								}
 							}
+							var.varName = graphContext.localVarNames[index]->GetData( )->c_str( );
 						}
 						if( ImGui::IsItemDeactivated() )
 						{
@@ -996,16 +997,13 @@ void StateGraphEditor::DrawLeftPane( float paneWidth, StateEditContext& graphCon
 						{
 							activeButton = index;
 						}
-
 						ImGui::SetItemAllowOverlap( );
 						ImGui::SetCursorPosY( cursorY );
-
-						ImGui::Text( var.varName );
+						ImGui::Text( graphContext.localVarNames[index]->GetData()->c_str() );
 					}
 					ImGui::TableSetColumnIndex( 2 );
 					ImGui::ImScriptVariable( var.varName, var );
 				}
-
 				ImGui::EndTable();
 			}
 
@@ -1020,57 +1018,43 @@ void StateGraphEditor::DrawLeftPane( float paneWidth, StateEditContext& graphCon
 				ImGui::TextDisabled( "Pick Type:" );
 				ImGui::BeginChild( "popup_scroller", ImVec2( 200, 150 ), true );
 
-				int nameStrIndex = graphContext.localVarNames.AddUnique( new idScriptStr() );
-				idScriptStr* newNamePtr = graphContext.localVarNames[nameStrIndex];
+				auto createLocalVar = []( const char* label, etype_t type, StateEditContext & graphContext )
+				{
+					int nameStrIndex = graphContext.localVarNames.AddUnique( new idScriptStr( ) );
+					idScriptStr* newNamePtr = graphContext.localVarNames[nameStrIndex];
+					auto& newVar = graphContext.graphObject->CreateVariable( &newNamePtr, type );
+					*newNamePtr->GetData( ) = label;
+					newVar.varName = newNamePtr->GetData( )->c_str( );
+					ImGui::CloseCurrentPopup( );
+				};
 
 				if( ImGui::MenuItem( "Boolean" ) )
 				{
-					auto& newVar = graphContext.graphObject->CreateVariable( &newNamePtr, ev_boolean );
-					*newNamePtr->GetData() = "Boolean";
-					newVar.varName = newNamePtr->GetData()->c_str();
-					ImGui::CloseCurrentPopup( );
+					createLocalVar( "Boolean", ev_boolean, graphContext );
 				}
 				if( ImGui::MenuItem( "Float" ) )
 				{
-					auto& newVar = graphContext.graphObject->CreateVariable( &newNamePtr, ev_float );
-					*newNamePtr->GetData() = "Float";
-					newVar.varName = newNamePtr->GetData()->c_str();
-					ImGui::CloseCurrentPopup( );
+					createLocalVar( "Float", ev_float, graphContext );
 				}
 				if( ImGui::MenuItem( "Integer" ) )
 				{
-					auto& newVar = graphContext.graphObject->CreateVariable( &newNamePtr, ev_int );
-					*newNamePtr->GetData() = "Integer";
-					newVar.varName = newNamePtr->GetData()->c_str();
-					ImGui::CloseCurrentPopup( );
+					createLocalVar( "Integer", ev_int, graphContext );
 				}
 				if( ImGui::MenuItem( "3d Vector" ) )
 				{
-					auto& newVar = graphContext.graphObject->CreateVariable( &newNamePtr, ev_vector );
-					*newNamePtr->GetData() = "3d Vector";
-					newVar.varName = newNamePtr->GetData()->c_str();
-					ImGui::CloseCurrentPopup( );
+					createLocalVar( "3d Vector", ev_vector, graphContext );
 				}
 				if( ImGui::MenuItem( "String" ) )
 				{
-					auto& newVar = graphContext.graphObject->CreateVariable( &newNamePtr , ev_string );
-					*newNamePtr->GetData() = "String";
-					newVar.varName = newNamePtr->GetData()->c_str();
-					ImGui::CloseCurrentPopup( );
+					createLocalVar( "String", ev_string, graphContext );
 				}
 				if( ImGui::MenuItem( "Entity" ) )
 				{
-					auto& newVar = graphContext.graphObject->CreateVariable( &newNamePtr , ev_entity );
-					*newNamePtr->GetData() = "Entity";
-					newVar.varName = newNamePtr->GetData()->c_str();
-					ImGui::CloseCurrentPopup( );
+					createLocalVar( "Entity", ev_entity, graphContext );
 				}
 				if( ImGui::MenuItem( "Object" ) )
 				{
-					auto& newVar = graphContext.graphObject->CreateVariable( &newNamePtr, ev_object );
-					*newNamePtr->GetData() = "Object";
-					newVar.varName = newNamePtr->GetData()->c_str();
-					ImGui::CloseCurrentPopup( );
+					createLocalVar( "Object", ev_object, graphContext );
 				}
 
 				ImGui::EndChild();

@@ -433,10 +433,12 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 		ImGui::BeginChild( "popup_scroller", ImVec2( 200, 200 ), true, ImGuiWindowFlags_AlwaysVerticalScrollbar );
 
 		ImGui::TextDisabled( " - Local - " );
+		int varIndex = 0;
 		auto& locaVars = node.targetContext.graphObject->GetVariables( );
 		for( auto& var : locaVars )
 		{
-			if( ImGui::Button( var.varName, ImVec2( 180, 20 ) ) )
+			varIndex++;
+			if( ImGui::Button( idStr::Length( var.varName ) ? var.varName : idStr( "##" ) + varIndex, ImVec2( 180, 20 ) ) )
 			{
 				nodePtr->dirty = true;
 				OnChangeVar( var );
