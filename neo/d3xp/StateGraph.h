@@ -57,7 +57,7 @@ public:
 
 	idScriptStr* Alloc( const char* str )
 	{
-		strList.Alloc() = new idStr( str );
+		strList.AddUnique( new idStr( str ) );
 		return new idScriptStr( ( void* )strList[strList.Num() - 1] );
 	}
 
@@ -204,7 +204,7 @@ public:
 	bool								LoadBinary( idFile* file, const ID_TIME_T _timeStamp , idClass* owner = nullptr );
 
 	idList<idScriptVariableInstance_t>& GetVariables();
-	idScriptVariableInstance_t&			CreateVariable( const char* variableName, etype_t type );
+	idScriptVariableInstance_t&			CreateVariable( idScriptStr** variableName, etype_t type );
 	void								RemoveNode( idGraphNode* node );
 	idGraphNode*						CreateNode( idGraphNode* node );
 	void								RemoveLink( idGraphNodeSocket* start, idGraphNodeSocket* end );

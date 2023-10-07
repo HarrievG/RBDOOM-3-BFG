@@ -646,22 +646,27 @@ void idClassNode::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL */ )
 	file->WriteBig( ( int )type );
 	file->WriteString( targetEventName );
 
-	int index = 0;
+	int index = -1;
 	idStr outVarName = targetVariableName;
 
-	idEntity* entPtr = ownerClass->Cast<idEntity>();
-	assert( entPtr );
-	for( auto& localVar : graphState->localVariables )
+	if( isLocalvar )
 	{
-		if( localVar.varName == targetVariableName )
+		idEntity* entPtr = ownerClass->Cast<idEntity>( );
+		assert( entPtr );
+		for( auto& localVar : graphState->localVariables )
 		{
-			outVarName.Format( "%s_%s_localVar_%i", entPtr->GetEntityDefName( ), graphState->name.c_str(), index );
-			break;
+			index++;
+			if( localVar.varName == targetVariableName )
+			{
+				outVarName.Format( "%s_%s_localVar_%i", entPtr->GetEntityDefName( ), graphState->name.c_str( ), index );
+				break;
+			}
+
 		}
-		index++;
 	}
 
 	file->WriteString( outVarName );
+	file->WriteBig( index );
 	file->WriteBool( isLocalvar );
 
 	idGraphNode::WriteBinary( file, _timeStamp );
@@ -671,6 +676,7 @@ bool idClassNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass*
 {
 	if( file != NULL )
 	{
+		int index = -1;
 		int newType = 0;
 		file->ReadBig( newType );
 		type = ( NodeType )newType;
@@ -682,21 +688,13 @@ bool idClassNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass*
 		}
 
 		file->ReadString( targetVariableName );
+		file->ReadBig( index );
 		file->ReadBool( isLocalvar );
-		if( !targetVariableName.IsEmpty() )
+		if( index >= 0 )
 		{
 			if( isLocalvar )
 			{
-				int index = 0;
-				for( auto& localVar : graphState->localVariables )
-				{
-					if( localVar.varName == targetVariableName )
-					{
-						targetVariable = localVar.scriptVariable;
-						break;
-					}
-					index++;
-				}
+				targetVariable = graphState->localVariables[index].scriptVariable;
 			}
 			else
 			{

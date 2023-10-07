@@ -111,6 +111,7 @@ struct StateEditContext
 	idHashTableT<int, GraphNode*> nodeHashIdx;
 	idStr saveState;
 	int lastSave = 0;
+	idList<idScriptStr*> localVarNames;
 };
 
 

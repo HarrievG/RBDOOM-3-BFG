@@ -206,17 +206,18 @@ void StateGraphEditor::LoadGraph( StateEditContext& graphContext )
 				infoFile->ReadVec2( nodePositions.Alloc() );
 			}
 
+			idStr tmpName;
 			for( int i = 0; i < graphState.localVariables.Num( ); i++ )
 			{
+				auto& localVar = graphState.localVariables[i];
 				idStr varName;
 				infoFile->ReadString( varName );
-				idStr tmpName;
 				idEntity* entPtr = graphContext.graphOwner.GetEntity();
 				assert( entPtr );
 				tmpName.Format( "%s_%s_localVar_%i", entPtr->GetEntityDefName( ), graphState.name.c_str(), i );
-				idStrPtr nameStr = graphState.blackBoard.GetAllocatedStr( tmpName );
-				assert( nameStr );
-				*nameStr = varName;
+				idScriptStr* nameStr = graphState.blackBoard.Alloc( varName );
+				graphContext.localVarNames.AddUnique( nameStr );
+				localVar.varName = nameStr->GetData()->c_str();
 
 				//patch node var names
 				for( auto* node : graphState.nodes )
@@ -227,7 +228,7 @@ void StateGraphEditor::LoadGraph( StateEditContext& graphContext )
 						{
 							if( classNode->targetVariableName == tmpName )
 							{
-								classNode->targetVariableName = *nameStr;
+								classNode->targetVariableName = localVar.varName;
 							}
 						}
 					}
@@ -954,15 +955,53 @@ void StateGraphEditor::DrawLeftPane( float paneWidth, StateEditContext& graphCon
 				ImGui::TableSetupColumn( "", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_IndentDisable, 25 );
 				ImGui::TableSetupColumn( "", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_IndentDisable, TEXT_BASE_WIDTH * 20 );
 				ImGui::TableSetupColumn( "", ImGuiTableColumnFlags_IndentDisable );
-
+				int index = -1;
 				const idList<idScriptVariableInstance_t>& vars = graphContext.graphObject->GetVariables();
+				static int activeButton = -1;
 				for( auto& var : vars )
 				{
+					++index;
 					ImGui::TableNextRow( 0 );
 					ImGui::TableSetColumnIndex( 0 );
 					ImGui::Dummy( ImVec2( 25, 25 ) );
 					ImGui::TableSetColumnIndex( 1 );
-					ImGui::Text( var.varName );
+					int cursorY = ImGui::GetCursorPosY();
+					if( activeButton == index )
+					{
+						if( ImGui::InputText( idStr( "##" ) + index, graphContext.localVarNames[index]->GetData() ) )
+						{
+							for( auto* node : graphContext.graphObject->GetLocalState( idStateGraph::MAIN )->nodes )
+							{
+								if( auto* classNode = node->Cast<idClassNode>() )
+								{
+									if( classNode->isLocalvar )
+									{
+										if( classNode->targetVariableName == var.varName )
+										{
+											classNode->targetVariableName = graphContext.localVarNames[index]->GetData()->c_str();
+											var.varName = classNode->targetVariableName;
+										}
+									}
+								}
+							}
+						}
+						if( ImGui::IsItemDeactivated() )
+						{
+							activeButton = -1;
+						}
+					}
+					else
+					{
+						if( ImGui::InvisibleButton( idStr( "##" ) + index, ImVec2( TEXT_BASE_WIDTH * 20, TEXT_BASE_HEIGHT ), ImGuiButtonFlags_AllowItemOverlap ) )
+						{
+							activeButton = index;
+						}
+
+						ImGui::SetItemAllowOverlap( );
+						ImGui::SetCursorPosY( cursorY );
+
+						ImGui::Text( var.varName );
+					}
 					ImGui::TableSetColumnIndex( 2 );
 					ImGui::ImScriptVariable( var.varName, var );
 				}
@@ -980,40 +1019,57 @@ void StateGraphEditor::DrawLeftPane( float paneWidth, StateEditContext& graphCon
 			{
 				ImGui::TextDisabled( "Pick Type:" );
 				ImGui::BeginChild( "popup_scroller", ImVec2( 200, 150 ), true );
-				//extern idScriptVariableBase * VarFromType(etype_t type, GraphState * graphState);
+
+				int nameStrIndex = graphContext.localVarNames.AddUnique( new idScriptStr() );
+				idScriptStr* newNamePtr = graphContext.localVarNames[nameStrIndex];
+
 				if( ImGui::MenuItem( "Boolean" ) )
 				{
-					graphContext.graphObject->CreateVariable( "newBoolean", ev_boolean );
+					auto& newVar = graphContext.graphObject->CreateVariable( &newNamePtr, ev_boolean );
+					*newNamePtr->GetData() = "Boolean";
+					newVar.varName = newNamePtr->GetData()->c_str();
 					ImGui::CloseCurrentPopup( );
 				}
 				if( ImGui::MenuItem( "Float" ) )
 				{
-					graphContext.graphObject->CreateVariable( "newFloat", ev_float );
+					auto& newVar = graphContext.graphObject->CreateVariable( &newNamePtr, ev_float );
+					*newNamePtr->GetData() = "Float";
+					newVar.varName = newNamePtr->GetData()->c_str();
 					ImGui::CloseCurrentPopup( );
 				}
 				if( ImGui::MenuItem( "Integer" ) )
 				{
-					graphContext.graphObject->CreateVariable( "newInteger", ev_int );
+					auto& newVar = graphContext.graphObject->CreateVariable( &newNamePtr, ev_int );
+					*newNamePtr->GetData() = "Integer";
+					newVar.varName = newNamePtr->GetData()->c_str();
 					ImGui::CloseCurrentPopup( );
 				}
 				if( ImGui::MenuItem( "3d Vector" ) )
 				{
-					graphContext.graphObject->CreateVariable( "newVector", ev_vector );
+					auto& newVar = graphContext.graphObject->CreateVariable( &newNamePtr, ev_vector );
+					*newNamePtr->GetData() = "3d Vector";
+					newVar.varName = newNamePtr->GetData()->c_str();
 					ImGui::CloseCurrentPopup( );
 				}
 				if( ImGui::MenuItem( "String" ) )
 				{
-					graphContext.graphObject->CreateVariable( "newString", ev_string );
+					auto& newVar = graphContext.graphObject->CreateVariable( &newNamePtr , ev_string );
+					*newNamePtr->GetData() = "String";
+					newVar.varName = newNamePtr->GetData()->c_str();
 					ImGui::CloseCurrentPopup( );
 				}
 				if( ImGui::MenuItem( "Entity" ) )
 				{
-					graphContext.graphObject->CreateVariable( "newEntityPtr" , ev_entity );
+					auto& newVar = graphContext.graphObject->CreateVariable( &newNamePtr , ev_entity );
+					*newNamePtr->GetData() = "Entity";
+					newVar.varName = newNamePtr->GetData()->c_str();
 					ImGui::CloseCurrentPopup( );
 				}
 				if( ImGui::MenuItem( "Object" ) )
 				{
-					graphContext.graphObject->CreateVariable( "newObjectPtr", ev_object );
+					auto& newVar = graphContext.graphObject->CreateVariable( &newNamePtr, ev_object );
+					*newNamePtr->GetData() = "Object";
+					newVar.varName = newNamePtr->GetData()->c_str();
 					ImGui::CloseCurrentPopup( );
 				}
 

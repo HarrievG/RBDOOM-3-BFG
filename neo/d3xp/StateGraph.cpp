@@ -189,8 +189,7 @@ bool idStateGraph::LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass
 		{
 			int type;
 			file->ReadBig( type );
-			tmpName.Format( "%s_%s_localVar_%i", entPtr->GetEntityDefName(), currentGraphState.name.c_str(), i );
-			auto& newInstance = currentGraphState.graph->CreateVariable( tmpName, ( etype_t ) type );
+			auto& newInstance = currentGraphState.graph->CreateVariable( nullptr, ( etype_t ) type );
 			ReadVar( newInstance.scriptVariable, file, _timeStamp );
 		}
 
@@ -235,16 +234,33 @@ idList<idScriptVariableInstance_t>& idStateGraph::GetVariables()
 	return GetLocalVariables();
 }
 
-idScriptVariableInstance_t& idStateGraph::CreateVariable( const char* variableName, etype_t type )
+idScriptVariableInstance_t& idStateGraph::CreateVariable( idScriptStr** variableName, etype_t type )
 {
 	int stateIndex = GetLocalStateIndex( MAIN );
 	GraphState& graphState = localGraphState[stateIndex];
 
-	idStr& nameVar =  *graphState.blackBoard.Alloc( "" )->GetData();
-	nameVar = variableName;
-
 	auto& newInstance = graphState.localVariables.Alloc();
-	newInstance.varName = nameVar;
+
+	if( variableName != nullptr )
+	{
+		if( *variableName == nullptr )
+		{
+			*variableName = graphState.blackBoard.Alloc( "" );
+		}
+		if( ( *variableName )->GetRawData() == nullptr )
+		{
+			idScriptStr* newStr = graphState.blackBoard.Alloc( "" );
+			( *variableName )->SetRawData( newStr->GetRawData() );
+			delete newStr;
+		}
+
+		newInstance.varName = ( *variableName )->GetData()->c_str();
+	}
+	else
+	{
+		newInstance.varName = nullptr;
+	}
+
 	newInstance.scriptVariable = VarFromType( type, &graphState );
 	return newInstance;
 }
