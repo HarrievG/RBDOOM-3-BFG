@@ -391,10 +391,23 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 		ImGuiContext& g = *GImGui;
 		// Note: if it weren't for the child window, we would have to PushItemWidth() here to avoid a crash!
 		ImGui::TextDisabled( "Pick One:" );
+		static idStr autoCompleteStr;
+		if( ImGui::IsWindowFocused( ImGuiFocusedFlags_RootAndChildWindows ) && !ImGui::IsAnyItemActive( ) && !ImGui::IsMouseClicked( 0 ) )
+		{
+			ImGui::SetKeyboardFocusHere( 0 );
+		}
+		ImGui::InputText( "##search", &autoCompleteStr, ImGuiInputTextFlags_AutoSelectAll );
 		ImGui::BeginChild( "popup_scroller", ImVec2( 200, 200 ), true, ImGuiWindowFlags_AlwaysVerticalScrollbar );
-
 		for( auto def : eventDefs )
 		{
+			if( !autoCompleteStr.IsEmpty() )
+			{
+				idStr defName = def->GetName( );
+				if( !defName.Filter( autoCompleteStr, false ) )
+				{
+					continue;
+				}
+			}
 			ImGui::PushID( def->GetEventNum() );
 			if( ImGui::Button( def->GetName(), ImVec2( 180, 20 ) ) )
 			{
@@ -409,6 +422,14 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 
 		for( auto def : threadEventDefs )
 		{
+			if( !autoCompleteStr.IsEmpty( ) )
+			{
+				idStr defName = def->GetName( );
+				if( !defName.Filter( autoCompleteStr, false ) )
+				{
+					continue;
+				}
+			}
 			ImGui::PushID( def->GetEventNum() + def->NumEventCommands() );
 			if( ImGui::Button( def->GetName(), ImVec2( 180, 20 ) ) )
 			{
