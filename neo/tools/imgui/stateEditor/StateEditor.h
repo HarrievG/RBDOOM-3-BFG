@@ -112,6 +112,7 @@ struct StateEditContext
 	idStr saveState;
 	int lastSave = 0;
 	idList<idScriptStr*> localVarNames;
+	ed::PinId lastDragSocket = ed::PinId::Invalid;
 };
 
 

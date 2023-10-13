@@ -116,75 +116,8 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 			int maxSocket = idMath::Imax( maxInputSockets, maxOutputSockets );
 			int inputSocketIdx = 1, outputSocketIdx = ( type != NodeType::Get ) ? 1 : 0;
 
-			auto getVarWidth =
-				[]( idScriptVariableBase * var, bool isOutput ) -> int
-			{
-				etype_t type = var->GetType();
-
-				switch( type )
-				{
-					default:
-						return 1;
-						break;
-					case ev_float:
-						return 10;
-						break;
-					case ev_vector:
-						return 20;
-						break;
-					case ev_string:
-					case ev_object:
-					case ev_entity:
-					{
-						if( isOutput )
-						{
-							return 1;
-						}
-						else
-						{
-							return 20;
-						}
-					}
-					break;
-					case ev_boolean:
-						return 5;
-						break;
-					case ev_int:
-						return 10;
-						break;
-				}
-			};
-
-			int maxLengthIn = popup_text.Length();;
-			int maxLengthOut = 1;
-			for( int i = 0; i < maxSocket; i++ )
-			{
-				if( i < maxInputSockets )
-				{
-					auto& inpSocket = inputSockets[i];
-					if( inpSocket.var )
-
-					{
-						maxLengthIn = idMath::Imax( maxLengthIn, getVarWidth( inpSocket.var, false ) );
-					}
-					else
-					{
-						maxLengthIn = idMath::Imax( maxLengthIn, inpSocket.name.Length() );
-					}
-				}
-				if( i < maxOutputSockets )
-				{
-					auto& outSocket = outputSockets[i];
-					if( outSocket.var )
-					{
-						maxLengthOut = idMath::Imax( maxLengthOut, getVarWidth( outSocket.var, true ) );
-					}
-					else
-					{
-						maxLengthOut = idMath::Imax( maxLengthOut, outSocket.name.Length() );
-					}
-				}
-			}
+			int maxLengthIn = ImGui::GetMaxWidth( inputSockets, false, popup_text.Length() );
+			int maxLengthOut = ImGui::GetMaxWidth( outputSockets, true , 1 );
 
 			ImGui::Dummy( ImVec2( 0, TEXT_BASE_HEIGHT ) );
 			static ImGuiTableFlags flags = ImGuiTableFlags_NoHostExtendX | ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_NoPadOuterX;
@@ -203,20 +136,16 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 				ImGui::Dummy( ImVec2( 0.0f, 0.0f ) );
 				if( ImGui::Button( popup_text ) )
 				{
+					// Hold alt and click to manually trigger the flow input socket:
 					if( ImGui::GetIO().KeyAlt && !inputSockets[0].active )
 					{
 						inputSockets[0].active = true;
 					}
 					else
 					{
-						if( type == NodeType::Call )
-						{
-							do_defPopup = true;    // Instead of saying OpenPopup() here, we set this bool, which is used later in the Deferred Pop-up Section
-						}
-						else
-						{
-							do_varPopup = true;
-						}
+						// Instead of saying OpenPopup() here, we set this bool, which is used later in the Deferred Pop-up Section
+						do_defPopup = type == NodeType::Call;
+						do_varPopup = !do_defPopup;
 					}
 				}
 				ImGui::TableSetColumnIndex( 0 );
@@ -227,7 +156,6 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 					ed::PinPivotAlignment( ImVec2( 0.25, 0.5f ) );
 					ed::PinPivotSize( ImVec2( 0, 0 ) );
 					ImGui::DrawIcon( node.drawList, cursorPos, cursorPos + ImVec2( 25, 25 ), ImGui::IconType::Flow, nodeOwner->inputSockets[0].connections.Num(), ImColor( 255, 255, 255 ), ImColor( 0, 0, 0, 0 ) );
-					//ImGui::TextDisabled(idStr(nodeOwner->inputSockets[0].lastActivated).c_str());
 					ImGui::Dummy( ImVec2( 25, 25 ) );
 					ed::EndPin();
 				}
@@ -243,7 +171,6 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 					ed::PinPivotAlignment( ImVec2( 0.25, 0.5f ) );
 					ed::PinPivotSize( ImVec2( 0, 0 ) );
 					ImGui::DrawIcon( node.drawList, cursorPos, cursorPos + ImVec2( 25, 25 ), ImGui::IconType::Flow, nodeOwner->outputSockets[0].connections.Num(), ImColor( 255, 255, 255 ), ImColor( 0, 0, 0, 0 ) );
-					//ImGui::TextDisabled(idStr(nodeOwner->outputSockets[0].lastActivated).c_str());
 					ImGui::Dummy( ImVec2( 25, 25 ) );
 					ed::EndPin();
 					ImGui::PopID();
@@ -267,31 +194,24 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 						ImGui::PushItemWidth( type != NodeType::Get ? TEXT_BASE_WIDTH* maxLengthOut : 1 );
 						idGraphNodeSocket& ownerSocket = nodeOwner->outputSockets[outputSocketIdx];
 						ImGui::IconItem icon = { ImGui::IconType::Flow , ownerSocket.connections.Num() > 0, ImColor( 255, 255, 255 ), ImColor( 0, 0, 0, 0 ) };
-						if( 0 ) //ownerSocket.var )
+
+						auto* tmpVar = VarFromType( ownerSocket.var->GetType(), graphState );
+						icon = ImGui::ImScriptVariable( idStr(), { "", tmpVar }, false );
+						icon.filled = ownerSocket.connections.Num() > 0;
+						node.drawList->AddText( ImGui::GetCursorScreenPos() + ImVec2( 0, ImGui::GetStyle().ItemInnerSpacing.y ), ImColor( 50.0f, 45.0f, 255.0f, 255.0f ), ownerSocket.name.c_str() );
+						if( tmpVar->GetType() == ev_string )
 						{
-							icon = ImGui::ImScriptVariable( idStr( reinterpret_cast<uintptr_t>( node.Outputs[outputSocketIdx]->ID.AsPointer() ) ), { ownerSocket.name.c_str(), ownerSocket.var }, type != NodeType::Get );
-							icon.filled = ownerSocket.connections.Num() > 0;
+							graphState->blackBoard.Free( ( idStr* )tmpVar->GetRawData() );
+							idStr* data = ( ( idScriptStr* )tmpVar )->GetData();
+							data->FreeData();
+							delete data;
 						}
 						else
 						{
-							auto* tmpVar = VarFromType( ownerSocket.var->GetType(), graphState );
-							icon = ImGui::ImScriptVariable( idStr(), { "", tmpVar }, false );
-							icon.filled = ownerSocket.connections.Num() > 0;
-							node.drawList->AddText( ImGui::GetCursorScreenPos() + ImVec2( 0, ImGui::GetStyle().ItemInnerSpacing.y ),
-													ImColor( 50.0f, 45.0f, 255.0f, 255.0f ), ownerSocket.name.c_str() );
-							if( tmpVar->GetType() == ev_string )
-							{
-								graphState->blackBoard.Free( ( idStr* )tmpVar->GetRawData() );
-								idStr* data = ( ( idScriptStr* )tmpVar )->GetData();
-								data->FreeData();
-								delete data;
-							}
-							else
-							{
-								graphState->blackBoard.Free( tmpVar->GetRawData() );
-							}
-							delete tmpVar;
+							graphState->blackBoard.Free( tmpVar->GetRawData() );
 						}
+						delete tmpVar;
+
 						ImGui::PopItemWidth();
 						ImGui::TableSetColumnIndex( 3 );
 						ed::BeginPin( node.Outputs[outputSocketIdx]->ID, ed::PinKind::Output );
@@ -299,7 +219,6 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 						ed::PinPivotAlignment( ImVec2( 1.0f, 0.5f ) );
 						ed::PinPivotSize( ImVec2( 0, 0 ) );
 						ImGui::DrawIcon( node.drawList, cursorPos, cursorPos + ImVec2( 25, 25 ), icon.type, icon.filled, icon.color, icon.innerColor );
-						//ImGui::TextDisabled(idStr(nodeOwner->outputSockets[outputSocketIdx].lastActivated).c_str());
 						ImGui::Dummy( ImVec2( 25, 25 ) );
 						ed::EndPin();
 						outputSocketIdx++;
@@ -336,7 +255,6 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 							ed::PinPivotAlignment( ImVec2( 0.25, 0.5f ) );
 							ed::PinPivotSize( ImVec2( 0, 0 ) );
 							ImGui::DrawIcon( node.drawList, cursorPos, cursorPos + ImVec2( 25, 25 ), icon.type, icon.filled, icon.color, icon.innerColor );
-							//ImGui::TextDisabled(idStr(nodeOwner->inputSockets[inputSocketIdx].lastActivated).c_str());
 							ImGui::Dummy( ImVec2( 25, 25 ) );
 							ed::EndPin();
 						}
@@ -398,6 +316,7 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 		}
 		ImGui::InputText( "##search", &autoCompleteStr, ImGuiInputTextFlags_AutoSelectAll );
 		ImGui::BeginChild( "popup_scroller", ImVec2( 200, 200 ), true, ImGuiWindowFlags_AlwaysVerticalScrollbar );
+		ImGui::TextDisabled( ownerClass->GetClassname() );
 		for( auto def : eventDefs )
 		{
 			if( !autoCompleteStr.IsEmpty() )
@@ -419,7 +338,7 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 			}
 			ImGui::PopID();
 		}
-
+		ImGui::TextDisabled( scriptThread->GetClassname() );
 		for( auto def : threadEventDefs )
 		{
 			if( !autoCompleteStr.IsEmpty( ) )
@@ -466,6 +385,26 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 				popup_text = var.varName;
 				ImGui::CloseCurrentPopup( );  // These calls revoke the popup open state, which was set by OpenPopup above.
 				isLocalvar = true;
+				isStaticVar = false;
+			}
+		}
+
+		if( type == NodeType::Get )
+		{
+			ImGui::TextDisabled( " - Static - " );
+			int varIndex = 0;
+			for( auto& var : idStateGraph::StaticVars )
+			{
+				varIndex++;
+				if( ImGui::Button( idStr::Length( var.varName ) ? var.varName : idStr( "##" ) + varIndex, ImVec2( 180, 20 ) ) )
+				{
+					nodePtr->dirty = true;
+					OnChangeVar( var );
+					popup_text = var.varName;
+					ImGui::CloseCurrentPopup( );  // These calls revoke the popup open state, which was set by OpenPopup above.
+					isLocalvar = false;
+					isStaticVar = true;
+				}
 			}
 		}
 
@@ -479,6 +418,7 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 				popup_text = var.varName;
 				ImGui::CloseCurrentPopup();  // These calls revoke the popup open state, which was set by OpenPopup above.
 				isLocalvar = false;
+				isStaticVar = false;
 			}
 		}
 
@@ -489,3 +429,106 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 	ImGui::PopID();
 	ed::Resume();
 }
+
+
+idGraphNode* idGraphLogicNode::QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner )
+{
+	auto& graph = *targetGraph;
+	if( ImGui::MenuItem( "IF Statement" ) )
+	{
+		auto* logicNode = static_cast< idGraphLogicNode* >( graph.CreateNode( new idGraphLogicNode( ) ) );
+		logicNode->nodeType = idGraphLogicNode::IF_EQU;
+		logicNode->Setup( graphOwner );
+		return logicNode;
+	}
+
+	return nullptr;
+}
+
+const char* idGraphLogicNode::GetName( )
+{
+	return GetName( nodeType );
+}
+
+const char* idGraphLogicNode::GetLabel( idGraphLogicNode::NodeType type )
+{
+#define GetNameStr( n , name) case  idGraphLogicNode::##n: return name; break
+	switch( type )
+	{
+			GetNameStr( IF_EQU,		"==" );
+			GetNameStr( IF_NOTEQ,	"!=" );
+			GetNameStr( IF_GT,		">" );
+			GetNameStr( IF_LT,		"<" );
+			GetNameStr( IF_GTE,		">=" );
+			GetNameStr( IF_LTE,		"<=" );
+
+		default:
+			break;
+	}
+#undef GetNameStr
+	return "TYPE_FAILURE";
+
+}
+
+const char* idGraphLogicNode::GetName( idGraphLogicNode::NodeType type )
+{
+#define GetNameStr( n , name) case  idGraphLogicNode::##n: return name; break
+	switch( type )
+	{
+			GetNameStr( IF_EQU,		"If Equal" );
+			GetNameStr( IF_NOTEQ,	"If Not Equal" );
+			GetNameStr( IF_GT,		"If Greater Than" );
+			GetNameStr( IF_LT,		"If Less Than" );
+			GetNameStr( IF_GTE,		"If Greater or Equal" );
+			GetNameStr( IF_LTE,		"If Less or Equal" );
+		default:
+			break;
+	}
+#undef GetNameStr
+	return "TYPE_FAILURE";
+
+}
+
+bool idGraphLogicNode::DrawFlowInputLabel( ImGuiTools::GraphNode* nodePtr, idStr& popup )
+{
+	namespace ed = ax::NodeEditor;
+	const char* label = GetLabel( nodeType );
+	if( ImGui::Button( label ) )
+	{
+		popup = "logicIF";
+	}
+
+	return false;
+}
+
+void idGraphLogicNode::Draw( ImGuiTools::GraphNode* nodePtr )
+{
+	namespace ed = ax::NodeEditor;
+	using namespace ImGuiTools;
+
+	ImGui::AlignTextToFramePadding();
+
+	__super::Draw( nodePtr );
+
+	ed::Suspend();
+	ImGui::PushItemWidth( 100 );
+	if( ImGui::BeginPopup( "logicIF" ) )
+	{
+		ImGui::TextDisabled( "Pick One:" );
+		// Note: if it weren't for the child window, we would have to PushItemWidth() here to avoid a crash!
+		ImGui::BeginChild( "popup_scroller", ImVec2( 200, 100 ), true, ImGuiWindowFlags_AlwaysVerticalScrollbar );
+		for( int i = IF_EQU ; i < IF_MAX; i++ )
+		{
+			if( ImGui::Button( GetName( NodeType( i ) ) , ImVec2( 180, 20 ) ) )
+			{
+				nodeType = NodeType( i );
+				ImGui::CloseCurrentPopup();
+			}
+		}
+		ImGui::EndChild( );
+		ImGui::EndPopup( );
+	}
+	ImGui::PopItemWidth();
+	ed::Resume();
+}
+

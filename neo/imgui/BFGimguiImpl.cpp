@@ -71,8 +71,7 @@ bool ImGui::DragVec3fitLabel( const char* label, idVec3& v, float v_speed,
 	return ImGui::DragVec3( label, v, v_speed, v_min, v_max, display_format, power, false );
 }
 
-ImGui::IconItem ImGui::ImScriptVariable
-( const char* strId, const idScriptVariableInstance_t& scriptVar, bool enabled /*= true*/ )
+ImGui::IconItem ImGui::ImScriptVariable( const char* strId, const idScriptVariableInstance_t& scriptVar, bool enabled /*= true*/ )
 {
 	etype_t t = scriptVar.scriptVariable->GetType();
 
@@ -457,11 +456,69 @@ void ImGui::DrawIcon( ImDrawList* drawList, const ImVec2& a, const ImVec2& b, Im
 	}
 }
 
+int ImGui::GetItemWidth( idScriptVariableBase* var, bool isOutput, int minLength )
+{
+	etype_t type = var->GetType();
 
+	switch( type )
+	{
+		default:
+			return 1;
+			break;
+		case ev_float:
+			return 10;
+			break;
+		case ev_vector:
+			return 20;
+			break;
+		case ev_string:
+		case ev_object:
+		case ev_entity:
+		{
+			if( isOutput )
+			{
+				return 1;
+			}
+			else
+			{
+				return 20;
+			}
+		}
+		break;
+		case ev_boolean:
+			return 5;
+			break;
+		case ev_int:
+			return 10;
+			break;
+	}
+}
+
+int ImGui::GetMaxWidth( idList<idGraphNodeSocket>& socketList, bool isOutput, int minLength )
+{
+	int maxLength = minLength;
+	for( int i = 0; i < socketList.Num(); i++ )
+	{
+		auto& socket = socketList[i];
+		if( socket.var && !isOutput )
+		{
+			maxLength = idMath::Imax( maxLength, GetItemWidth( socket.var, isOutput, minLength ) );
+		}
+		else
+		{
+			maxLength = idMath::Imax( maxLength, socket.name.Length( ) );
+		}
+	}
+
+	return maxLength;
+}
 // the ImGui hooks to integrate it into the engine
 
 
 // NODE EDITOR EXAMPLE AND TEST
+
+
+
 #include "../extern/imgui-node-editor/imgui_node_editor.h"
 namespace ed = ax::NodeEditor;
 

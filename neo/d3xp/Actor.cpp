@@ -1590,6 +1590,11 @@ void idActor::UpdateScript()
 		scriptThread->DisableDebugInfo();
 	}
 
+	if( graphObject )
+	{
+		graphObject->Think( );
+	}
+
 	// a series of state changes can happen in a single frame.
 	// this loop limits them in case we've entered an infinite loop.
 	for( i = 0; i < 20; i++ )

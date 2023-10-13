@@ -189,6 +189,50 @@ void idGraphOnInitNode::Setup( idClass* graphOwner )
 
 idGraphNode* idGraphOnInitNode::QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner )
 {
+	auto& graph = *targetGraph;
+
+	bool foundOnActivate = false;
+	bool foundOnConstruct = false;
+	auto nodes = graph.GetLocalState( idStateGraph::MAIN )->nodes;
+	for( auto node : nodes )
+	{
+		if( auto onInitNode = node->Cast<idGraphOnInitNode>() )
+		{
+			if( onInitNode->type == NodeType::Activate )
+			{
+				foundOnActivate = true;
+			}
+			if( onInitNode->type == NodeType::Construct )
+			{
+				foundOnConstruct = true;
+			}
+		}
+		if( foundOnActivate && foundOnConstruct )
+		{
+			break;
+		}
+	}
+
+	if( !foundOnActivate && ImGui::MenuItem( "OnActivate" ) )
+	{
+
+		auto* logicNode = static_cast< idGraphOnInitNode* >( graph.CreateNode( new idGraphOnInitNode( ) ) );
+		logicNode->type = NodeType::Activate;
+		logicNode->Setup( graphOwner );
+		return logicNode;
+	}
+
+
+	if( !foundOnConstruct && ImGui::MenuItem( "OnConstruct" ) )
+	{
+
+		auto* logicNode = static_cast< idGraphOnInitNode* >( graph.CreateNode( new idGraphOnInitNode( ) ) );
+		logicNode->type = NodeType::Construct;
+		logicNode->Setup( graphOwner );
+		return logicNode;
+	}
+
+
 	return nullptr;
 }
 
@@ -276,6 +320,7 @@ idClassNode::idClassNode()
 	targetEvent = nullptr;
 	targetVariable = nullptr;
 	isLocalvar = false;
+	isStaticVar = false;
 
 	scriptThread = nullptr;
 
@@ -565,15 +610,18 @@ void idClassNode::SetOwner( idClass** target )
 	}
 }
 
-void idClassNode::SetOwner( const idEventDef& def, idClass** target )
+//returns false if def was in GraphThreadEventMap
+bool idClassNode::SetOwner( const idEventDef& def, idClass** target )
 {
 	if( idStateGraph::GraphThreadEventMap.Find( def.GetEventNum() ) )
 	{
 		SetOwner( ( idClass** ) & ( graphState->graph ) );
+		return false;
 	}
 	else
 	{
 		SetOwner( target );
+		return true;
 	}
 }
 
@@ -664,10 +712,22 @@ void idClassNode::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL */ )
 
 		}
 	}
+	else if( isStaticVar )
+	{
+		for( auto& staticVar : idStateGraph::StaticVars )
+		{
+			index++;
+			if( staticVar.varName == outVarName )
+			{
+				break;
+			}
+		}
+	}
 
 	file->WriteString( outVarName );
 	file->WriteBig( index );
 	file->WriteBool( isLocalvar );
+	file->WriteBool( isStaticVar );
 
 	idGraphNode::WriteBinary( file, _timeStamp );
 }
@@ -690,13 +750,14 @@ bool idClassNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass*
 		file->ReadString( targetVariableName );
 		file->ReadBig( index );
 		file->ReadBool( isLocalvar );
-		if( index >= 0 )
+		file->ReadBool( isStaticVar );
+		if( !targetVariableName.IsEmpty() )
 		{
 			if( isLocalvar )
 			{
 				targetVariable = graphState->localVariables[index].scriptVariable;
 			}
-			else
+			else if( !isStaticVar )
 			{
 				idList<idScriptVariableInstance_t> searchVar;
 				idScriptVariableInstance_t& var = searchVar.Alloc( );
@@ -704,6 +765,10 @@ bool idClassNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass*
 				var.scriptVariable = nullptr;
 				owner->GetType( )->GetScriptVariables( owner, searchVar );
 				targetVariable = var.scriptVariable;
+			}
+			else
+			{
+				targetVariable = idStateGraph::StaticVars[index].scriptVariable;
 			}
 		}
 
@@ -713,3 +778,97 @@ bool idClassNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass*
 	return false;
 }
 
+//////////////////////////////////////////////////////////////////////////
+CLASS_DECLARATION( idGraphNode, idGraphLogicNode )
+END_CLASS
+
+idGraphLogicNode::idGraphLogicNode( )
+{
+	nodeType = idGraphLogicNode::IF_EQU;
+}
+
+stateResult_t idGraphLogicNode::Exec( stateParms_t* parms )
+{
+	if( inputSockets[1].connections.Num() && inputSockets[2].connections.Num() )
+	{
+		idGraphNodeSocket& lhs = *inputSockets[1].connections[0];
+		idGraphNodeSocket& rhs = *inputSockets[2].connections[0];
+
+		switch( nodeType )
+		{
+			case idGraphLogicNode::IF_EQU:
+				*boolOutput = lhs == rhs;
+				break;
+			case idGraphLogicNode::IF_NOTEQ:
+				*boolOutput = lhs != rhs;
+				break;
+			case idGraphLogicNode::IF_GT:
+				*boolOutput = lhs > rhs;
+				break;
+			case idGraphLogicNode::IF_LT:
+				*boolOutput = lhs < rhs;
+				break;
+			case idGraphLogicNode::IF_GTE:
+				*boolOutput = lhs >= rhs;
+				break;
+			case idGraphLogicNode::IF_LTE:
+				*boolOutput = lhs <= rhs;
+				break;
+			default:
+				*boolOutput = false;
+				break;
+		}
+
+		if( *boolOutput )
+		{
+			outputSockets[0].active = true;
+		}
+		else
+		{
+			outputSockets[1].active = true;
+		}
+	}
+	return SRESULT_DONE;
+}
+
+void idGraphLogicNode::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL */ )
+{
+	file->WriteBig( ( int )nodeType );
+	file->WriteBig( numInputs );
+	idGraphNode::WriteBinary( file, _timeStamp );
+}
+
+bool idGraphLogicNode::LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass* owner /*= nullptr */ )
+{
+	file->ReadBig( ( int& )nodeType );
+	file->ReadBig( numInputs );
+	Setup( owner );
+	idGraphNode::LoadBinary( file, _timeStamp, owner );
+	return true;
+}
+
+void idGraphLogicNode::Setup( idClass* graphOwner )
+{
+	numInputs = 2;
+	idGraphNodeSocket& newInput = CreateInputSocket();
+	newInput.name = "  ";
+	idGraphNodeSocket& newOutputTrue = CreateOutputSocket( );
+	idGraphNodeSocket& newOutputFalse = CreateOutputSocket( );
+
+	idGraphNodeSocket& resultOutput = CreateOutputSocket( );
+	resultOutput.name = "Result";
+	boolOutput = ( idScriptBool* ) VarFromType( ev_boolean, graphState );
+	resultOutput.var = boolOutput;
+
+	for( int i = 0; i < numInputs; i++ )
+	{
+		idGraphNodeSocket* inp = &CreateInputSocket( );
+		inp->var = nullptr;
+	}
+
+}
+
+idVec4 idGraphLogicNode::NodeTitleBarColor( )
+{
+	return idVec4( 0.7f, 0.3f, 3.0f, 1.0f );
+}

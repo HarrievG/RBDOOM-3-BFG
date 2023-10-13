@@ -55,6 +55,9 @@ public:
 	//	return  new idScriptString( ( void* )strPool.AllocString( str ) );
 	//}
 
+	idScriptVariableBase* Alloc( etype_t type );
+
+	static int SizeInBytes( etype_t type );
 	idScriptStr* Alloc( const char* str )
 	{
 		strList.AddUnique( new idStr( str ) );
@@ -112,6 +115,13 @@ public:
 	} Link_t;
 	//////////////////////////////////////////////////////////////////////////
 
+	bool operator == ( idGraphNodeSocket const& rhs );
+	bool operator != ( idGraphNodeSocket const& rhs );
+	bool operator <= ( idGraphNodeSocket const& rhs );
+	bool operator >= ( idGraphNodeSocket const& rhs );
+	bool operator > ( idGraphNodeSocket const& rhs );
+	bool operator < ( idGraphNodeSocket const& rhs );
+
 	idGraphNodeSocket& operator=( idGraphNodeSocket&& );
 	~idGraphNodeSocket();
 	idGraphNodeSocket() :
@@ -157,6 +167,10 @@ public:
 	//Should only be used in editor.
 	virtual idGraphNode* QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner ) = 0;
 	virtual void Draw( ImGuiTools::GraphNode* nodePtr );
+	virtual bool DrawFlowInputLabel( ImGuiTools::GraphNode* nodePtr, idStr& popup )
+	{
+		return false;
+	}
 	virtual idVec4 NodeTitleBarColor();
 	//////////////////////////////////////////////////////////////////////////
 
@@ -229,6 +243,7 @@ public:
 	idHashIndex							localStateHash;
 	idList<GraphState>					localGraphState;
 
+	static idList<idScriptVariableInstance_t> StaticVars;
 	static idList<int>	GraphThreadEventMap;
 	static bool			GraphThreadEventMapInitDone;
 
@@ -239,6 +254,7 @@ private:
 	idGraphNode*						CreateLocalStateNode( const char* stateName, idGraphNode* node );
 
 	idList<idScriptVariableInstance_t>&  GetLocalVariables();
+	idClass*							 ownerClass;
 };
 
 //Testcase for idStateGraph[editor]

@@ -409,6 +409,8 @@ void StateGraphEditor::DrawGraphEntityTest()
 void StateGraphEditor::DrawMapGraph()
 {
 	static StateEditContext MapGraphContext;
+	idEntityPtr<idEntity> worldEnt;
+	worldEnt = gameLocal.entities[ENTITYNUM_WORLD];
 	if( MapGraphContext.Editor == nullptr )
 	{
 		idStr currentMap  = commonLocal.GetCurrentMapName();
@@ -429,9 +431,6 @@ void StateGraphEditor::DrawMapGraph()
 		MapGraphContext.Config.SettingsFile = MapGraphContext.file;
 		MapGraphContext.Editor = ed::CreateEditor( &MapGraphContext.Config );
 
-		idEntityPtr<idEntity> worldEnt;
-		worldEnt = gameLocal.entities[ENTITYNUM_WORLD];
-
 		if( worldEnt && worldEnt->graphObject )
 		{
 			MapGraphContext.graphOwner = worldEnt;
@@ -442,7 +441,10 @@ void StateGraphEditor::DrawMapGraph()
 		return;
 	}
 
-	Draw( MapGraphContext );
+	if( worldEnt && worldEnt->graphObject )
+	{
+		Draw( MapGraphContext );
+	}
 }
 
 void StateGraphEditor::DrawIdPlayer( )
@@ -646,7 +648,66 @@ void StateGraphEditor::Draw( StateEditContext& graphContext )
 			ImGui::PushID( node.ID.Get() );
 			if( node.dirty )
 			{
+				//check for existing flow links
+				ed::PinId flowOut = ed::PinId::Invalid;
+				ed::PinId flowIn = ed::PinId::Invalid;
+				int linkIdx = 0;
+				while( linkIdx < graphContext.linkList.Num( ) )
+				{
+					auto& link = graphContext.linkList[linkIdx];
+					for( GraphNodePin* pin : node.Inputs )
+					{
+						if( pin->ID == link.EndPinID )
+						{
+
+							flowOut = link.StartPinID;
+							break;
+						}
+					}
+					for( GraphNodePin* pin : node.Outputs )
+					{
+						if( pin->ID == link.StartPinID )
+						{
+							flowIn = link.EndPinID;
+							break;
+						}
+					}
+					linkIdx++;
+				}
+
+				//destructive node reload
 				ReadNode( node.Owner, node, graphContext );
+
+				//Restore flow links.
+				if( flowOut != ed::PinId::Invalid )
+				{
+					GraphLink& newLink = graphContext.linkList.Alloc( );
+					newLink.ID = ed::LinkId( NextLinkID( graphContext ) );
+					newLink.StartPinID = flowOut;
+					newLink.EndPinID = node.Inputs[0]->ID;
+
+					idGraphNodeSocket** inputSocketPtr;
+					idGraphNodeSocket** outputSocketPtr;
+					graphContext.socketHashIdx.Get( newLink.StartPinID.Get( ), &outputSocketPtr );
+					graphContext.socketHashIdx.Get( newLink.EndPinID.Get( ), &inputSocketPtr );
+
+					graphContext.graphObject->AddLink( **outputSocketPtr, **inputSocketPtr );
+				}
+				if( flowIn != ed::PinId::Invalid )
+				{
+					GraphLink& newLink = graphContext.linkList.Alloc( );
+					newLink.ID = ed::LinkId( NextLinkID( graphContext ) );
+					newLink.StartPinID = node.Outputs[0]->ID;
+					newLink.EndPinID = flowIn;
+
+					idGraphNodeSocket** inputSocketPtr;
+					idGraphNodeSocket** outputSocketPtr;
+					graphContext.socketHashIdx.Get( newLink.StartPinID.Get( ), &outputSocketPtr );
+					graphContext.socketHashIdx.Get( newLink.EndPinID.Get( ), &inputSocketPtr );
+
+					graphContext.graphObject->AddLink( **outputSocketPtr, **inputSocketPtr );
+				}
+
 				node.dirty = false;
 			}
 
@@ -1152,9 +1213,25 @@ void StateGraphEditor::Handle_ContextMenus( StateEditContext& graphContext )
 			idGraphNode* createdNode = nodePtr->QueryNodeConstruction( graphContext.graphObject, graphContext.graphOwner );
 			if( createdNode != nullptr )
 			{
-				auto& newNode = *( graphContext.nodeList.Alloc() = new GraphNode( graphContext, NextNodeID( graphContext ), createdNode->GetName(), createdNode ) );
+				int newNodeID = NextNodeID( graphContext );
+				auto& newNode = *( graphContext.nodeList.Alloc() = new GraphNode( graphContext, newNodeID , createdNode->GetName(), createdNode ) );
 				ReadNode( createdNode, newNode , graphContext );
 				ed::SetNodePosition( newNode.ID, openPopupPosition );
+				if( graphContext.lastDragSocket != ed::PinId::Invalid )
+				{
+					GraphLink& newLink = graphContext.linkList.Alloc( );
+					newLink.ID = ed::LinkId( NextLinkID( graphContext ) );
+					newLink.StartPinID = graphContext.lastDragSocket;
+					newLink.EndPinID = newNode.Inputs[0]->ID;
+
+					idGraphNodeSocket** inputSocketPtr;
+					idGraphNodeSocket** outputSocketPtr;
+					graphContext.socketHashIdx.Get( newLink.StartPinID.Get( ), &outputSocketPtr );
+					graphContext.socketHashIdx.Get( newLink.EndPinID.Get( ), &inputSocketPtr );
+
+					graphContext.graphObject->AddLink( **outputSocketPtr, **inputSocketPtr );
+					graphContext.lastDragSocket = ed::PinId::Invalid;
+				}
 			}
 		}
 		ImGui::EndPopup();
@@ -1215,6 +1292,7 @@ void StateGraphEditor::Handle_NodeEvents( StateEditContext& graphContext )
 				// ed::AcceptNewItem() return true when user release mouse button.
 				if( ed::AcceptNewItem() )
 				{
+					//no more swap needed?
 					if( outputSocket->isOutput )
 					{
 						graphContext.graphObject->AddLink( *outputSocket, *inputSocket );
@@ -1244,21 +1322,31 @@ void StateGraphEditor::Handle_NodeEvents( StateEditContext& graphContext )
 					}
 					else if( !( inputSocket->var == nullptr && outputSocket->var == nullptr ) )
 					{
-						if( ( inputSocket->var && !outputSocket->var || !inputSocket->var && outputSocket->var )
-								|| inputSocket->var->GetType() != outputSocket->var->GetType() )
+
+						for( auto* connection : outputSocket->connections )
+						{
+							if( connection == inputSocket )
+							{
+								ed::RejectNewItem( ImColor( 255, 0, 0 ), 2.0f );
+								break;
+							}
+						}
+
+						if( !outputSocket->isOutput )
+						{
+							auto* tmp = outputSocket;
+							outputSocket = inputSocket;
+							inputSocket = tmp;
+						}
+
+						if( !inputSocket->var && outputSocket->var && inputSocket->socketIndex )
+						{
+
+						}
+						else if( !outputSocket->var || !inputSocket->socketIndex
+								 || inputSocket->var->GetType() != outputSocket->var->GetType() )
 						{
 							ed::RejectNewItem( ImColor( 255, 0, 0 ), 2.0f );
-						}
-						else
-						{
-							for( auto* connection : outputSocket->connections )
-							{
-								if( connection == inputSocket )
-								{
-									ed::RejectNewItem( ImColor( 255, 0, 0 ), 2.0f );
-									break;
-								}
-							}
 						}
 					}
 					else
@@ -1300,6 +1388,7 @@ void StateGraphEditor::Handle_NodeEvents( StateEditContext& graphContext )
 				//newLinkPin = nullptr;
 				ed::Suspend();
 				ImGui::OpenPopup( "Create New Node" );
+				graphContext.lastDragSocket = pinId;
 				ed::Resume();
 			}
 		}

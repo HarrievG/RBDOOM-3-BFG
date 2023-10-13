@@ -6,6 +6,7 @@
 
 #include "../idlib/math/Vector.h"
 #include "../d3xp/script/Script_Program.h"
+#include "./d3xp/StateGraph.h"
 
 // add custom functions for imgui
 namespace ImGui
@@ -33,6 +34,10 @@ struct IconItem
 IconItem ImScriptVariable( const char* label, const idScriptVariableInstance_t& scriptVar, bool enabled = true );
 
 void DrawIcon( ImDrawList* drawList, const ImVec2& a, const ImVec2& b, IconType type, bool filled, ImU32 color, ImU32 innerColor );
+
+int GetItemWidth( idScriptVariableBase* var, bool isOutput, int minLength );
+
+int GetMaxWidth( idList<idGraphNodeSocket>& socketList , bool isOutput, int minLength );
 
 }
 

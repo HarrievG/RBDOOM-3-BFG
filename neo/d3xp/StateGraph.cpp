@@ -35,6 +35,9 @@ If you have questions concerning this license or the applicable additional terms
 # define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui_internal.h"
 
+
+idCVar debugGraphTraces( "debugGraphTraces", "0", CVAR_BOOL, "Enable Graph debug output" );
+
 void WriteVar( idScriptVariableBase* var, idFile* file, ID_TIME_T* _timeStamp /*= NULL */ );
 void ReadVar( idScriptVariableBase* var, idFile* file, const ID_TIME_T _timeStamp );
 
@@ -46,7 +49,7 @@ END_CLASS
 
 idList<int> idStateGraph::GraphThreadEventMap;
 bool idStateGraph::GraphThreadEventMapInitDone = false;
-
+idList<idScriptVariableInstance_t> idStateGraph::StaticVars;
 
 void idStateGraph::Event_Wait( float time )
 {
@@ -74,13 +77,30 @@ idStateGraph::idStateGraph( idClass* Owner /* = nullptr*/ )
 	auto& mainState = localGraphState[GetLocalStateIndex( MAIN )];
 	mainState.stateThread = new rvStateThread();
 	mainState.stateThread->SetOwner( Owner );
+	ownerClass = Owner;
 
 	if( !GraphThreadEventMapInitDone )
 	{
+		//add events to be routed to idStateGraph here:
 		GraphThreadEventMap.Alloc() = EV_Thread_Wait.GetEventNum();
 		GraphThreadEventMap.Alloc() = EV_Thread_WaitFrame.GetEventNum();
 		GraphThreadEventMapInitDone = true;
+
+#define newStaticVar( name , label, type ,nativeType, value )	\
+		auto & newVarInst##name = StaticVars.Alloc(); \
+		newVarInst##name.varName = label; 			\
+		static nativeType StaticGraphVariable##name = value;		\
+		newVarInst##name.scriptVariable = new type( ); \
+		newVarInst##name.scriptVariable->SetRawData((byte*)&StaticGraphVariable##name);
+
+		newStaticVar( 0, " TRUE ", idScriptBool, bool, TRUE );
+		newStaticVar( 1, " FALSE ", idScriptBool, bool, FALSE );
+		newStaticVar( 2, " int 1 ", idScriptInteger, int, 1 );
+		newStaticVar( 3, " int 0 ", idScriptInteger, int, 0 );
+		newStaticVar( 4, " int 1000 ", idScriptInteger, int, 100 );
+#undef newStaticVar;
 	}
+
 }
 
 idStateGraph::~idStateGraph()
@@ -120,14 +140,19 @@ int idStateGraph::CreateSubState( const char* name, idList<idScriptVariableInsta
 
 void idStateGraph::Think()
 {
-	auto& graph = localGraphState[0];
+	auto& graphState = localGraphState[0];
 
-	graph.stateThread->SetOwner( this );
-	if( graph.stateThread->IsIdle() )
+	if( debugGraphTraces.GetBool() && graphState.graph && graphState.graph->ownerClass )
 	{
-		graph.stateThread->SetState( "State_Update" );
+		common->Printf( "%s total states : %i \n ", graphState.graph->ownerClass->GetClassname( ), localGraphState.Num() );
 	}
-	graph.stateThread->Execute();
+
+	graphState.stateThread->SetOwner( this );
+	if( graphState.stateThread->IsIdle() )
+	{
+		graphState.stateThread->SetState( "State_Update" );
+	}
+	graphState.stateThread->Execute();
 }
 
 void idStateGraph::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL*/ )
@@ -501,7 +526,6 @@ T* idStateGraph::CreateNode( int stateIndex )
 	return static_cast<T*>( CreateLocalStateNode( stateIndex, new T() ) );
 }
 
-
 void WriteVar( idScriptVariableBase* var, idFile* file, ID_TIME_T* _timeStamp /*= NULL */ )
 {
 	switch( var->GetType() )
@@ -644,12 +668,14 @@ idGraphNodeSocket& idGraphNode::CreateSocket( idList<idGraphNodeSocket>& socketL
 	ret.socketIndex = socketList.Num() - 1;
 	ret.nodeIndex = this->nodeIndex;
 	ret.owner = this;
+	ret.name = "";
 	return ret;
 }
 
 //Move out of this file and only compile with editor tools.
 void idGraphNode::Draw( ImGuiTools::GraphNode* nodePtr )
 {
+	idStr popup;
 	auto& node = *nodePtr;
 	namespace ed = ax::NodeEditor;
 	using namespace ImGuiTools;
@@ -680,65 +706,9 @@ void idGraphNode::Draw( ImGuiTools::GraphNode* nodePtr )
 			int maxSocket = idMath::Imax( maxInputSockets, maxOutputSockets );
 			int inputSocketIdx = 0, outputSocketIdx = 0;
 
-			auto getVarWidth =
-				[]( idScriptVariableBase * var ) -> int
-			{
-				etype_t type = var->GetType();
-				switch( type )
-				{
-					default:
-						return 1;
-						break;
-					case ev_float:
-						return 10;
-						break;
-					case ev_vector:
-						return 18;
-						break;
-					case ev_string:
-					case ev_object:
-					case ev_entity:
-						return 20;
-						break;
-					case ev_boolean:
-						return 5;
-						break;
-					case ev_int:
-						return 10;
-						break;
-				}
-			};
+			int maxLengthIn = ImGui::GetMaxWidth( inputSockets, false, 1 );
+			int maxLengthOut = ImGui::GetMaxWidth( outputSockets, true, 1 );
 
-			int maxLengthIn = 1;
-			int maxLengthOut = 1;
-			for( int i = 0; i < maxSocket; i++ )
-			{
-				if( i < maxInputSockets )
-				{
-					auto& inpSocket = inputSockets[i];
-					if( inpSocket.var )
-
-					{
-						maxLengthIn = idMath::Imax( maxLengthIn, getVarWidth( inpSocket.var ) );
-					}
-					else
-					{
-						maxLengthIn = idMath::Imax( maxLengthIn, inpSocket.name.Length() );
-					}
-				}
-				if( i < maxOutputSockets )
-				{
-					auto& outSocket = outputSockets[i];
-					if( outSocket.var )
-					{
-						maxLengthOut = idMath::Imax( maxLengthOut, getVarWidth( outSocket.var ) );
-					}
-					else
-					{
-						maxLengthOut = idMath::Imax( maxLengthOut, outSocket.name.Length() );
-					}
-				}
-			}
 			ImGui::Dummy( ImVec2( 0, TEXT_BASE_HEIGHT ) );
 			static ImGuiTableFlags flags = ImGuiTableFlags_NoHostExtendX | ImGuiTableFlags_SizingStretchProp;
 			if( ImGui::IsItemVisible() && ImGui::BeginTable( "NodeContent", 4, flags ) )
@@ -747,6 +717,7 @@ void idGraphNode::Draw( ImGuiTools::GraphNode* nodePtr )
 				ImGui::TableSetupColumn( "", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_IndentDisable, TEXT_BASE_WIDTH * maxLengthIn );
 				ImGui::TableSetupColumn( "", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_IndentDisable, TEXT_BASE_WIDTH * maxLengthOut );
 				ImGui::TableSetupColumn( "", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_IndentDisable, 25 );
+
 
 				for( int i = 0; i < maxSocket; i++ )
 				{
@@ -764,8 +735,11 @@ void idGraphNode::Draw( ImGuiTools::GraphNode* nodePtr )
 						}
 						else
 						{
-							ImGui::GetWindowDrawList()->AddText( ImGui::GetCursorScreenPos() + ImVec2( 0, ImGui::GetStyle().ItemInnerSpacing.y ),
-																 ImColor( 50.0f, 45.0f, 255.0f, 255.0f ), ownerSocket.name.c_str() );
+							if( i > 0 || !DrawFlowInputLabel( nodePtr, popup ) )
+							{
+								ImGui::GetWindowDrawList( )->AddText( ImGui::GetCursorScreenPos( ) + ImVec2( 0, ImGui::GetStyle( ).ItemInnerSpacing.y ),
+																	  ImColor( 50.0f, 45.0f, 255.0f, 255.0f ), ownerSocket.name.c_str( ) );
+							}
 						}
 
 						ImGui::PushID( node.Inputs[inputSocketIdx]->ID.Get() );
@@ -836,6 +810,13 @@ void idGraphNode::Draw( ImGuiTools::GraphNode* nodePtr )
 	}
 	ImGui::PopID();
 	ed::EndNode();
+
+	if( !popup.IsEmpty() )
+	{
+		ed::Suspend( );
+		ImGui::OpenPopup( popup );
+		ed::Resume( );
+	}
 }
 
 idVec4 idGraphNode::NodeTitleBarColor()
@@ -1050,6 +1031,164 @@ idGraphNodeSocket::~idGraphNodeSocket()
 
 }
 
+bool idGraphNodeSocket::operator==( idGraphNodeSocket const& rhs )
+{
+	if( !var || !rhs.var )
+	{
+		return false;
+	}
+
+	if( var->GetType( ) != rhs.var->GetType( ) )
+	{
+		if( !( ( var->GetType() == ev_boolean && rhs.var->GetType() == ev_int )
+				|| ( var->GetType() == ev_int && rhs.var->GetType() == ev_boolean ) ) )
+		{
+			return false;
+		}
+	}
+
+	if( var->GetType( ) != ev_string )
+	{
+		return memcmp( var->GetRawData( ), rhs.var->GetRawData( ), idBlackBoard::SizeInBytes( var->GetType( ) ) ) == 0;
+	}
+	else
+	{
+		return ( *( ( idScriptStr* ) var )->GetData( ) == *( ( idScriptStr* ) rhs.var )->GetData( ) );
+	}
+	return false;
+}
+
+bool idGraphNodeSocket::operator!=( idGraphNodeSocket const& rhs )
+{
+	if( !var || !rhs.var )
+	{
+		return false;
+	}
+
+	if( var->GetType( ) != rhs.var->GetType( ) )
+	{
+		if( !( ( var->GetType() == ev_boolean && rhs.var->GetType() == ev_int )
+				|| ( var->GetType() == ev_int && rhs.var->GetType() == ev_boolean ) ) )
+		{
+			return false;
+		}
+	}
+
+	if( var->GetType( ) != ev_string )
+	{
+		return memcmp( var->GetRawData( ), rhs.var->GetRawData( ), idBlackBoard::SizeInBytes( rhs.var->GetType( ) ) ) != 0;
+	}
+	else
+	{
+		return ( ( ( idScriptStr* ) var )->GetData( ) != ( ( idScriptStr* ) rhs.var )->GetData( ) );
+	}
+	return false;
+}
+
+bool idGraphNodeSocket::operator>=( idGraphNodeSocket const& rhs )
+{
+	if( !var || !rhs.var || var->GetType( ) != rhs.var->GetType( ) )
+	{
+		return false;
+	}
+
+	if( *this == rhs )
+	{
+		return true;
+	}
+
+	return *this > rhs;
+}
+
+bool idGraphNodeSocket::operator<=( idGraphNodeSocket const& rhs )
+{
+	if( !var || !rhs.var || var->GetType( ) != rhs.var->GetType( ) )
+	{
+		return false;
+	}
+
+	assert( var->GetType( ) == rhs.var->GetType( ) );
+
+	if( *this == rhs )
+	{
+		return true;
+	}
+
+	return  *this < rhs;
+}
+
+bool idGraphNodeSocket::operator>( idGraphNodeSocket const& rhs )
+{
+	if( !var || !rhs.var || var->GetType( ) != rhs.var->GetType( ) )
+	{
+		return false;
+	}
+
+	switch( var->GetType() )
+	{
+		case ev_string:
+		{
+			idStr& rhsStr = *( ( idScriptStr* ) var )->GetData( );
+			return ( ( ( idScriptStr* ) var )->GetData( )->Icmpn( rhsStr, rhsStr.Length( ) ) ) > 0;
+		}
+		break;
+		case ev_float:
+			return ( *( ( idScriptFloat* ) var )->GetData( ) > *( ( idScriptFloat* ) rhs.var )->GetData( ) );
+			break;
+		//vec.length vs length
+		case ev_vector:
+			return ( ( ( idScriptVector* ) var )->GetData( )->LengthFast() > ( ( idScriptVector* ) rhs.var )->GetData( )->LengthFast() );
+		case ev_entity:
+			__debugbreak();
+			break;
+		case ev_boolean:
+		case ev_int:
+			return ( *( ( idScriptInt* ) var )->GetData( ) > *( ( idScriptInt* ) rhs.var )->GetData( ) );
+			break;
+		default:
+			__debugbreak();
+			break;
+	}
+	return false;
+}
+
+bool idGraphNodeSocket::operator<( idGraphNodeSocket const& rhs )
+{
+
+	if( !var || !rhs.var || var->GetType( ) != rhs.var->GetType( ) )
+	{
+		return false;
+	}
+
+
+	switch( var->GetType() )
+	{
+		case ev_string:
+		{
+			idStr& rhsStr = *( ( idScriptStr* ) var )->GetData( );
+			return ( ( ( idScriptStr* ) var )->GetData( )->Icmpn( rhsStr, rhsStr.Length( ) ) ) < 0;
+		}
+		break;
+		case ev_float:
+			return ( *( ( idScriptFloat* ) var )->GetData( ) < * ( ( idScriptFloat* ) rhs.var )->GetData( ) );
+			break;
+		//vec.length vs length
+		case ev_vector:
+			return ( ( ( idScriptVector* ) var )->GetData( )->LengthFast() < ( ( idScriptVector* ) rhs.var )->GetData( )->LengthFast() );
+		case ev_entity:
+			__debugbreak();
+			break;
+		case ev_boolean:
+		case ev_int:
+			return ( *( ( idScriptInt* ) var )->GetData( ) < * ( ( idScriptInt* ) rhs.var )->GetData( ) );
+			break;
+		default:
+			__debugbreak();
+			break;
+	}
+	return false;
+}
+
 idScriptVariableBase* VarFromFormatSpec( const char spec, GraphState* graphState )
 {
 	idScriptVariableBase* ret = nullptr;
@@ -1087,32 +1226,7 @@ idScriptVariableBase* VarFromFormatSpec( const char spec, GraphState* graphState
 
 idScriptVariableBase* VarFromType( etype_t type, GraphState* graphState )
 {
-	idScriptVariableBase* ret = nullptr;
-	switch( type )
-	{
-		case ev_string:
-			ret = graphState->blackBoard.Alloc( "" );
-			break;
-		case ev_float:
-			ret = graphState->blackBoard.Alloc<idScriptFloat>( 8 );
-			break;
-		case ev_vector:
-			ret = graphState->blackBoard.Alloc<idScriptVector>( 3 * 8 ) ;
-			break;
-		case ev_object:
-		case ev_entity:
-			ret = graphState->blackBoard.Alloc<idScriptEntity>( 8 );
-			break;
-		case ev_boolean:
-		case ev_int:
-			ret = graphState->blackBoard.Alloc<idScriptInteger>( 8 );
-			break;
-		default:
-			gameLocal.Error( "idClassNode::Setup : Invalid arg format '%s' for event.", idTypeInfo::GetEnumTypeInfo( "etype_t", type ) );
-			break;
-	}
-
-	return ret;
+	return graphState->blackBoard.Alloc( type );
 }
 
 bool VarCopy( idScriptVariableBase* target, idScriptVariableBase* source )
@@ -1145,4 +1259,64 @@ bool VarCopy( idScriptVariableBase* target, idScriptVariableBase* source )
 			break;
 	};
 	return true;
+}
+
+idScriptVariableBase* idBlackBoard::Alloc( etype_t type )
+{
+	idScriptVariableBase* ret = nullptr;
+	switch( type )
+	{
+		case ev_string:
+			ret = Alloc( "" );
+			break;
+		case ev_float:
+			ret = Alloc<idScriptFloat>( 8 );
+			break;
+		case ev_vector:
+			ret = Alloc<idScriptVector>( 3 * 8 );
+			break;
+		case ev_object:
+		case ev_entity:
+			ret = Alloc<idScriptEntity>( 8 );
+			break;
+		case ev_boolean:
+			ret = Alloc<idScriptBool>( 1 );
+		case ev_int:
+			ret = Alloc<idScriptInteger>( 8 );
+			break;
+		default:
+			gameLocal.Error( "idClassNode::Setup : Invalid arg format '%s' for event.", idTypeInfo::GetEnumTypeInfo( "etype_t", type ) );
+			break;
+	}
+
+	return ret;
+}
+
+int idBlackBoard::SizeInBytes( etype_t type )
+{
+	switch( type )
+	{
+		case ev_string:
+			return 0;
+			break;
+		case ev_float:
+			return 8;
+			break;
+		case ev_vector:
+			return 3 * 8;
+			break;
+		case ev_object:
+		case ev_entity:
+			return 8;
+			break;
+		case ev_boolean:
+			return 1;
+		case ev_int:
+			return 8;
+			break;
+		default:
+			gameLocal.Error( "idClassNode::Setup : Invalid arg format '%s' for event.", idTypeInfo::GetEnumTypeInfo( "etype_t", type ) );
+			break;
+	}
+	return 0;
 }

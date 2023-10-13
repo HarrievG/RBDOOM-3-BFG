@@ -86,12 +86,13 @@ void idWorldspawn::Spawn()
 	// load mapgraph
 	if( graphObject == nullptr )
 	{
+		graphObject = new idStateGraph( this );
+
 		idStr	graphName;
 		graphName = gameLocal.GetMapName();
 		graphName.SetFileExtension( ".bgrph" );
 		if( fileSystem->ReadFile( graphName, NULL, NULL ) > 0 )
 		{
-			graphObject = new idStateGraph( this );
 			idFileLocal file( fileSystem->OpenFileRead( graphName ) );
 			if( !graphObject->LoadBinary( file, file->Timestamp(), this ) )
 			{
@@ -102,7 +103,6 @@ void idWorldspawn::Spawn()
 			auto* func = gameLocal.program.CompileFunction( "graphStart", "void graphStart () {sys.trigger($world);}" );
 			thread = new idThread( func );
 			thread->DelayedStart( 0 );
-
 		}
 	}
 

@@ -92,13 +92,14 @@ public:
 	idScriptVariableBase* targetVariable;
 	idStr targetVariableName;
 	bool isLocalvar;
+	bool isStaticVar;
 	idThread* scriptThread;//for sys events;
 	idStr currentTitle;
 
 private:
 	idClass* ownerClass;
 	idClass** nodeOwnerClass;
-	void SetOwner( const idEventDef& def,  idClass** target );
+	bool SetOwner( const idEventDef& def,  idClass** target );
 	void SetOwner( idClass** target );
 };
 
@@ -159,5 +160,43 @@ public:
 	NodeType nodeType;
 };
 
+
+class idGraphLogicNode : public idGraphNode
+{
+public:
+	CLASS_PROTOTYPE( idGraphLogicNode );
+	enum NodeType
+	{
+		IF_EQU,
+		IF_NOTEQ,
+		IF_GT,
+		IF_LT,
+		IF_GTE,
+		IF_LTE,
+		IF_MAX,
+
+		MAX_TYPES
+	};
+
+	idGraphLogicNode();
+	stateResult_t Exec( stateParms_t* parms ) override;
+	const char* GetName() override;
+	static const char* GetName( idGraphLogicNode::NodeType type );
+	static const char* GetLabel( idGraphLogicNode::NodeType type );
+	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL ) override;
+	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass* owner = nullptr ) override;
+	virtual void Draw( ImGuiTools::GraphNode* nodePtr ) override;
+	virtual bool DrawFlowInputLabel( ImGuiTools::GraphNode* nodePtr, idStr& popup ) override;
+
+	void Setup( idClass* graphOwner );
+	idGraphNode* QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner );
+	idVec4 NodeTitleBarColor() override;
+
+	idScriptBool* boolOutput;
+
+	NodeType nodeType;
+private:
+	int numInputs;
+};
 
 #endif //__SYS_STATE_GRAPH_NODES_H__
