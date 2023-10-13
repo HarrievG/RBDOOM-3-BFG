@@ -172,6 +172,43 @@ void StateGraphEditor::DeleteNode( GraphNode* node, StateEditContext& graphConte
 	delete node;
 }
 
+void StateGraphEditor::DeleteLocalVar( int index, StateEditContext& graphContext )
+{
+	//find usage in graph
+	int nodeIdx = 0;
+	bool stillInUse = false;
+	while( nodeIdx < graphContext.nodeList.Num( ) )
+	{
+		auto* node = graphContext.nodeList[nodeIdx];
+
+		if( idClassNode* varNode = node->Owner->Cast<idClassNode>() )
+		{
+			if( varNode->type != idClassNode::Call )
+			{
+				if( varNode->targetVariableName.Cmp( graphContext.localVarNames[index]->GetData()->c_str() ) == 0 )
+				{
+					ed::SelectNode( node->ID, true );
+					stillInUse = true;
+				}
+			}
+		}
+		nodeIdx++;
+	}
+	if( stillInUse )
+	{
+		ed::NavigateToSelection( false, 0.25f );
+	}
+	else
+	{
+		graphContext.localVarNames.RemoveIndexFast( index );
+
+		auto& graphState = *graphContext.graphObject->GetLocalState( idStateGraph::MAIN ) ;
+		auto& varInstance = graphState.localVariables[index];
+		graphState.blackBoard.Free( varInstance.scriptVariable->GetRawData() );
+		graphState.localVariables.RemoveIndexFast( index );
+	}
+}
+
 void StateGraphEditor::ReadNode( idGraphNode* node, GraphNode& newNode , StateEditContext& graphContext )
 {
 	DeleteAllPinsAndLinks( newNode, graphContext );
@@ -1019,12 +1056,17 @@ void StateGraphEditor::DrawLeftPane( float paneWidth, StateEditContext& graphCon
 				int index = -1;
 				const idList<idScriptVariableInstance_t>& vars = graphContext.graphObject->GetVariables();
 				static int activeButton = -1;
+				int deletionIndex = -1;
 				for( auto& var : vars )
 				{
 					++index;
 					ImGui::TableNextRow( 0 );
 					ImGui::TableSetColumnIndex( 0 );
-					ImGui::Dummy( ImVec2( 25, 25 ) );
+					ImGui::PushID( index );
+					if( ImGui::Button( "X", ImVec2( 20, 20 ) ) )
+					{
+						deletionIndex = index;
+					}
 					ImGui::TableSetColumnIndex( 1 );
 					int cursorY = ImGui::GetCursorPosY();
 					if( activeButton == index )
@@ -1064,6 +1106,13 @@ void StateGraphEditor::DrawLeftPane( float paneWidth, StateEditContext& graphCon
 					}
 					ImGui::TableSetColumnIndex( 2 );
 					ImGui::ImScriptVariable( var.varName, var );
+
+					ImGui::PopID();
+				}
+				if( deletionIndex > -1 )
+				{
+					DeleteLocalVar( deletionIndex, graphContext );
+					deletionIndex = -1;
 				}
 				ImGui::EndTable();
 			}

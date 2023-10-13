@@ -227,6 +227,7 @@ public:
 	void							DeleteAllPinsAndLinks( GraphNode& target, StateEditContext& graphContext );
 	void							DeleteLink( GraphLink& id, StateEditContext& graphContext );
 	void							DeleteNode( GraphNode* node , StateEditContext& graphContext );
+	void							DeleteLocalVar( int index, StateEditContext& graphContext );
 	void							ReadNode( idGraphNode* node, GraphNode& newNode, StateEditContext& graphContext );
 	void							LoadGraph( StateEditContext& graphContext );
 
