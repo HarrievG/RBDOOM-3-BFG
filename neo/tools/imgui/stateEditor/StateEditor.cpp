@@ -230,7 +230,7 @@ void StateGraphEditor::LoadGraph( StateEditContext& graphContext )
 {
 	if( graphContext.Loaded )
 	{
-		auto& graphState = *graphContext.graphObject->GetLocalState( idStateGraph::MAIN ) ;
+		auto& graphState = *graphContext.graphObject->GetLocalState( contextStateName ) ;
 
 		idStr infoFilename = graphContext.file;
 		infoFilename.Append( ".binfo" );
@@ -499,9 +499,14 @@ void StateGraphEditor::DrawIdPlayer( )
 	static StateEditContext idPlayerContext[max_idPlayerGraphContexts] ;
 	static int idPlayerGraphId = 0;
 
+	if (contextStateIndex != -1 
+		&&contextStateIndex != idPlayerGraphId)
+	{
+		idPlayerGraphId = contextStateIndex;
+	}
 	idPlayer* player = gameLocal.GetLocalPlayer( );
 
-	if( player )
+	if( player && idPlayerGraphId > -1)
 	{
 		if( idPlayerContext[idPlayerGraphId].Editor == nullptr )
 		{
@@ -509,6 +514,10 @@ void StateGraphEditor::DrawIdPlayer( )
 
 			idStr& contextName = idPlayerContextNames[idPlayerGraphId];
 
+			if ( player->graphObject ) {
+				contextName = player->graphObject->localStates[idPlayerGraphId];
+			}
+			
 			const char*	graphObjectName;
 			player->spawnArgs.GetString( "graphObject", NULL, &graphObjectName );
 
@@ -546,19 +555,8 @@ void StateGraphEditor::DrawIdPlayer( )
 
 			assert( mainState );
 
-			if( !mainState->nodes.Num() )
-			{
-				idGraphOnInitNode* initNode = new idGraphOnInitNode( );
-				player->graphObject->CreateNode( initNode );
-				initNode->type = idGraphOnInitNode::NodeType::Construct;
-				initNode->Setup( player );
-
-				auto* onActivate = player->graphObject->CreateNode( new idGraphOnInitNode( ) );
-				onActivate->Setup( player );
-			}
-
-			if( idPlayerGraphId == 0 ) //idEntity
-			{
+			//if( idPlayerGraphId == 0 ) //idEntity
+			//{
 				if( player->graphObject )
 				{
 					contextIt.graphOwner = player;
@@ -566,35 +564,35 @@ void StateGraphEditor::DrawIdPlayer( )
 					contextIt.Loaded = true;
 					LoadGraph( contextIt );
 				}
-			}
+			//}
 		}
 
-		for( int i = 0; i < max_idPlayerGraphContexts; i++ )
-		{
-			idStr& name = idPlayerContextNames[i];
-			int prevIndex = idPlayerGraphId;
-			if( idPlayerGraphId == i )
-			{
-				ImGui::PushStyleColor( ImGuiCol_Button, ImVec4( ImColor( 114, 144, 154 ) ) );
-				ImGui::PushStyleColor( ImGuiCol_ButtonHovered, ImVec4( ImColor( 123, 153, 180 ) ) );
-				ImGui::PushStyleColor( ImGuiCol_ButtonActive, ImVec4( ImColor( 153, 183, 204 ) ) );
-			}
+		//for( int i = 0; i < max_idPlayerGraphContexts; i++ )
+		//{
+		//	idStr& name = idPlayerContextNames[i];
+		//	int prevIndex = idPlayerGraphId;
+		//	if( idPlayerGraphId == i )
+		//	{
+		//		ImGui::PushStyleColor( ImGuiCol_Button, ImVec4( ImColor( 114, 144, 154 ) ) );
+		//		ImGui::PushStyleColor( ImGuiCol_ButtonHovered, ImVec4( ImColor( 123, 153, 180 ) ) );
+		//		ImGui::PushStyleColor( ImGuiCol_ButtonActive, ImVec4( ImColor( 153, 183, 204 ) ) );
+		//	}
 
-			if( ImGui::Button( name ) )
-			{
-				idPlayerGraphId = i;
-			}
+		//	if( ImGui::Button( name ) )
+		//	{
+		//		idPlayerGraphId = i;
+		//	}
 
 
-			if( prevIndex == i )
-			{
-				ImGui::PopStyleColor( 3 );
-			}
-			if( i + 1 < max_idPlayerGraphContexts )
-			{
-				ImGui::SameLine( );
-			}
-		}
+		//	if( prevIndex == i )
+		//	{
+		//		ImGui::PopStyleColor( 3 );
+		//	}
+		//	if( i + 1 < max_idPlayerGraphContexts )
+		//	{
+		//		ImGui::SameLine( );
+		//	}
+		//}
 
 		if( idPlayerContext[idPlayerGraphId].graphObject && idPlayerContext[idPlayerGraphId].graphOwner.IsValid() )
 		{
@@ -673,6 +671,8 @@ void StateGraphEditor::Draw( StateEditContext& graphContext )
 	Splitter( true, 4.0f, &leftPaneWidth, &rightPaneWidth, 50.0f, 50.0f );
 
 	DrawLeftPane( leftPaneWidth - 4.0f , graphContext );
+
+	ImGui::BeginChild( graphContext.name + "_graphs" );
 
 	//ImGui::SameLine(0.0f, 12.0f);
 	ed::Begin( graphContext.name + "_editor" );
@@ -796,6 +796,7 @@ void StateGraphEditor::Draw( StateEditContext& graphContext )
 
 	ed::End();
 	ImGui::EndChild();
+	ImGui::EndChild();
 
 	ed::SetCurrentEditor( nullptr );
 }
@@ -814,191 +815,247 @@ void StateGraphEditor::Enable( const idCmdArgs& args )
 
 void StateGraphEditor::DrawLeftPane( float paneWidth, StateEditContext& graphContext )
 {
+	//hvgtodo
+	//Break into each panel
 	auto& io = ImGui::GetIO();
 	const float TEXT_BASE_WIDTH = ImGui::CalcTextSize( "A" ).x;
 	const float TEXT_BASE_HEIGHT = ImGui::GetTextLineHeightWithSpacing();
 
-	ImGui::BeginChild( "Selection", ImVec2( paneWidth, 0 ) );
+	ImGui::BeginChild( "Panel", ImVec2( paneWidth, 0 ) );
 
-	paneWidth = ImGui::GetContentRegionAvail().x;
-
-	std::vector<ed::NodeId> selectedNodes;
-	std::vector<ed::LinkId> selectedLinks;
-	int selectedObjectCount = ed::GetSelectedObjectCount();
-	if( selectedObjectCount )
+	if( ImGui::CollapsingHeader( "Nodes" ) )
 	{
-		selectedNodes.resize( selectedObjectCount );
-		selectedLinks.resize( selectedObjectCount );
-	}
+		paneWidth = ImGui::GetContentRegionAvail( ).x;
 
-	int nodeCount = ed::GetSelectedNodes( selectedNodes.data(), static_cast<int>( selectedNodes.size() ) );
-	int linkCount = ed::GetSelectedLinks( selectedLinks.data(), static_cast<int>( selectedLinks.size() ) );
+		std::vector<ed::NodeId> selectedNodes;
+		std::vector<ed::LinkId> selectedLinks;
+		int selectedObjectCount = ed::GetSelectedObjectCount( );
+		if ( selectedObjectCount ) {
+			selectedNodes.resize( selectedObjectCount );
+			selectedLinks.resize( selectedObjectCount );
+		}
 
-	selectedNodes.resize( nodeCount );
-	selectedLinks.resize( linkCount );
+		int nodeCount = ed::GetSelectedNodes( selectedNodes.data( ), static_cast< int >( selectedNodes.size( ) ) );
+		int linkCount = ed::GetSelectedLinks( selectedLinks.data( ), static_cast< int >( selectedLinks.size( ) ) );
 
-	int saveIconWidth = 0;
-	int saveIconHeight = 0;
-	int restoreIconWidth = 0;
-	int restoreIconHeight = 0;
+		selectedNodes.resize( nodeCount );
+		selectedLinks.resize( linkCount );
 
-	ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
+		int saveIconWidth = 0;
+		int saveIconHeight = 0;
+		int restoreIconWidth = 0;
+		int restoreIconHeight = 0;
 
-	ImGui::GetWindowDrawList()->AddRectFilled(
-		cursorScreenPos,
-		ImVec2( cursorScreenPos.x + paneWidth, cursorScreenPos.y + ImGui::GetTextLineHeight() ),
-		ImColor( ImGui::GetStyle().Colors[ImGuiCol_HeaderActive] ), 1.0f );
-	ImGui::Dummy( ImVec2( 0, ImGui::GetTextLineHeight() ) );
-	ImGui::GetWindowDrawList()->AddText( cursorScreenPos, ImColor( 50.0f, 45.0f, 255.0f, 255.0f ), "Nodes" );
+		ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos( );
 
-	ImGui::Indent();
-	for( auto* nodePtr : graphContext.nodeList )
-	{
-		auto& node = *nodePtr;
+		ImGui::GetWindowDrawList( )->AddRectFilled(
+			cursorScreenPos,
+			ImVec2( cursorScreenPos.x + paneWidth, cursorScreenPos.y + ImGui::GetTextLineHeight( ) ),
+			ImColor( ImGui::GetStyle( ).Colors[ImGuiCol_HeaderActive] ), 1.0f );
+		ImGui::Dummy( ImVec2( 0, ImGui::GetTextLineHeight( ) ) );
+		ImGui::GetWindowDrawList( )->AddText( cursorScreenPos, ImColor( 50.0f, 45.0f, 255.0f, 255.0f ), "Nodes" );
 
-		ImGui::PushID( node.ID.AsPointer() );
-		auto start = ImGui::GetCursorScreenPos();
+		ImGui::Indent( );
+		for ( auto *nodePtr : graphContext.nodeList ) {
+			auto &node = *nodePtr;
 
-		bool isSelected = std::find( selectedNodes.begin(), selectedNodes.end(), node.ID ) != selectedNodes.end();
-		if( ImGui::Selectable( ( node.Name + "##" + idStr( reinterpret_cast<unsigned int>( node.ID.AsPointer() ) ) ).c_str(), &isSelected ) )
-		{
-			if( io.KeyCtrl )
-			{
-				if( isSelected )
-				{
-					ed::SelectNode( node.ID, true );
+			ImGui::PushID( node.ID.AsPointer( ) );
+			auto start = ImGui::GetCursorScreenPos( );
+
+			bool isSelected = std::find( selectedNodes.begin( ), selectedNodes.end( ), node.ID ) != selectedNodes.end( );
+			if ( ImGui::Selectable( ( node.Name + "##" + idStr( reinterpret_cast< unsigned int >( node.ID.AsPointer( ) ) ) ).c_str( ), &isSelected ) ) {
+				if ( io.KeyCtrl ) {
+					if ( isSelected ) {
+						ed::SelectNode( node.ID, true );
+					} else {
+						ed::DeselectNode( node.ID );
+					}
+				} else {
+					ed::SelectNode( node.ID, false );
 				}
-				else
-				{
-					ed::DeselectNode( node.ID );
+
+				ed::NavigateToSelection( );
+			}
+			if ( ImGui::IsItemHovered( ) && !node.State.IsEmpty( ) ) {
+				ImGui::SetTooltip( "State: %s", node.State.c_str( ) );
+			}
+
+			auto id = std::string( "(" ) + std::to_string( reinterpret_cast< uintptr_t >( node.ID.AsPointer( ) ) ) + ")";
+			auto textSize = ImGui::CalcTextSize( id.c_str( ), nullptr );
+			auto iconPanelPos = ImVec2(
+				start.x + paneWidth - ImGui::GetStyle( ).FramePadding.x - ImGui::GetStyle( ).IndentSpacing - saveIconWidth - restoreIconWidth - ImGui::GetStyle( ).ItemInnerSpacing.x * 1,
+				start.y + ( ImGui::GetTextLineHeight( ) - saveIconHeight ) / 2 );
+			ImGui::GetWindowDrawList( )->AddText(
+				ImVec2( iconPanelPos.x - textSize.x - ImGui::GetStyle( ).ItemInnerSpacing.x, start.y ),
+				IM_COL32( 255, 255, 255, 255 ), id.c_str( ), nullptr );
+
+			auto drawList = ImGui::GetWindowDrawList( );
+			ImGui::SetCursorScreenPos( iconPanelPos );
+			ImGui::SetItemAllowOverlap( );
+			if ( node.SavedState.IsEmpty( ) ) {
+				//if (ImGui::InvisibleButton("save", ImVec2((float)saveIconWidth, (float)saveIconHeight)))
+				//    node.SavedState = node.State;
+
+				//if (ImGui::IsItemActive())
+				//    drawList->AddImage(m_SaveIcon, ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ImVec2(0, 0), ImVec2(1, 1), IM_COL32(255, 255, 255, 96));
+				//else if (ImGui::IsItemHovered())
+				//    drawList->AddImage(m_SaveIcon, ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ImVec2(0, 0), ImVec2(1, 1), IM_COL32(255, 255, 255, 255));
+				//else
+				//    drawList->AddImage(m_SaveIcon, ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ImVec2(0, 0), ImVec2(1, 1), IM_COL32(255, 255, 255, 160));
+			} else {
+				//ImGui::Dummy(ImVec2((float)saveIconWidth, (float)saveIconHeight));
+				// drawList->AddImage(m_SaveIcon, ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ImVec2(0, 0), ImVec2(1, 1), IM_COL32(255, 255, 255, 32));
+			}
+
+			ImGui::SameLine( 0, ImGui::GetStyle( ).ItemInnerSpacing.x );
+			ImGui::SetItemAllowOverlap( );
+			if ( !node.SavedState.IsEmpty( ) ) {
+				if ( ImGui::InvisibleButton( "restore", ImVec2( ( float ) restoreIconWidth, ( float ) restoreIconHeight ) ) ) {
+					node.State = node.SavedState;
+					ed::RestoreNodeState( node.ID );
+					node.SavedState.IsEmpty( );
 				}
-			}
-			else
-			{
-				ed::SelectNode( node.ID, false );
-			}
 
-			ed::NavigateToSelection();
-		}
-		if( ImGui::IsItemHovered() && !node.State.IsEmpty() )
-		{
-			ImGui::SetTooltip( "State: %s", node.State.c_str() );
-		}
-
-		auto id = std::string( "(" ) + std::to_string( reinterpret_cast<uintptr_t>( node.ID.AsPointer() ) ) + ")";
-		auto textSize = ImGui::CalcTextSize( id.c_str(), nullptr );
-		auto iconPanelPos = ImVec2(
-								start.x + paneWidth - ImGui::GetStyle().FramePadding.x - ImGui::GetStyle().IndentSpacing - saveIconWidth - restoreIconWidth - ImGui::GetStyle().ItemInnerSpacing.x * 1,
-								start.y + ( ImGui::GetTextLineHeight() - saveIconHeight ) / 2 );
-		ImGui::GetWindowDrawList()->AddText(
-			ImVec2( iconPanelPos.x - textSize.x - ImGui::GetStyle().ItemInnerSpacing.x, start.y ),
-			IM_COL32( 255, 255, 255, 255 ), id.c_str(), nullptr );
-
-		auto drawList = ImGui::GetWindowDrawList();
-		ImGui::SetCursorScreenPos( iconPanelPos );
-		ImGui::SetItemAllowOverlap();
-		if( node.SavedState.IsEmpty() )
-		{
-			//if (ImGui::InvisibleButton("save", ImVec2((float)saveIconWidth, (float)saveIconHeight)))
-			//    node.SavedState = node.State;
-
-			//if (ImGui::IsItemActive())
-			//    drawList->AddImage(m_SaveIcon, ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ImVec2(0, 0), ImVec2(1, 1), IM_COL32(255, 255, 255, 96));
-			//else if (ImGui::IsItemHovered())
-			//    drawList->AddImage(m_SaveIcon, ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ImVec2(0, 0), ImVec2(1, 1), IM_COL32(255, 255, 255, 255));
-			//else
-			//    drawList->AddImage(m_SaveIcon, ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ImVec2(0, 0), ImVec2(1, 1), IM_COL32(255, 255, 255, 160));
-		}
-		else
-		{
-			//ImGui::Dummy(ImVec2((float)saveIconWidth, (float)saveIconHeight));
-			// drawList->AddImage(m_SaveIcon, ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ImVec2(0, 0), ImVec2(1, 1), IM_COL32(255, 255, 255, 32));
-		}
-
-		ImGui::SameLine( 0, ImGui::GetStyle().ItemInnerSpacing.x );
-		ImGui::SetItemAllowOverlap();
-		if( !node.SavedState.IsEmpty() )
-		{
-			if( ImGui::InvisibleButton( "restore", ImVec2( ( float )restoreIconWidth, ( float )restoreIconHeight ) ) )
-			{
-				node.State = node.SavedState;
-				ed::RestoreNodeState( node.ID );
-				node.SavedState.IsEmpty();
+				//  if (ImGui::IsItemActive())
+				//      drawList->AddImage(m_RestoreIcon, ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ImVec2(0, 0), ImVec2(1, 1), IM_COL32(255, 255, 255, 96));
+				//  else if (ImGui::IsItemHovered())
+				//      drawList->AddImage(m_RestoreIcon, ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ImVec2(0, 0), ImVec2(1, 1), IM_COL32(255, 255, 255, 255));
+				//  else
+				//      drawList->AddImage(m_RestoreIcon, ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ImVec2(0, 0), ImVec2(1, 1), IM_COL32(255, 255, 255, 160));
+			} else {
+				//ImGui::Dummy(ImVec2((float)restoreIconWidth, (float)restoreIconHeight));
+				//drawList->AddImage(m_RestoreIcon, ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ImVec2(0, 0), ImVec2(1, 1), IM_COL32(255, 255, 255, 32));
 			}
 
-			//  if (ImGui::IsItemActive())
-			//      drawList->AddImage(m_RestoreIcon, ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ImVec2(0, 0), ImVec2(1, 1), IM_COL32(255, 255, 255, 96));
-			//  else if (ImGui::IsItemHovered())
-			//      drawList->AddImage(m_RestoreIcon, ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ImVec2(0, 0), ImVec2(1, 1), IM_COL32(255, 255, 255, 255));
-			//  else
-			//      drawList->AddImage(m_RestoreIcon, ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ImVec2(0, 0), ImVec2(1, 1), IM_COL32(255, 255, 255, 160));
+			ImGui::SameLine( 0, 0 );
+			ImGui::SetItemAllowOverlap( );
+			ImGui::Dummy( ImVec2( 0, ( float ) restoreIconHeight ) );
+
+			ImGui::PopID( );
 		}
-		else
-		{
-			//ImGui::Dummy(ImVec2((float)restoreIconWidth, (float)restoreIconHeight));
-			//drawList->AddImage(m_RestoreIcon, ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ImVec2(0, 0), ImVec2(1, 1), IM_COL32(255, 255, 255, 32));
+		ImGui::Unindent( );
+
+		static int changeCount = 0;
+
+		ImGui::TextUnformatted( "Selection" );
+
+		ImGui::Text( "Changed %d time%s", changeCount, changeCount > 1 ? "s" : "" );
+		if ( ImGui::Button( "Deselect All" ) ) {
+			ed::ClearSelection( );
 		}
-
-		ImGui::SameLine( 0, 0 );
-		ImGui::SetItemAllowOverlap();
-		ImGui::Dummy( ImVec2( 0, ( float )restoreIconHeight ) );
-
-		ImGui::PopID();
-	}
-	ImGui::Unindent();
-
-	static int changeCount = 0;
-
-	ImGui::TextUnformatted( "Selection" );
-
-	ImGui::Text( "Changed %d time%s", changeCount, changeCount > 1 ? "s" : "" );
-	if( ImGui::Button( "Deselect All" ) )
-	{
-		ed::ClearSelection();
-	}
-	ImGui::Indent();
-	for( int i = 0; i < nodeCount; ++i )
-	{
-		ImGui::Text( "Node (%p)", selectedNodes[i].AsPointer() );
-	}
-	for( int i = 0; i < linkCount; ++i )
-	{
-		ImGui::Text( "Link (%p)", selectedLinks[i].AsPointer() );
-	}
-	ImGui::Unindent();
-
-	if( ImGui::IsKeyPressed( ImGui::GetKeyIndex( ImGuiKey_Z ) ) )
-		for( auto& link : graphContext.linkList )
-		{
-			ed::Flow( link.ID );
+		ImGui::Indent( );
+		for ( int i = 0; i < nodeCount; ++i ) {
+			ImGui::Text( "Node (%p)", selectedNodes[i].AsPointer( ) );
 		}
+		for ( int i = 0; i < linkCount; ++i ) {
+			ImGui::Text( "Link (%p)", selectedLinks[i].AsPointer( ) );
+		}
+		ImGui::Unindent( );
 
-	if( ed::HasSelectionChanged() )
-	{
-		++changeCount;
+		if ( ImGui::IsKeyPressed( ImGui::GetKeyIndex( ImGuiKey_Z ) ) )
+			for ( auto &link : graphContext.linkList ) {
+				ed::Flow( link.ID );
+			}
+
+		if ( ed::HasSelectionChanged( ) ) {
+			++changeCount;
+		}
 	}
 
 	ImGui::Separator();
 
-
 	if( graphContext.graphOwner.IsValid() )
 	{
-		if( ImGui::CollapsingHeader( "States" ) )
+		if( ImGui::CollapsingHeader( "States" ),nullptr,ImGuiTreeNodeFlags_DefaultOpen )
 		{
-			if( ImGui::Button( "Create New" ) )
-			{
-				graphContext.graphObject->CreateSubState( "New Function", {}, {} );
-			}
 			auto& graphState = graphContext.graphObject->localGraphState;
 			auto& graphNames = graphContext.graphObject->localStates;
-			if( graphState.Num() > 1 )
+			
+			int popupIdx = -1;
+			for( int i = 0; i < graphState.Num(); i++ )
 			{
-				for( int i = 1; i < graphState.Num(); i++ )
+				ImGui::PushID( graphNames[i].FileNameHash() );
+				ImU32 color = ImGui::GetColorU32( ImGuiCol_Button );
+				if ( contextStateName == graphNames[i])
 				{
-					ImGui::Text( graphNames[i] );
+					color = IM_COL32(80.f, 140.f, 155.f,255.f);
 				}
+				ImGui::PushStyleColor(ImGuiCol_Button,color );
+
+				if (ImGui::Button(  graphNames[i],ImVec2(200,TEXT_BASE_HEIGHT * 1.5)))
+				{
+					contextStateIndex = i;
+					contextStateName = graphNames[i];
+				}
+				if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+				{	
+					popupIdx = i;
+					activeStateIndex = i;
+				}
+				PopStyleColor( );
+				ImGui::PopID();
+			}
+
+			//be aware: cant call openPopup while pushing/popping ids
+			if (popupIdx > -1)
+			{
+				ImGui::OpenPopup( "StateContextMenu" );
+			}
+
+			if ( ImGui::Button( "Create New" ) ) {
+				ImGui::OpenPopup( "AddNewState" );
+				//graphContext.graphObject->CreateSubState( "New State", {}, {} );
+			}
+			if ( ImGui::BeginPopup( "AddNewState" ) ) {
+				ImGui::TextDisabled( "Enter Name:" );
+				static idStr tmpStr;
+				ImGui::BeginChild( "textInput", ImVec2( 150, TEXT_BASE_HEIGHT * 2 ), true, ImGuiWindowFlags_NoScrollbar );
+				if ( ImGui::InputText( idStr( "##" ), &tmpStr, ImGuiInputTextFlags_EnterReturnsTrue ) ) {
+					graphContext.graphObject->CreateSubState( tmpStr, {}, {} );
+					ImGui::CloseCurrentPopup( );
+				}
+
+				ImGui::EndChild( );
+				ImGui::EndPopup( );
+			}
+
+			if ( ImGui::BeginPopup( "StateContextMenu" ) ) 
+			{
+				if (activeStateIndex > -1)
+				{
+					ImGui::TextDisabled( graphNames[activeStateIndex].c_str( ) );
+					static idStr tmpStr;
+					ImGui::BeginChild( "LocalStateContextMenuPopup", ImVec2( 200, TEXT_BASE_HEIGHT * 2 ), true, ImGuiWindowFlags_NoScrollbar );
+					//if ( ImGui::InputText( idStr( "##" ), &tmpStr, ImGuiInputTextFlags_EnterReturnsTrue ) ) {
+					//	graphContext.graphObject->CreateSubState( tmpStr, {}, {} );
+					//	ImGui::CloseCurrentPopup( );
+					//}
+					if ( ImGui::Button( "open" ) ) {
+						contextStateIndex = activeStateIndex;
+						activeStateIndex = -1;						
+						ImGui::CloseCurrentPopup( );
+					}
+					ImGui::SameLine();
+					if ( ImGui::Button( "delete" ) ) {
+
+						activeStateIndex = -1;
+						ImGui::CloseCurrentPopup( );
+					}
+					ImGui::SameLine();
+					if ( ImGui::Button( "rename" ) ) {
+						activeStateIndex = -1;
+						ImGui::CloseCurrentPopup( );
+					}
+				}else
+				{
+					ImGui::CloseCurrentPopup( );
+				}
+
+				ImGui::EndChild( );
+				ImGui::EndPopup( );
 			}
 		}
+		
 		if( ImGui::CollapsingHeader( "Events" ) )
 		{
 			if( ImGui::Button( "Create New" ) )
@@ -1259,7 +1316,7 @@ void StateGraphEditor::Handle_ContextMenus( StateEditContext& graphContext )
 		idList<int> classNums;
 		for( auto* nodePtr : nodeTypes )
 		{
-			idGraphNode* createdNode = nodePtr->QueryNodeConstruction( graphContext.graphObject, graphContext.graphOwner );
+			idGraphNode* createdNode = nodePtr->QueryNodeConstruction( graphContext.graphObject, graphContext.graphOwner, contextStateName );
 			if( createdNode != nullptr )
 			{
 				int newNodeID = NextNodeID( graphContext );

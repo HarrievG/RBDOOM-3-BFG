@@ -6183,7 +6183,7 @@ void idGameEdit::ANIM_CreateAnimFrame( const idRenderModel* model, const idMD5An
 		joints[i] *= joints[ md5joints[i].parent - md5joints ];
 	}
 }
-
+	
 /*
 =====================
 idGameEdit::ANIM_CreateMeshForAnim

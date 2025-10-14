@@ -57,14 +57,22 @@ public:
 	{
 		return ( uint32 )( endp - startp );
 	}
+	
 	uint32			Tell() const
 	{
 		return ( uint32 )( readp - startp );
 	}
+	
 	void			Seek( int32 offset )
 	{
 		readp += offset;
 	}
+
+	void			SeekToEnd() 
+	{
+		readp = endp;
+	}
+
 	void			Rewind()
 	{
 		readp = startp;

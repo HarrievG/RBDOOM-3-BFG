@@ -601,6 +601,7 @@ localTrace_t R_LocalTrace( const idVec3& start, const idVec3& end, const float r
 {
 	localTrace_t hit;
 	hit.fraction = 1.0f;
+	//hit.indexes[0],hit.indexes[1],hit.indexes[2]= 0;
 
 	ALIGNTYPE16 idPlane planes[4];
 	// create two planes orthogonal to each other that intersect along the trace

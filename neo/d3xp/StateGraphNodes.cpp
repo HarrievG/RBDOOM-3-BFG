@@ -115,7 +115,7 @@ void idStateNode::Setup( idClass* graphOwner )
 
 }
 
-idGraphNode* idStateNode::QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner )
+idGraphNode *idStateNode::QueryNodeConstruction( idStateGraph *targetGraph, idClass *graphOwner, idStr contextName )
 {
 	return nullptr;
 }
@@ -187,13 +187,13 @@ void idGraphOnInitNode::Setup( idClass* graphOwner )
 	done = false;
 }
 
-idGraphNode* idGraphOnInitNode::QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner )
+idGraphNode* idGraphOnInitNode::QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner,idStr contextName )
 {
 	auto& graph = *targetGraph;
 
 	bool foundOnActivate = false;
 	bool foundOnConstruct = false;
-	auto nodes = graph.GetLocalState( idStateGraph::MAIN )->nodes;
+	auto nodes = graph.GetLocalState( contextName )->nodes;
 	for( auto node : nodes )
 	{
 		if( auto onInitNode = node->Cast<idGraphOnInitNode>() )
@@ -569,7 +569,7 @@ void idClassNode::Setup( idClass* graphOwner )
 	}
 }
 
-idGraphNode* idClassNode::QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner )
+idGraphNode* idClassNode::QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner,idStr contextName )
 {
 	auto& graph = *targetGraph;
 	if( ImGui::MenuItem( "Call Event" ) )

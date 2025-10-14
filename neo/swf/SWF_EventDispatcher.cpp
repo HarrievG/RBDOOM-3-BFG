@@ -32,7 +32,9 @@ idSWFScriptObject_EventDispatcherPrototype::idSWFScriptObject_EventDispatcherPro
 {
 	SWF_EVENTDISPATCHER_NATIVE_VAR_SET( MouseEvent );
 	SWF_EVENTDISPATCHER_NATIVE_VAR_SET( Event );
+	SetNative( "flash.events.Event", &swfScriptVar_Event );;
 	SWF_EVENTDISPATCHER_FUNCTION_SET( addEventListener );
+	SWF_EVENTDISPATCHER_FUNCTION_SET( removeEventListener );
 }
 
 SWF_EVENTDISPATCHER_NATIVE_VAR_DEFINE_SET( MouseEvent ) {}
@@ -81,7 +83,8 @@ SWF_EVENTDISPATCHER_NATIVE_VAR_DEFINE_GET( Event )
 
 		eventParms->Set( "type", "Event" );
 		eventObj->Set( "[Event]", eventParms );
-
+		eventObj->Set( "[flash.events.Event]", eventParms );
+		
 		//constants
 		eventObj->Set( "ACTIVATE",						"activate" );
 		eventObj->Set( "ADDED", 						"added" );
@@ -153,10 +156,18 @@ SWF_EVENTDISPATCHER_FUNCTION_DEFINE( addEventListener )
 	{
 		dispatcher->value.SetObject( idSWFScriptObject::Alloc() );
 	}
-
+	//ok its time to do this right.
 	dispatcher->value.GetObject()->Set( parms[0].ToString(), parms[1] );
 	common->DPrintf( "{%s} AddEventListener(%s,%s)\n", thisObject->GetSprite()->name.c_str(), parms[0].ToString().c_str(), parms[1].ToString().c_str() );
 	//add listener
+	return idSWFScriptVar( );
+}
+
+SWF_EVENTDISPATCHER_FUNCTION_DEFINE( removeEventListener ) {
+	SWF_EVENTDISPATCHER_PTHIS_FUNC( "removeEventListener" );
+
+	//dispatcher->value.GetObject( )->Set( parms[0].ToString( ), parms[1] );
+	common->DPrintf( "{%s} removeEventListener(%s,%s)\n", thisObject->GetSprite( )->name.c_str( ), parms[0].ToString( ).c_str( ), parms[1].ToString( ).c_str( ) );
 	return idSWFScriptVar( );
 }
 

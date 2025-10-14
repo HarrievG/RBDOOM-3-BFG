@@ -1002,10 +1002,12 @@ void idAI::Spawn()
 	// init the move variables
 	StopMove( MOVE_STATUS_DONE );
 
-// jmarshall begin
-
+	// jmarshall begin
 	// Only AI that derives off of ai_monster_base can support native AI.
-	supportsNative = scriptObject.GetFunction( "supports_native" ) != NULL;
+	// HVG:
+	//	native calls in actorclass can still be called when it doesnt support native.
+	//	moved this var up in hierachy to actor so it can be checked there too
+	//supportsNative = scriptObject.GetFunction( "supports_native" ) != NULL;
 
 	if( supportsNative )
 	{

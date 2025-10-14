@@ -94,6 +94,11 @@ struct GraphLink
 	}
 };
 
+struct GraphEditContext
+{
+
+};
+
 struct StateEditContext
 {
 	ed::EditorContext* Editor = nullptr;
@@ -245,7 +250,9 @@ public:
 	{
 		return graphContext.nextElementId++;
 	}
-
+	int activeStateIndex = -1;
+	int contextStateIndex = -1;
+	idStr contextStateName = idStateGraph::MAIN;
 private:
 
 	void Handle_ContextMenus( StateEditContext& graphContext );
@@ -262,6 +269,9 @@ private:
 	int					nextElementId = 1;
 
 	bool				isShown;
+
+
+
 
 	//replace this with only the graph, editor does care about entity but not as parent of the graph.
 	idEntityPtr<idGraphedEntity> graphEnt;

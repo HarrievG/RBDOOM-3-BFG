@@ -838,7 +838,7 @@ private:
 
 	float					attack_flags;
 
-	bool					supportsNative;
+	
 
 	idStr					lastStateName;
 	stateParms_t			storedState;

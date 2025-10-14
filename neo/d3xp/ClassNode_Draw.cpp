@@ -431,7 +431,7 @@ void idClassNode::Draw( ImGuiTools::GraphNode* nodePtr )
 }
 
 
-idGraphNode* idGraphLogicNode::QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner )
+idGraphNode* idGraphLogicNode::QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner,idStr contextName )
 {
 	auto& graph = *targetGraph;
 	if( ImGui::MenuItem( "IF Statement" ) )

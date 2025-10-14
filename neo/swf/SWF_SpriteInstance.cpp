@@ -26,6 +26,7 @@ If you have questions concerning this license or the applicable additional terms
 ===========================================================================
 */
 #include "precompiled.h"
+#include "SWF_Graphics.h"
 #pragma hdrstop
 
 idSWFScriptObject_SpriteInstancePrototype spriteInstanceScriptObjectPrototype;
@@ -79,7 +80,6 @@ void idSWFSpriteInstance::Init( idSWFSprite* _sprite, idSWFSpriteInstance* _pare
 	{
 		scriptObject = idSWFScriptObject::Alloc();
 		scriptObject->SetPrototype( &spriteInstanceScriptObjectPrototype );
-
 	}
 	scriptObject->SetSprite( this );
 
@@ -221,19 +221,23 @@ swfDisplayEntry_t* idSWFSpriteInstance::AddDisplayEntry( int depth, int characte
 			if( dictEntry->scriptClass.IsValid() )
 			{
 				display.spriteInstance->scriptObject = idSWFScriptObject::Alloc( );
-				auto* super = dictEntry->scriptClass.GetObject( );
+				auto* scriptClass = dictEntry->scriptClass.GetObject( );
+				
+				if (scriptClass->GetPrototype() == NULL )
+					scriptClass->SetPrototype(&spriteInstanceScriptObjectPrototype);
 
-				auto dcopy = super->Get( *dictEntry->name );
+				auto dcopy = scriptClass->Get( "[" + *dictEntry->name + "]" );
 				if( dcopy.IsObject() )
 				{
 					display.spriteInstance->scriptObject->DeepCopy( dcopy.GetObject() );
 				}
 
-				display.spriteInstance->scriptObject->SetPrototype( super );
+				display.spriteInstance->scriptObject->SetPrototype( scriptClass );
 			}
 
 			display.spriteInstance->Init( dictEntry->sprite, this, depth );
 			display.spriteInstance->RunTo( 1 );
+			display.spriteInstance->RunActions();			
 		}
 		else if( dictEntry->type == SWF_DICT_EDITTEXT )
 		{
@@ -242,7 +246,7 @@ swfDisplayEntry_t* idSWFSpriteInstance::AddDisplayEntry( int depth, int characte
 			if( dictEntry->scriptClass.IsValid( ) )
 			{
 				auto* super = dictEntry->scriptClass.GetObject( );
-				auto dcopy = super->Get( *dictEntry->name );
+				auto dcopy = super->Get( "[" + *dictEntry->name+ "]" );
 				if( dcopy.IsObject() )
 				{
 					display.textInstance->scriptObject.DeepCopy( dcopy.GetObject() );
@@ -442,11 +446,26 @@ bool idSWFSpriteInstance::RunActions()
 				idSWFParmList parms;
 				parms.Append( eventArg );
 
-				idSWFScriptFunction_Script* eventFunc = ( idSWFScriptFunction_Script* )var.GetFunction();
 
-				actionScript->SetData( eventFunc->GetMethodInfo() );
+				idSWFScriptFunction_Script* eventFunc = ( idSWFScriptFunction_Script* )var.GetFunction();
+				actionScript->SetData( eventFunc->GetMethodInfo( ) );
 				actionScript->SetAbcFile( abcFile );
 				actionScript->Call( scriptObject, parms );
+
+				//idSWFScriptFunction_Script* eventFunc = ( idSWFScriptFunction_Script* )var.GetFunction();
+				//if ( !( eventFunc )->GetScope( )->Num( ) ) {
+				//	( ( eventFunc )->SetScope( *actionScript->GetScope( ) ));
+				//}
+				//eventFunc->Call( scriptObject, parms );
+				//DoAction( funcPtr );
+
+				//actionScript->SetData( eventFunc->GetMethodInfo() );
+				//actionScript->SetAbcFile( abcFile );
+				//
+				//if (!actionScript->GetScope()->Num())
+				//	actionScript->SetScope(*actionScript->GetScope());
+				//
+				//actionScript->Call( scriptObject, parms );
 				parms.Clear();
 			}
 		}
@@ -633,6 +652,23 @@ void idSWFSpriteInstance::DoAction( idSWFBitStream& bitstream )
 void idSWFSpriteInstance::DoAction( idSWFScriptFunction* function )
 {
 	functionActions.Alloc() = function;
+}
+
+/*
+========================
+idSWFSpriteInstance::NumChildren
+========================
+*/
+int idSWFSpriteInstance::NumChildren( ) {
+	return displayList.Num();
+
+	//int count = 0;
+	//for ( int i = 0; i < displayList.Num( ); i++ ) {
+	//	if ( displayList[i].spriteInstance != NULL ) {
+	//		count++;
+	//	}
+	//}
+	//return count;
 }
 
 /*
@@ -1195,6 +1231,7 @@ idSWFScriptObject_SpriteInstancePrototype::idSWFScriptObject_SpriteInstanceProto
 	SWF_SPRITE_FUNCTION_SET( prevFrame );
 	SWF_SPRITE_FUNCTION_SET( play );
 	SWF_SPRITE_FUNCTION_SET( stop );
+	SWF_SPRITE_FUNCTION_SET( getChildAt );
 
 	SWF_SPRITE_NATIVE_VAR_SET( _x );
 	SWF_SPRITE_NATIVE_VAR_SET( _y );
@@ -1226,8 +1263,9 @@ idSWFScriptObject_SpriteInstancePrototype::idSWFScriptObject_SpriteInstanceProto
 	SWF_SPRITE_NATIVE_VAR_SET( material );
 	SWF_SPRITE_NATIVE_VAR_SET( materialWidth );
 	SWF_SPRITE_NATIVE_VAR_SET( materialHeight );
-	SWF_SPRITE_NATIVE_VAR_SET( xOffset );
+	SWF_SPRITE_NATIVE_VAR_SET( numChildren );
 
+	SWF_SPRITE_NATIVE_VAR_SET( xOffset );
 	SWF_SPRITE_NATIVE_VAR_SET( onEnterFrame );
 	//SWF_SPRITE_NATIVE_VAR_SET( onLoad );
 }
@@ -1273,14 +1311,12 @@ SWF_SPRITE_NATIVE_VAR_DEFINE_GET( _height )
 }
 SWF_SPRITE_NATIVE_VAR_DEFINE_SET( _height ) { }
 
-
 SWF_SPRITE_FUNCTION_DEFINE( addFrameScript )
 {
 	SWF_SPRITE_PTHIS_FUNC( "addFrameScript" );
 	// Frame/timeline actionScript code is added implicitly
 	return idSWFScriptVar();
 }
-
 
 SWF_SPRITE_FUNCTION_DEFINE( duplicateMovieClip )
 {
@@ -1395,12 +1431,14 @@ SWF_SPRITE_FUNCTION_DEFINE( prevFrame )
 	pThis->PrevFrame();
 	return idSWFScriptVar();
 }
+
 SWF_SPRITE_FUNCTION_DEFINE( play )
 {
 	SWF_SPRITE_PTHIS_FUNC( "play" );
 	pThis->Play();
 	return idSWFScriptVar();
 }
+
 SWF_SPRITE_FUNCTION_DEFINE( stop )
 {
 	SWF_SPRITE_PTHIS_FUNC( "stop" );
@@ -1408,12 +1446,72 @@ SWF_SPRITE_FUNCTION_DEFINE( stop )
 	return idSWFScriptVar();
 }
 
+SWF_SPRITE_FUNCTION_DEFINE( getChildAt ) {
+	SWF_SPRITE_PTHIS_FUNC( "getChildAt" );
+	if ( parms.Num( ) > 0 && parms[0].IsNumeric( ) ) {
+		int index = parms[0].ToInteger( );
+		if ( index < 0 || index >= pThis->displayList.Num( ) ) {
+			idLib::Warning( "getChildAt: index out of range" );
+			return idSWFScriptVar( );
+		}
+		idSWFDictionaryEntry *dictEntry = pThis->sprite->GetSWF( )->FindDictionaryEntry( pThis->displayList[index].characterID );
+		if ( dictEntry != NULL ) {
+			switch ( dictEntry->type ) {
+			case SWF_DICT_SPRITE:
+				// Handle sprite dictionary entry
+				if ( pThis->displayList[index].spriteInstance != NULL ) {
+					return idSWFScriptVar( pThis->displayList[index].spriteInstance );
+				}
+				break;
+
+			case SWF_DICT_EDITTEXT:
+				// Handle edit text dictionary entry
+				if ( pThis->displayList[index].textInstance != NULL ) {
+					return idSWFScriptVar( pThis->displayList[index].textInstance );
+				}
+				break;
+
+			case SWF_DICT_TEXT:
+				// Handle text dictionary entry
+				if ( pThis->displayList[index].textInstance != NULL ) {
+					return idSWFScriptVar( pThis->displayList[index].textInstance );
+				}
+				break;
+			case SWF_DICT_SHAPE:				
+				{
+					idSWFScriptObject_Shape *shapeObj = new idSWFScriptObject_Shape( );
+					shapeObj->AddRef( );
+					shapeObj->Shape = dictEntry->shape;
+					return shapeObj ;
+				}
+				break;
+			default:
+				idLib::Warning( "getChildAt: unhandled dictionary type" );
+				break;
+			//case SWF_DICT_NULL:
+			//	break;
+			//case SWF_DICT_IMAGE:
+			//	break;
+
+			//case SWF_DICT_MORPH:
+			//	break;
+			//case SWF_DICT_FONT:
+			//	break;
+			}
+		} else {
+			idLib::Warning( "getChildAt: dictionary entry not found" );
+		}
+	} else {
+		idLib::Warning( "getChildAt: expected 1 numerical index as parameter" );
+	}
+	return idSWFScriptVar( );
+}
+
 SWF_SPRITE_NATIVE_VAR_DEFINE_GET( _x )
 {
 	SWF_SPRITE_PTHIS_GET( "_x" );
 	return pThis->GetXPos();
 }
-
 SWF_SPRITE_NATIVE_VAR_DEFINE_SET( _x )
 {
 	SWF_SPRITE_PTHIS_SET( "_x" );
@@ -1425,7 +1523,6 @@ SWF_SPRITE_NATIVE_VAR_DEFINE_GET( _y )
 	SWF_SPRITE_PTHIS_GET( "_y" );
 	return pThis->GetYPos();
 }
-
 SWF_SPRITE_NATIVE_VAR_DEFINE_SET( _y )
 {
 	SWF_SPRITE_PTHIS_SET( "_y" );
@@ -1447,7 +1544,6 @@ SWF_SPRITE_NATIVE_VAR_DEFINE_GET( _xscale )
 	}
 	return thisDisplayEntry->matrix.Scale( idVec2( 1.0f, 0.0f ) ).Length() * 100.0f;
 }
-
 SWF_SPRITE_NATIVE_VAR_DEFINE_SET( _xscale )
 {
 	SWF_SPRITE_PTHIS_SET( "_xscale" );
@@ -1491,7 +1587,6 @@ SWF_SPRITE_NATIVE_VAR_DEFINE_GET( _yscale )
 	}
 	return thisDisplayEntry->matrix.Scale( idVec2( 0.0f, 1.0f ) ).Length() * 100.0f;
 }
-
 SWF_SPRITE_NATIVE_VAR_DEFINE_SET( _yscale )
 {
 	SWF_SPRITE_PTHIS_SET( "_yscale" );
@@ -1535,7 +1630,6 @@ SWF_SPRITE_NATIVE_VAR_DEFINE_GET( _alpha )
 	}
 	return thisDisplayEntry->cxf.mul.w;
 }
-
 SWF_SPRITE_NATIVE_VAR_DEFINE_SET( _alpha )
 {
 	SWF_SPRITE_PTHIS_SET( "_alpha" );
@@ -1571,7 +1665,6 @@ SWF_SPRITE_NATIVE_VAR_DEFINE_GET( _brightness )
 		return avgMul - 1.0f;
 	}
 }
-
 SWF_SPRITE_NATIVE_VAR_DEFINE_SET( _brightness )
 {
 	SWF_SPRITE_PTHIS_SET( "_brightness" );
@@ -1603,7 +1696,6 @@ SWF_SPRITE_NATIVE_VAR_DEFINE_GET( _visible )
 	SWF_SPRITE_PTHIS_GET( "_visible" );
 	return pThis->isVisible;
 }
-
 SWF_SPRITE_NATIVE_VAR_DEFINE_SET( _visible )
 {
 	SWF_SPRITE_PTHIS_SET( "_visible" );
@@ -1639,7 +1731,6 @@ SWF_SPRITE_NATIVE_VAR_DEFINE_GET( _rotation )
 	}
 	return rotation;
 }
-
 SWF_SPRITE_NATIVE_VAR_DEFINE_SET( _rotation )
 {
 	SWF_SPRITE_PTHIS_SET( "_rotation" );
@@ -1732,7 +1823,6 @@ SWF_SPRITE_NATIVE_VAR_DEFINE_GET( _itemindex )
 	SWF_SPRITE_PTHIS_GET( "_itemindex" );
 	return pThis->itemIndex;
 }
-
 SWF_SPRITE_NATIVE_VAR_DEFINE_SET( _itemindex )
 {
 	SWF_SPRITE_PTHIS_SET( "_itemindex" );
@@ -1744,7 +1834,6 @@ SWF_SPRITE_NATIVE_VAR_DEFINE_SET( _stereoDepth )
 	SWF_SPRITE_PTHIS_SET( "_stereoDepth" );
 	pThis->stereoDepth = value.ToInteger();
 }
-
 SWF_SPRITE_NATIVE_VAR_DEFINE_GET( _stereoDepth )
 {
 	SWF_SPRITE_PTHIS_GET( "_stereoDepth" );
@@ -1763,7 +1852,6 @@ SWF_SPRITE_NATIVE_VAR_DEFINE_GET( material )
 		return pThis->materialOverride->GetName();
 	}
 }
-
 SWF_SPRITE_NATIVE_VAR_DEFINE_SET( material )
 {
 	SWF_SPRITE_PTHIS_SET( "material" );
@@ -1783,7 +1871,6 @@ SWF_SPRITE_NATIVE_VAR_DEFINE_GET( materialWidth )
 	SWF_SPRITE_PTHIS_GET( "materialWidth" );
 	return pThis->materialWidth;
 }
-
 SWF_SPRITE_NATIVE_VAR_DEFINE_SET( materialWidth )
 {
 	SWF_SPRITE_PTHIS_SET( "materialWidth" );
@@ -1797,7 +1884,6 @@ SWF_SPRITE_NATIVE_VAR_DEFINE_GET( materialHeight )
 	SWF_SPRITE_PTHIS_GET( "materialHeight" );
 	return pThis->materialHeight;
 }
-
 SWF_SPRITE_NATIVE_VAR_DEFINE_SET( materialHeight )
 {
 	SWF_SPRITE_PTHIS_SET( "materialHeight" );
@@ -1806,12 +1892,16 @@ SWF_SPRITE_NATIVE_VAR_DEFINE_SET( materialHeight )
 	pThis->materialHeight = ( uint16 )value.ToInteger();
 }
 
+SWF_SPRITE_NATIVE_VAR_DEFINE_GET( numChildren ) {
+	SWF_SPRITE_PTHIS_GET( "numChildren" );
+	return pThis->NumChildren( );
+}
+
 SWF_SPRITE_NATIVE_VAR_DEFINE_GET( xOffset )
 {
 	SWF_SPRITE_PTHIS_GET( "xOffset" );
 	return pThis->xOffset;
 }
-
 SWF_SPRITE_NATIVE_VAR_DEFINE_SET( xOffset )
 {
 	SWF_SPRITE_PTHIS_SET( "xOffset" );
@@ -1823,9 +1913,20 @@ SWF_SPRITE_NATIVE_VAR_DEFINE_GET( onEnterFrame )
 	SWF_SPRITE_PTHIS_GET( "onEnterFrame" );
 	return pThis->onEnterFrame;
 }
-
 SWF_SPRITE_NATIVE_VAR_DEFINE_SET( onEnterFrame )
 {
 	SWF_SPRITE_PTHIS_SET( "onEnterFrame" );
 	pThis->onEnterFrame = value;
 }
+
+#undef SWF_SPRITE_FUNCTION_DEFINE
+#undef SWF_SPRITE_NATIVE_VAR_DEFINE_GET
+#undef SWF_SPRITE_NATIVE_VAR_DEFINE_SET
+
+#undef SWF_SPRITE_PTHIS_FUNC
+#undef SWF_SPRITE_PTHIS_GET
+#undef SWF_SPRITE_PTHIS_SET
+
+#undef SWF_SPRITE_FUNCTION_SET
+#undef SWF_SPRITE_NATIVE_VAR_SET
+

@@ -42,8 +42,8 @@ If you have questions concerning this license or the applicable additional terms
 #endif
 
 //Helper macros for gltf data deserialize
-#define GLTFARRAYITEM(target,name,type) auto * name = new type (#name); target.AddItemDef((parsable*)name)
-#define GLTFARRAYITEMREF(target,name,type,ref) auto * name = new type (#name); target.AddItemDef((parsable*)name); name->Set(&ref)
+#define GLTFARRAYITEM(target,name,type) type name(#name); target.AddItemDef(&name)
+#define GLTFARRAYITEMREF(target,name,type,ref) type name(#name); target.AddItemDef(&name); name.Set(&ref)
 
 #ifndef GLTF_EXTRAS_H
 #define GLTF_EXTRAS_H

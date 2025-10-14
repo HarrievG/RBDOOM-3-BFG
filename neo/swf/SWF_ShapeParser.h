@@ -79,7 +79,6 @@ private:
 	idList< swfSPDrawFill_t, TAG_SWF > fillDraws;
 	idList< swfSPDrawLine_t, TAG_SWF > lineDraws;
 
-
 private:
 	void ParseShapes( idSWFBitStream& bitstream1, idSWFBitStream* bitstream2, bool swap );
 	void ReadFillStyle( idSWFBitStream& bitstream );
@@ -90,6 +89,8 @@ private:
 	int FindEarVert( const swfSPLineLoop_t& loop );
 	void AddUniqueVert( idSWFShapeDrawFill& drawFill, const idVec2& start, const idVec2& end );
 	void MakeCap( swfSPDrawLine_t& spld, idSWFShapeDrawLine& ld , swfSPMorphEdge_t& edge, bool start );
+
+	idSWFShape * currentShape;
 };
 
 #endif // !__SWF_SHAPEPARSER_H__

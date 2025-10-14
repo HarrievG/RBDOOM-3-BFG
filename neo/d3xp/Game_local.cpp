@@ -3350,21 +3350,25 @@ void idGameLocal::CallObjectFrameCommand( idEntity* ent, const char* frameComman
 {
 	const function_t* func;
 
+// hvg
+   if (ent->supportsNative)
+   {
 // jmarshall
-	if( ent->HasNativeFunction( frameCommand ) )
-	{
-		ent->Invoke( frameCommand, NULL );
-		return;
-	}
-	else if( ent->InvokeChild() != NULL )
-	{
-		if( ent->InvokeChild()->HasNativeFunction( frameCommand ) )
+		if(ent->HasNativeFunction( frameCommand ) )
 		{
-			ent->InvokeChild()->Invoke( frameCommand, NULL );
+			ent->Invoke( frameCommand, NULL );
 			return;
 		}
-	}
+		else if( ent->InvokeChild() != NULL )
+		{
+			if( ent->InvokeChild()->HasNativeFunction( frameCommand ) )
+			{
+				ent->InvokeChild()->Invoke( frameCommand, NULL );
+				return;
+			}
+		}
 // jmarshall end
+	}
 
 	func = ent->scriptObject.GetFunction( frameCommand );
 	if( !func )

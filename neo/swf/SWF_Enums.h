@@ -34,7 +34,7 @@ enum swfInstanceFlags_t
 	ClassSealed =		0x01,	//The class is sealed: properties can not be dynamically added to instances of the class.
 	ClassFinal  =		0x02,	//The class is final : it cannot be a base class for any other class.
 	ClassInterface =	0x04,	//The class is an interface.
-	ClassProtectedNs =	0x08,	//The class uses its protected namespace andthe protectedNs
+	ClassProtectedNs =	0x08,	//The class uses its protected namespace and the protectedNs
 };
 
 enum swfConstantKind_t

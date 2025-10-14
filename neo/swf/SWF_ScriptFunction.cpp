@@ -30,7 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "precompiled.h"
 #pragma hdrstop
 
-idCVar swf_debug( "swf_debug", "0", CVAR_INTEGER | CVAR_ARCHIVE, "debug swf scripts.  1 shows traces/errors.  2 also shows warnings.  3 also shows disassembly.  4 shows parameters in the disassembly." );
+idCVar swf_debug( "swf_debug", "1", CVAR_INTEGER | CVAR_ARCHIVE, "debug swf scripts.  1 shows traces/errors.  2 also shows warnings.  3 also shows disassembly.  4 shows parameters in the disassembly." );
 idCVar swf_debugInvoke( "swf_debugInvoke", "0", CVAR_INTEGER, "debug swf functions being called from game." );
 
 idList<idSWFScriptFunction*, TAG_SWF> idSwfActionScriptAPI::actionScriptAPIs;
@@ -175,7 +175,7 @@ idSWFScriptVar idSWFScriptFunction_Script::Call( idSWFScriptObject* thisObject, 
 	idSWFBitStream bitstream( data, length, false );
 
 	// We assume scope[0] is the global scope
-	assert( scope.Num() > 0 );
+	assert( scope.Num( ) > 0 );
 
 	if( thisObject == NULL )
 	{
@@ -296,7 +296,6 @@ idSWFScriptVar idSWFScriptFunction_Script::Call( idSWFScriptObject* thisObject, 
 		registers[ preloadReg ].SetObject( scope[0] );
 		preloadReg++;
 	}
-
 	int scopeSize = scope.Num();
 	scope.Append( locals );
 	locals->AddRef();
@@ -306,12 +305,13 @@ idSWFScriptVar idSWFScriptFunction_Script::Call( idSWFScriptObject* thisObject, 
 		assert( methodInfo->body );
 		auto* body = methodInfo->body;
 		registers[0].SetObject( thisObject );
+		for (int i = 0; i < parms.Num(); i++)
+		{
+			registers[i+1] = parms[i];
+		}
 		idSWFBitStream abcStream( body->code.Ptr( ), body->codeLength, false );
 		retVal = RunAbc( thisObject, stack, abcStream );
-
-		//-- FIXME
-		//-- Although some of the abc bytecode is skipped, scopes should match!
-		//assert(scope.Num() == scopeSize + 1);
+		assert(scope.Num() == scopeSize + 1);
 	}
 	else
 	{

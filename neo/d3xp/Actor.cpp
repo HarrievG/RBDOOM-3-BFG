@@ -159,6 +159,8 @@ idAnimState::SetState
 */
 void idAnimState::SetState( const char* statename, int blendFrames )
 {
+	// this does not check if it supports native calls, animstates are always checked..
+	// hvgtodo: bring inline with general native state use.
 	bool hasNative = self->HasNativeFunction( statename );
 
 	const function_t* func;
@@ -584,6 +586,10 @@ void idActor::Spawn()
 	animPrefix	= "";
 	state		= NULL;
 	idealState	= NULL;
+
+	///HvG
+	supportsNative = scriptObject.GetFunction( "supports_native" ) != NULL;
+	///
 
 	spawnArgs.GetInt( "rank", "0", rank );
 	spawnArgs.GetInt( "team", "0", team );
@@ -1557,10 +1563,16 @@ idActor::SetState
 */
 void idActor::SetState( const char* statename )
 {
-	const function_t* newState;
+	const function_t* newState = GetScriptFunction( statename );
 
+	if ( graphObject && graphObject->GetLocalState( statename ) ) {
+			//activate state's inputs node
+#if _DEBUG
+			__debugbreak( );
+#endif
+	}
 	// jmarshall
-	if( HasNativeFunction( statename ) )
+	else if(supportsNative && HasNativeFunction( statename ) )
 	{
 		stateThread.SetState( statename );
 	}
@@ -4054,7 +4066,8 @@ idActor::Event_SetState
 void idActor::Event_SetState( const char* name )
 {
 	// jmarshall begin
-	if( HasNativeFunction( name ) )
+	// Event SetState is only called from an EventDef, this means from script or from graph
+	if(supportsNative && HasNativeFunction( name ) )
 	{
 		stateThread.SetState( name );
 		return;

@@ -238,6 +238,7 @@ public:
 	void					DoAction( idSWFBitStream& bitstream );
 	void					DoAction( idSWFScriptFunction* function );
 
+	int						NumChildren();
 	idSWFSpriteInstance* 	FindChildSprite( const char* childName );
 	idSWFSpriteInstance* 	ResolveTarget( const char* targetName );
 	uint32					FindFrame( const char* frameLabel ) const;
@@ -272,6 +273,7 @@ public:
 	SWF_SPRITE_FUNCTION_DECLARE( prevFrame );
 	SWF_SPRITE_FUNCTION_DECLARE( play );
 	SWF_SPRITE_FUNCTION_DECLARE( stop );
+	SWF_SPRITE_FUNCTION_DECLARE( getChildAt );
 
 	SWF_NATIVE_VAR_DECLARE( _x );
 	SWF_NATIVE_VAR_DECLARE( _y );
@@ -298,6 +300,7 @@ public:
 	SWF_NATIVE_VAR_DECLARE_READONLY( _quality );
 	SWF_NATIVE_VAR_DECLARE_READONLY( _mousex );
 	SWF_NATIVE_VAR_DECLARE_READONLY( _mousey );
+	SWF_NATIVE_VAR_DECLARE_READONLY( numChildren );
 
 	SWF_NATIVE_VAR_DECLARE( _stereoDepth );
 	SWF_NATIVE_VAR_DECLARE( _itemindex );
@@ -305,7 +308,7 @@ public:
 	SWF_NATIVE_VAR_DECLARE( material );
 	SWF_NATIVE_VAR_DECLARE( materialWidth );
 	SWF_NATIVE_VAR_DECLARE( materialHeight );
-
+	
 	SWF_NATIVE_VAR_DECLARE( xOffset );
 	SWF_NATIVE_VAR_DECLARE( onEnterFrame );
 	//SWF_NATIVE_VAR_DECLARE( onLoad );

@@ -875,20 +875,19 @@ void idCameraAnim::gltfLoadAnim( idStr gltfFileName, idStr animName )
 			lexer.LoadMemory( anim->extras.json, anim->extras.json.Size(), "idCameraAnim_gltfExtra", 0 );
 			animExtras.Parse( &lexer , true );
 
-			if( CameraLensFrames->item )
+			if( CameraLensFrames.item )
 			{
-				auto* lensFrameValues = ( idList<double, TAG_IDLIB_LIST>* )CameraLensFrames->item;
+				const idList<double, TAG_IDLIB_LIST>& lensFrameValues = *CameraLensFrames.item;
 
-				if( lensFrameValues )
+				assert( lensFrameValues.Num() == camera.Num() );
+
+				for( int i = 0; i < lensFrameValues.Num(); i++ )
 				{
-					assert( lensFrameValues->Num() == camera.Num() );
-					for( int i = 0; i < lensFrameValues->Num(); i++ )
-					{
-						camera[i].fov = ( float )( *lensFrameValues )[i];
-					}
+						camera[i].fov = ( float )lensFrameValues[i];
 				}
+
 				//Dont forget to free! normally a gltfPropertyArray destructor frees the itemdata
-				delete CameraLensFrames->item;
+				delete CameraLensFrames.item;
 			}
 		}
 	}

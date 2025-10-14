@@ -1241,6 +1241,7 @@ source_group("ui" FILES ${UI_SOURCES})
 source_group("swf" FILES ${SWF_INCLUDES})
 source_group("swf" FILES ${SWF_SOURCES})
 
+
 source_group("sys" FILES ${SYS_INCLUDES})
 source_group("sys" FILES ${SYS_SOURCES})
 

@@ -167,11 +167,24 @@ public:
 	bool					HasValidProperty( const char* name );
 	idSWFScriptVar			DefaultValue( bool stringHint );
 
-	// This is to implement for-in (fixme: respect DONTENUM flag)
-	int						NumVariables()
+	int	NumVariables()
 	{
 		return variables.Num();
 	}
+
+	int	NumEnumerateable( ) //fixme: respect DONTENUM flag,
+	{
+		if (objectType == SWF_OBJECT_ARRAY )
+			return variables.Num( ) - 1;
+		return variables.Num( );
+	}
+	
+	bool IsArray() const { return objectType == SWF_OBJECT_ARRAY; }
+
+	int EnumVariableFlags( int i ) {
+		return variables[i].flags;
+	}
+
 	const char* 			EnumVariable( int i )
 	{
 		return variables[i].name;
@@ -181,6 +194,18 @@ public:
 	idSWFScriptObject* 		GetNestedObj( const char* arg1, const char* arg2 = NULL, const char* arg3 = NULL, const char* arg4 = NULL, const char* arg5 = NULL, const char* arg6 = NULL );
 	idSWFSpriteInstance* 	GetNestedSprite( const char* arg1, const char* arg2 = NULL, const char* arg3 = NULL, const char* arg4 = NULL, const char* arg5 = NULL, const char* arg6 = NULL );
 	idSWFTextInstance* 		GetNestedText( const char* arg1, const char* arg2 = NULL, const char* arg3 = NULL, const char* arg4 = NULL, const char* arg5 = NULL, const char* arg6 = NULL );
+
+
+	bool IsInstanceOf( const idSWFScriptObject *type ) {
+		idSWFScriptObject  * current = this;
+		while ( current ) {
+			if ( current == type ) {
+				return true;
+			}
+			current = current->GetPrototype( );
+		}
+		return false;
+	}
 
 	void					PrintToConsole( const char* name = nullptr ) const;
 
@@ -200,16 +225,16 @@ public:
 
 	swfNamedVar_t* 	GetVariable( int index, bool create );
 	swfNamedVar_t* 	GetVariable( const char* name, bool create );
-private:
-	int refCount;
-	bool noAutoDelete;
 
-	enum swfNamedVarFlags_t
+	enum swfNamedVarFlags_t 
 	{
 		SWF_VAR_FLAG_NONE = 0,
 		SWF_VAR_FLAG_READONLY = BIT( 1 ),
 		SWF_VAR_FLAG_DONTENUM = BIT( 2 )
 	};
+private:
+	int refCount;
+	bool noAutoDelete;
 
 	idList< swfNamedVar_t, TAG_SWF >	variables;
 

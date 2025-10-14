@@ -31,10 +31,12 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 #include "../renderer/Image.h"
 #include "../renderer/DXT/DXTCodec.h"
+#include "SWF_Vector.h"
+#include "SWF_Graphics.h"
 
 #pragma warning(disable: 4355) // 'this' : used in base member initializer list
 
-idCVar swf_loadBinary( "swf_loadBinary", "1", CVAR_INTEGER, "used to set whether to load binary swf from generated" );
+idCVar swf_loadBinary( "swf_loadBinary", "0", CVAR_INTEGER, "used to set whether to load binary swf from generated" );
 // RB begin
 idCVar postLoadExportFlashAtlas( "postLoadExportFlashAtlas", "0", CVAR_INTEGER, "" );
 idCVar postLoadExportFlashToSWF( "postLoadExportFlashToSWF", "0", CVAR_INTEGER, "" );
@@ -63,47 +65,58 @@ void idSWF::CreateAbcObjects( idSWFScriptObject* globals )
 
 		idSWFScriptObject* tmp = idSWFScriptObject::Alloc();
 		idStr& className = abcFile.constant_pool.utf8Strings[instanceInfo.name->nameIndex];
-		//if these are namespace sets, concat all?
 		idStr fullClassName = *abcFile.constant_pool.namespaceNames[instanceInfo.name->index];
 		if( !fullClassName.IsEmpty() )
 		{
 			fullClassName += ".";
 		}
-		fullClassName += abcFile.constant_pool.utf8Strings[instanceInfo.name->nameIndex];
-		idStr& superName = abcFile.constant_pool.utf8Strings[instanceInfo.super_name->nameIndex];
+		fullClassName += className;
 
-		//lookup prototype
-		if( globals->HasValidProperty( superName ) )
-		{
-			if( superName == "Object" )
-			{
-				idSWFScriptVar baseObjConstructor = globals->Get( "Object" );
-				idSWFScriptFunction* baseObj = baseObjConstructor.GetFunction();
-				tmp->SetPrototype( baseObj->GetPrototype() );
-			}
-			else
-			{
-				tmp->SetPrototype( globals->GetObject( superName )->GetPrototype() );
-			}
-
+		idStr &superName = abcFile.constant_pool.utf8Strings[instanceInfo.super_name->nameIndex];
+		idStr fullSuperName = *abcFile.constant_pool.namespaceNames[instanceInfo.super_name->index];
+		if ( !fullSuperName.IsEmpty( ) ) {
+			fullSuperName += ".";
 		}
-		else
+		fullSuperName += superName;
+		if ( (instanceInfo.flags & swfInstanceFlags_t::ClassInterface ) == 0 )
 		{
-			common->Warning( " prototype %s not found for %s ", superName.c_str(), className.c_str() );
+			//lookup prototype
+			if ( globals->HasValidProperty( fullSuperName ) ) {
+				if ( superName == "Object" ) {
+					idSWFScriptVar baseObjConstructor = globals->Get( "Object" );
+					idSWFScriptFunction *baseObj = baseObjConstructor.GetFunction( );
+					tmp->SetPrototype( baseObj->GetPrototype( ) );
+				} else if ( superName == "Sprite" ) {
+					tmp->SetPrototype( &spriteInstanceScriptObjectPrototype );
+				} else {
+					tmp->SetPrototype( globals->GetObject( fullSuperName ) );
+				}
+			} else {
+				common->Warning( " prototype %s not found for %s ", fullSuperName.c_str( ), fullClassName.c_str( ) );
+			}
 		}
 
 		idSWFScriptFunction_Script*   init = idSWFScriptFunction_Script::Alloc();
+		
+		idSWFScriptObject::swfNamedVar_t *initVar = tmp->GetVariable( "__initializer__",true);
+		initVar->value = idSWFScriptVar( init );
+		initVar->flags = idSWFScriptObject::SWF_VAR_FLAG_DONTENUM;
 		init->SetData( classInfo.cinit );
-		tmp->Set( "__initializer__", idSWFScriptVar( init ) );
 		init->SetAbcFile( &abcFile );
+
 		idSWFScriptFunction_Script* constr = idSWFScriptFunction_Script::Alloc( );
 		constr->SetData( instanceInfo.iinit );
-		tmp->Set( "__constructor__", idSWFScriptVar( constr ) );
+		idSWFScriptObject::swfNamedVar_t *constrvar = tmp->GetVariable( "__constructor__", true );
+		constrvar->value =  idSWFScriptVar( constr );
+		constrvar->flags = idSWFScriptObject::SWF_VAR_FLAG_DONTENUM;
 		constr->SetAbcFile( &abcFile );
-		globals->Set( className, tmp );
+		//auto *newScopeobj = constr->GetScope()->Alloc();
+		//newScopeobj = globals;
+		//newScopeobj->AddRef();
 		globals->Set( fullClassName, tmp );
+
 		idx++;
-		//check release
+		//TODO: check release
 		init->Release();
 		constr->Release();
 	}
@@ -123,11 +136,48 @@ void idSWF::CreateAbcObjects( idSWFScriptObject* globals )
 		idSWFScriptObject* tmp = globals->GetObject( fullClassName );
 		auto* target = idSWFScriptObject::Alloc( );
 		auto* var = tmp->GetVariable( "[" + fullClassName + "]", true );
+		var->flags = idSWFScriptObject::SWF_VAR_FLAG_DONTENUM;
 
 		for( swfTraits_info& trait : instanceInfo.traits )
 		{
 			target->Set( abcFile.constant_pool.utf8Strings[trait.name->nameIndex],
 						 abcFile.GetTrait<idSWFScriptObject::swfNamedVar_t>( trait, globals )->value );
+		}
+
+		//flatten trait inheritance  
+		idStr &superName = abcFile.constant_pool.utf8Strings[instanceInfo.super_name->nameIndex];
+		idStr fullSuperName = *abcFile.constant_pool.namespaceNames[instanceInfo.super_name->index];
+		if ( !fullSuperName.IsEmpty( ) ) {
+			fullSuperName += ".";
+		}
+		fullSuperName += superName;		
+		if ( superName != "*" || !superName.IsEmpty( ) ) {
+			if ( globals->HasValidProperty( fullSuperName ) ) {
+				idSWFScriptObject *super = globals->GetObject( fullSuperName );
+
+				while (super)
+				{
+					if(super->HasProperty("[" + fullSuperName + "]" ))
+					{
+						for (int i = 0 ; i< super->NumVariables(); i++)
+						{
+							if((super->EnumVariableFlags(i) & idSWFScriptObject::SWF_VAR_FLAG_DONTENUM ) == 0)
+							{
+								target->Set( super->EnumVariable( i ), super->Get( super->EnumVariable( i ) ) );
+							}
+						}
+
+						target->DeepCopy( super->Get( "[" + fullSuperName + "]" ).GetObject( ) );
+					}
+					
+					if ( super->GetPrototype( ) )
+					{
+						super = super->GetPrototype( );
+					}
+					else
+						super = nullptr;
+				}
+			}
 		}
 		var->value.SetObject( target );
 		target->Release();
@@ -139,8 +189,6 @@ void idSWF::CreateAbcObjects( idSWFScriptObject* globals )
 					);
 		}
 
-		tmp->Set( fullClassName, target );
-
 		if( swf_printAbcObjects.GetBool() )
 		{
 			tmp->PrintToConsole( className.c_str() );
@@ -148,7 +196,9 @@ void idSWF::CreateAbcObjects( idSWFScriptObject* globals )
 		}
 		idx++;
 	}
+
 	//should remove all API scriptinfo's here.
+	 ///__debugbreak();
 }
 
 /*
@@ -455,6 +505,27 @@ idSWF::idSWF( const char* filename_, idSoundWorld* soundWorld_ )
 		spriteInstanceScriptObjectPrototype.SetPrototype( &eventDispatcherScriptObjectPrototype );
 	}
 
+	auto *shapeObj = idSWFScriptObject::Alloc( );
+	shapeObj->SetPrototype( &shapeScriptObjectPrototype );
+
+	auto *PointObj = idSWFScriptObject::Alloc( );
+	PointObj->SetPrototype( &PointScriptObjectPrototype );
+
+	auto *graphicsPathObj = idSWFScriptObject::Alloc( );
+	graphicsPathObj->SetPrototype( &graphicsPathScriptObjectPrototype );
+
+	auto *graphicsObj = idSWFScriptObject::Alloc( );
+	graphicsObj->SetPrototype( &graphicsScriptObjectPrototype );
+
+	auto *IGraphicsDataObj = idSWFScriptObject::Alloc( );
+	IGraphicsDataObj->SetPrototype( &IGraphicsDataScriptObjectPrototype );
+
+	auto *SpriteObj = idSWFScriptObject::Alloc( );
+	SpriteObj->SetPrototype( &spriteInstanceScriptObjectPrototype );
+
+	auto* vectorObj = idSWFScriptObject::Alloc( );
+	vectorObj->SetPrototype( &vectorScriptObjectPrototype );
+
 	auto* arrayObj = idSWFScriptObject::Alloc();
 	arrayObj->SetPrototype( scriptFunction_Object.GetPrototype() );
 	arrayObj->MakeArray();
@@ -468,9 +539,18 @@ idSWF::idSWF( const char* filename_, idSoundWorld* soundWorld_ )
 	globals->Set( "AccessibilityProperties", accessibilityPropertiesObj );
 	globals->Set( "Dictionary", idSWFScriptObject::Alloc() );
 	globals->Set( "DisplayObjectContainer", idSWFScriptObject::Alloc( ) );
-	globals->Set( "Sprite", idSWFScriptObject::Alloc( ) );
-	globals->Set( "DisplayObjectContainer", idSWFScriptObject::Alloc( ) );
+	globals->Set( "Sprite", SpriteObj );
 	globals->Set( "MovieClip", movieclipObj );
+	globals->Set( "flash.display.MovieClip", movieclipObj );
+	
+	//globals->Set( "Shape", shapeObj ); //it should be a lightweight spriteinstance
+	globals->Set( "flash.display.Shape", shapeObj ); //it should be a lightweight spriteinstance
+	globals->Set( "Vector", vectorObj );
+	globals->Set( "flash.display.Graphics", graphicsObj );
+	globals->Set( "flash.display.IGraphicsData", IGraphicsDataObj );
+	globals->Set( "flash.display.GraphicsPath",graphicsPathObj );
+	globals->Set( "flash.geom.Point", PointObj );
+	idSWFScriptObject_GraphicsPath::SetGraphicsPathCommandGlobals( globals );
 
 	CreateAbcObjects( globals );
 	bool skipInitOnContruct = symbolClasses.symbols.Num() > 0;
@@ -494,9 +574,9 @@ idSWF::idSWF( const char* filename_, idSoundWorld* soundWorld_ )
 			{
 				mainspriteInstance->scriptObject->DeepCopy( dcopy.GetObject( ) );
 			}
-
 			mainspriteInstance->scriptObject->SetPrototype( super );
 			mainspriteInstance->scriptObject->Set( "root", mainspriteInstance->scriptObject );
+			break;
 		}
 	}
 	mainspriteInstance->Init( mainsprite, NULL, 0 );
@@ -538,7 +618,10 @@ idSWF::idSWF( const char* filename_, idSoundWorld* soundWorld_ )
 	globals->Set( "ceil", scriptFunction_ceil.Bind( this ) );
 	globals->Set( "toUpper", scriptFunction_toUpper.Bind( this ) );
 	globals->Set( "trace", scriptFunction_trace.Bind( this ) );
+	// this was a hack!
 	globals->Set( "String", scriptFunction_String.Bind( this ) );
+	globals->Set( "int", scriptFunction_int.Bind( this ) );
+	globals->Set( "uint", scriptFunction_int.Bind( this ) );
 
 	globals->SetNative( "platform", swfScriptVar_platform.Bind( &scriptFunction_getPlatform ) );
 	globals->SetNative( "blackbars", swfScriptVar_blackbars.Bind( this ) );
@@ -546,25 +629,28 @@ idSWF::idSWF( const char* filename_, idSoundWorld* soundWorld_ )
 	globals->SetNative( "cropToFit", swfScriptVar_crop.Bind( this ) );
 	globals->SetNative( "crop", swfScriptVar_crop.Bind( this ) );
 
-	// Do this to touch any external references (like sounds)
-	// But disable script warnings because many globals won't have been created yet
-	//  THIS DOES NOT APPLY TO AS3.
-	extern idCVar swf_debug;
-	int debug = swf_debug.GetInteger();
-	swf_debug.SetInteger( 0 );
+
+
 
 
 	//The original impl does an initial run when contructing the stage.
 	//This is not possible with swf's that have the tag DoABC / run abc-bytecode
 	if( !skipInitOnContruct )
 	{
+		// Do this to touch any external references (like sounds)
+		// But disable script warnings because many globals won't have been created yet
+		//  THIS DOES NOT APPLY TO AS3.
+		extern idCVar swf_debug;
+		int debug = swf_debug.GetInteger( );
+		swf_debug.SetInteger( 0 );
+
 		mainspriteInstance->Run();
 		mainspriteInstance->RunActions();
 		mainspriteInstance->RunTo( 0 );
 		mainspriteInstance->constructed = true;
-	}
 
-	swf_debug.SetInteger( debug );
+		swf_debug.SetInteger( debug );
+	}
 
 	if( mouseX == -1 )
 	{
@@ -636,7 +722,7 @@ void idSWF::Activate( bool b )
 {
 	if( !isActive && b )
 	{
-		inhibitControl = false;
+		inhibitControl = true;
 		lastRenderTime = Sys_Milliseconds();
 
 		mainspriteInstance->FreeDisplayList();
@@ -1239,4 +1325,8 @@ idSWFScriptVar idSWF::idSWFScriptFunction_String::Call( idSWFScriptObject* thisO
 		val += parms[i].ToString();
 	}
 	return val;
+}
+
+idSWFScriptVar idSWF::idSWFScriptFunction_int::Call( idSWFScriptObject *thisObject, const idSWFParmList &parms ) {
+	return parms[0].ToInteger();
 }

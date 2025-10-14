@@ -165,7 +165,7 @@ public:
 
 	//////////////////////////////////////////////////////////////////////////
 	//Should only be used in editor.
-	virtual idGraphNode* QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner ) = 0;
+	virtual idGraphNode* QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner,idStr contextName ) = 0;
 	virtual void Draw( ImGuiTools::GraphNode* nodePtr );
 	virtual bool DrawFlowInputLabel( ImGuiTools::GraphNode* nodePtr, idStr& popup )
 	{
@@ -229,11 +229,6 @@ public:
 	stateResult_t						State_LocalExec( stateParms_t* parms );
 	int									GetLocalStateIndex( const char* stateName );
 	GraphState* 						GetLocalState( const char* stateName );
-
-	template<class T>
-	T* CreateStateNode( int stateIndex, T* node );
-	template<class T>
-	T* CreateNode( int stateIndex );
 
 	void								Clear();
 

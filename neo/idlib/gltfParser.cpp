@@ -37,6 +37,7 @@ If you have questions concerning this license or the applicable additional terms
 static const unsigned int gltfChunk_Type_JSON =  0x4E4F534A; //1313821514
 static const unsigned int gltfChunk_Type_BIN =  0x004E4942; //5130562
 
+idCVar gltf_SaveJson( "gltf_savejson", "0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_BOOL, "stores the glb's json to name.glb.json" );
 idCVar gltf_parseVerbose( "gltf_parseVerbose", "0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_BOOL, "print gltf json data while parsing" );
 idCVar gltfParser_PrefixNodeWithID( "gltfParser_PrefixNodeWithID", "0", CVAR_SYSTEM | CVAR_BOOL, "The node's id is prefixed to the node's name during load" );
 //
@@ -168,14 +169,13 @@ idHashIndex			gltfData::fileDataHash;
 //NOTE: gltfItems that deviate from the default SET(T*) function cannot be handled with itemref macro.
 // target must be an gltfArrayItem.
 // type with name will be added to the array.
-#define GLTFARRAYITEM(target,name,type) auto * name = new type (#name); target.AddItemDef((parsable*)name)
+#define GLTFARRAYITEM(target,name,type) type name(#name); target.AddItemDef((parsable*)&name)
 // name must point to an existing valid entry
 // name->Set		(&target->name);
-#define GLTFARRAYITEMREF(target,name) name->Set(&target->name)
+#define GLTFARRAYITEMREF(target,name) name.Set(&target->name)
 
 void gltfPropertyArray::Iterator::operator ++()
 {
-
 	//check if by modification, we are iterating again.
 	//custom not AOS things can do this since it is not nicely guarded by braces
 	if( array->dirty && ( !array->iterating &&  !array->isArrayOfStructs ) )
@@ -289,10 +289,6 @@ gltfPropertyArray::Iterator gltfPropertyArray::end()
 	return Iterator{ this , endPtr};
 }
 
-gltfItemArray::~gltfItemArray()
-{
-	items.DeleteContents( true );
-}
 
 int gltfItemArray::Fill( idLexer* lexer, idDict* strPairs )
 {
@@ -417,6 +413,13 @@ bool gltfItem_uri::Convert()
 	// uri cache.
 	//read data
 	int length = fileSystem->ReadFile( item->c_str(), NULL );
+	if (length < 0)
+	{
+		common->Warning( "Could not read resolved URI %s", item->c_str() );
+		return false;
+	}
+
+
 	idFile* file = fileSystem->OpenFileRead( item->c_str() );
 
 	//create buffer
@@ -429,7 +432,7 @@ bool gltfItem_uri::Convert()
 
 	if( file->Read( dest, length ) != length )
 	{
-		common->FatalError( "Could not read %s", item->c_str() );
+		common->Warning( "gltfItem_uri Could not read %s", item->c_str() );
 	}
 
 	if( gltf_parseVerbose.GetBool() )
@@ -492,7 +495,7 @@ void gltfItem_animation_sampler::parse( idToken& token )
 		GLTFARRAYITEMREF( gltfAnimSampler, interpolation );
 		GLTFARRAYITEMREF( gltfAnimSampler, output );
 		GLTFARRAYITEMREF( gltfAnimSampler, extensions );
-		extras->Set( &gltfAnimSampler->extras, &lexer );
+		extras.Set( &gltfAnimSampler->extras, &lexer );
 		animSampler.Parse( &lexer );
 		if( gltf_parseVerbose.GetBool() )
 		{
@@ -516,7 +519,7 @@ void gltfItem_animation_channel_target::parse( idToken& token )
 	GLTFARRAYITEMREF( item,	node );
 	GLTFARRAYITEMREF( item,	path );
 	GLTFARRAYITEMREF( item,	extensions );
-	extras->Set( &item->extras, parser );
+	extras.Set( &item->extras, parser );
 	animChannelTarget.Parse( parser );
 
 	if( gltf_parseVerbose.GetBool() )
@@ -547,9 +550,9 @@ void gltfItem_animation_channel::parse( idToken& token )
 		gltfAnimation_Channel* gltfAnimationChannel = ( *item )[item->Num() - 1];
 
 		GLTFARRAYITEMREF( gltfAnimationChannel, sampler );
-		target->Set( &gltfAnimationChannel->target, &lexer );
+		target.Set( &gltfAnimationChannel->target, &lexer );
 		GLTFARRAYITEMREF( gltfAnimationChannel, extensions );
-		extras->Set( &gltfAnimationChannel->extras, &lexer );
+		extras.Set( &gltfAnimationChannel->extras, &lexer );
 		anim.Parse( &lexer );
 		if( gltf_parseVerbose.GetBool() )
 		{
@@ -581,13 +584,13 @@ void gltfItem_mesh_primitive::parse( idToken& token )
 		item->AssureSizeAlloc( item->Num() + 1, idListNewElement<gltfMesh_Primitive> );
 		gltfMesh_Primitive* gltfMeshPrim = ( *item )[item->Num() - 1];
 
-		attributes->Set( &gltfMeshPrim->attributes, &lexer );
+		attributes.Set( &gltfMeshPrim->attributes, &lexer );
 		GLTFARRAYITEMREF( gltfMeshPrim, indices	);
 		GLTFARRAYITEMREF( gltfMeshPrim, material );
 		GLTFARRAYITEMREF( gltfMeshPrim, mode );
 		GLTFARRAYITEMREF( gltfMeshPrim, target );
 		GLTFARRAYITEMREF( gltfMeshPrim, extensions );
-		extras->Set( &gltfMeshPrim->extras, &lexer );
+		extras.Set( &gltfMeshPrim->extras, &lexer );
 		prim.Parse( &lexer );
 		if( gltf_parseVerbose.GetBool() )
 		{
@@ -659,7 +662,6 @@ void gltfItem_integer_array::parse( idToken& token )
 
 void gltfItem_number_array::parse( idToken& token )
 {
-
 	parser->UnreadToken( &token );
 	gltfPropertyArray array = gltfPropertyArray( parser, false );
 	for( auto& prop : array )
@@ -681,6 +683,50 @@ void gltfItem_number_array::parse( idToken& token )
 			common->FatalError( "parse error" );
 		}
 
+		//Exponent checking.
+		//Check for "E - XX"
+		//			 ^
+		bool exp = parser->PeekTokenString( "E" );
+		if ( exp ) {
+			int expMultiplier = 1;
+			bool smaller = false;
+			parser->ExpectTokenString( "E" );
+
+			//Check for "E - XX"
+			//			   ^
+			if (parser->PeekTokenString( "-" ))
+			{
+				parser->ExpectTokenString( "-" );
+				smaller = true;
+			}
+			//Check for "E - XX"
+			//				  ^
+			if ( parser->ExpectTokenType(  TT_NUMBER, TT_INTEGER, &prop.item ) ) {
+				// take json bs into account : 
+				// E - 0 8 vs E - 08
+				//     ^ ^        ^^
+				int E = 0;
+				if (parser->PeekTokenType(  TT_NUMBER, TT_INTEGER, &prop.item ))
+				{
+					E = 10 * prop.item.GetIntValue();
+					parser->ExpectTokenType(  TT_NUMBER, TT_INTEGER, &prop.item );
+					E += prop.item.GetIntValue();
+				}else
+				{
+					E = prop.item.GetIntValue();
+				}
+
+				while (E-- > 0)
+					expMultiplier *= 10;
+			}
+
+			if (!smaller)
+				value *= expMultiplier;
+			else
+				value /= expMultiplier;
+		}
+
+
 		if( gltf_parseVerbose.GetBool() )
 		{
 			common->Printf( "%s%s", neg.c_str(), prop.item.c_str() );
@@ -691,87 +737,90 @@ void gltfItem_number_array::parse( idToken& token )
 
 void gltfItem_vec4::parse( idToken& token )
 {
-	auto* numbers = new gltfItem_number_array( "" );
+	gltfItem_number_array numbers = gltfItem_number_array( "" );
 	idList<double> numberarray;
-	numbers->Set( &numberarray, parser );
-	numbers->parse( token );
-	if( numbers->item->Num() != 4 )
+	numbers.Set( &numberarray, parser );
+	numbers.parse( token );
+	if( numbers.item->Num() != 4 )
 	{
-		common->FatalError( "gltfItem_vec4 : missing arguments, expected 4, got %i", numbers->item->Num() );
+		common->FatalError( "gltfItem_vec4 : missing arguments, expected 4, got %i", numbers.item->Num() );
 	}
-
-	double* val = numbers->item->Ptr();
-	*item = idVec4( val[0], val[1], val[2], val[3] );
-	delete numbers;
+	double* val = numbers.item->Ptr();
+	item->x = val[0];
+	item->y = val[1];
+	item->z = val[2];
+	item->w = val[3];
 }
 
 void gltfItem_vec3::parse( idToken& token )
 {
-	auto* numbers = new gltfItem_number_array( "" );
+	gltfItem_number_array numbers = gltfItem_number_array( "" );
 	idList<double> numberarray;
-	numbers->Set( &numberarray, parser );
-	numbers->parse( token );
-	if( numbers->item->Num() != 3 )
+	numbers.Set( &numberarray, parser );
+	numbers.parse( token );
+	if( numbers.item->Num() != 3 )
 	{
-		common->FatalError( "gltfItem_vec3 : missing arguments, expected 3, got %i", numbers->item->Num() );
+		common->FatalError( "gltfItem_vec3 : missing arguments, expected 3, got %i", numbers.item->Num() );
 	}
 
-	double* val = numbers->item->Ptr();
-	*item = idVec3( val[0], val[1], val[2] );
-	delete numbers;
+	const double *val = numbers.item->Ptr( );
+	item->x = val[0];
+	item->y = val[1];
+	item->z = val[2];
 }
 
 void gltfItem_vec2::parse( idToken& token )
 {
-	auto* numbers = new gltfItem_number_array( "" );
+	gltfItem_number_array numbers = gltfItem_number_array( "" );
 	idList<double> numberarray;
-	numbers->Set( &numberarray, parser );
-	numbers->parse( token );
-	if( numbers->item->Num() != 2 )
+	numbers.Set( &numberarray, parser );
+	numbers.parse( token );
+	if( numbers.item->Num() != 2 )
 	{
-		common->FatalError( "gltfItem_vec3 : missing arguments, expected 2, got %i", numbers->item->Num() );
+		common->FatalError( "gltfItem_vec3 : missing arguments, expected 2, got %i", numbers.item->Num() );
 	}
 
-	double* val = numbers->item->Ptr();
-	*item = idVec2( val[0], val[1] );
-	delete numbers;
+	const double *val = numbers.item->Ptr( );
+	item->x = val[0];
+	item->y = val[1];
 }
 
 void gltfItem_quat::parse( idToken& token )
 {
-	auto* numbers = new gltfItem_number_array( "" );
+	gltfItem_number_array numbers = gltfItem_number_array( "" );
 	idList<double> numberarray;
-	numbers->Set( &numberarray, parser );
-	numbers->parse( token );
-	if( numbers->item->Num() != 4 )
+	numbers.Set( &numberarray, parser );
+	numbers.parse( token );
+	if( numbers.item->Num() != 4 )
 	{
-		common->FatalError( "gltfItem_quat : missing arguments, expectd 4, got %i", numbers->item->Num() );
+		common->FatalError( "gltfItem_quat : missing arguments, expected 4, got %i", numbers.item->Num() );
 	}
 
-	double* val = numbers->item->Ptr();
-	*item = idQuat( val[0] , val[1] , val[2] , val[3] );
-	delete numbers;
+	const double* val = numbers.item->Ptr();
+	item->x = val[0];
+	item->y = val[1];
+	item->z = val[2];
+	item->w = val[3];
 }
 
 void gltfItem_mat4::parse( idToken& token )
 {
-	auto* numbers = new gltfItem_number_array( "" );
+	gltfItem_number_array numbers = gltfItem_number_array( "" );
 	idList<double> numberarray;
-	numbers->Set( &numberarray, parser );
-	numbers->parse( token );
-	if( numbers->item->Num() != 16 )
+	numbers.Set( &numberarray, parser );
+	numbers.parse( token );
+	if( numbers.item->Num() != 16 )
 	{
-		common->FatalError( "gltfItem_mat4 : missing arguments, expectd 16, got %i", numbers->item->Num() );
+		common->FatalError( "gltfItem_mat4 : missing arguments, expected 16, got %i", numbers.item->Num() );
 	}
 
-	double* val = numbers->item->Ptr();
+	double* val = numbers.item->Ptr();
 	*item = idMat4(
 				val[0], val[1], val[2], val[3],
 				val[4], val[5], val[6], val[7],
 				val[8], val[9], val[10], val[11],
 				val[12], val[13], val[14], val[15]
 			);
-	delete numbers;
 }
 
 void gltfItem_accessor_sparse::parse( idToken& token )
@@ -786,10 +835,10 @@ void gltfItem_accessor_sparse::parse( idToken& token )
 	GLTFARRAYITEM( sparse, extras,		gltfItem_Extra );
 
 	GLTFARRAYITEMREF( item, count );
-	indices->Set( &item->indices, parser );
-	values->Set( &item->values, parser );
+	indices.Set( &item->indices, parser );
+	values.Set( &item->values, parser );
 	GLTFARRAYITEMREF( item, extensions );
-	extras->Set( &item->extras, parser );
+	extras.Set( &item->extras, parser );
 	sparse.Parse( parser );
 
 	if( gltf_parseVerbose.GetBool() )
@@ -811,7 +860,7 @@ void gltfItem_accessor_sparse_values::parse( idToken& token )
 	GLTFARRAYITEMREF( item, bufferView );
 	GLTFARRAYITEMREF( item, byteOffset );
 	GLTFARRAYITEMREF( item, extensions );
-	extras->Set( &item->extras, parser );
+	extras.Set( &item->extras, parser );
 
 	if( gltf_parseVerbose.GetBool() )
 	{
@@ -834,7 +883,7 @@ void gltfItem_accessor_sparse_indices::parse( idToken& token )
 	GLTFARRAYITEMREF( item, byteOffset );
 	GLTFARRAYITEMREF( item, componentType );
 	GLTFARRAYITEMREF( item, extensions );
-	extras->Set( &item->extras, parser );
+	extras.Set( &item->extras, parser );
 	indices.Parse( parser );
 
 	if( gltf_parseVerbose.GetBool() )
@@ -869,7 +918,7 @@ void gltfItem_camera_perspective::parse( idToken& token )
 	GLTFARRAYITEMREF( item, zfar );
 	GLTFARRAYITEMREF( item, znear );
 	GLTFARRAYITEMREF( item, extensions );
-	extras->Set( &item->extras, parser );
+	extras.Set( &item->extras, parser );
 	cameraPerspective.Parse( parser );
 
 	if( gltf_parseVerbose.GetBool() )
@@ -891,8 +940,8 @@ void gltfItem_occlusion_texture::parse( idToken& token )
 	GLTFARRAYITEMREF( item, index );
 	GLTFARRAYITEMREF( item, texCoord );
 	GLTFARRAYITEMREF( item, strength );
-	extensions->Set( &item->extensions, parser );
-	extras->Set( &item->extras, parser );
+	extensions.Set( &item->extensions, parser );
+	extras.Set( &item->extras, parser );
 	textureInfo.Parse( parser );
 
 	if( gltf_parseVerbose.GetBool() )
@@ -914,8 +963,8 @@ void gltfItem_normal_texture::parse( idToken& token )
 	GLTFARRAYITEMREF( item,					index );
 	GLTFARRAYITEMREF( item,					texCoord );
 	GLTFARRAYITEMREF( item,					scale );
-	extensions->Set( &item->extensions,	parser );
-	extras->Set( &item->extras,		parser );
+	extensions.Set( &item->extensions,	parser );
+	extras.Set( &item->extras,		parser );
 	textureInfo.Parse( parser );
 
 	if( gltf_parseVerbose.GetBool() )
@@ -935,8 +984,8 @@ void gltfItem_texture_info::parse( idToken& token )
 
 	GLTFARRAYITEMREF( item, index );
 	GLTFARRAYITEMREF( item, texCoord );
-	extensions->Set( &item->extensions, parser );
-	extras->Set( &item->extras, parser );
+	extensions.Set( &item->extensions, parser );
+	extras.Set( &item->extras, parser );
 	textureInfo.Parse( parser );
 
 	if( gltf_parseVerbose.GetBool() )
@@ -957,13 +1006,13 @@ void gltfItem_pbrMetallicRoughness::parse( idToken& token )
 	GLTFARRAYITEM( pbrMetallicRoughness, extensions,				gltfItem );
 	GLTFARRAYITEM( pbrMetallicRoughness, extras,					gltfItem_Extra );
 
-	baseColorFactor->Set( &item->baseColorFactor,	parser );
-	baseColorTexture->Set( &item->baseColorTexture, parser );
+	baseColorFactor.Set( &item->baseColorFactor,	parser );
+	baseColorTexture.Set( &item->baseColorTexture, parser );
 	GLTFARRAYITEMREF( item, metallicFactor );
 	GLTFARRAYITEMREF( item, roughnessFactor );
-	metallicRoughnessTexture->Set( &item->metallicRoughnessTexture, parser );
+	metallicRoughnessTexture.Set( &item->metallicRoughnessTexture, parser );
 	GLTFARRAYITEMREF( item, extensions );
-	extras->Set( &item->extras, parser );
+	extras.Set( &item->extras, parser );
 	pbrMetallicRoughness.Parse( parser );
 
 	if( gltf_parseVerbose.GetBool() )
@@ -983,9 +1032,9 @@ void gltfItem_TextureInfo_KHR_texture_transform::parse( idToken& token )
 
 	item->KHR_texture_transform = new gltfExt_KHR_texture_transform();
 
-	offset->Set( &item->KHR_texture_transform->offset,	parser );
+	offset.Set( &item->KHR_texture_transform->offset,	parser );
 	GLTFARRAYITEMREF( item->KHR_texture_transform,			rotation );
-	scale->Set( &item->KHR_texture_transform->scale,	parser );
+	scale.Set( &item->KHR_texture_transform->scale,	parser );
 	GLTFARRAYITEMREF( item->KHR_texture_transform,			texCoord );
 	texureTransform.Parse( parser );
 
@@ -1009,13 +1058,13 @@ void gltfItem_Material_KHR_materials_pbrSpecularGlossiness::parse( idToken& toke
 
 	item->KHR_materials_pbrSpecularGlossiness = new gltfExt_KHR_materials_pbrSpecularGlossiness();
 
-	diffuseFactor->Set( &item->KHR_materials_pbrSpecularGlossiness->diffuseFactor,				parser	);
-	diffuseTexture->Set( &item->KHR_materials_pbrSpecularGlossiness->diffuseTexture,				parser	);
-	specularFactor->Set( &item->KHR_materials_pbrSpecularGlossiness->specularFactor,				parser	);
+	diffuseFactor.Set( &item->KHR_materials_pbrSpecularGlossiness->diffuseFactor,				parser	);
+	diffuseTexture.Set( &item->KHR_materials_pbrSpecularGlossiness->diffuseTexture,				parser	);
+	specularFactor.Set( &item->KHR_materials_pbrSpecularGlossiness->specularFactor,				parser	);
 	GLTFARRAYITEMREF( item->KHR_materials_pbrSpecularGlossiness,						glossinessFactor );
-	specularGlossinessTexture->Set( &item->KHR_materials_pbrSpecularGlossiness->specularGlossinessTexture,	parser	);
+	specularGlossinessTexture.Set( &item->KHR_materials_pbrSpecularGlossiness->specularGlossinessTexture,	parser	);
 	GLTFARRAYITEMREF( item->KHR_materials_pbrSpecularGlossiness,							extensions	);
-	extras->Set( &item->KHR_materials_pbrSpecularGlossiness->extras,						parser	);
+	extras.Set( &item->KHR_materials_pbrSpecularGlossiness->extras,						parser	);
 	khrPbr.Parse( parser );
 
 	if( gltf_parseVerbose.GetBool() )
@@ -1031,7 +1080,7 @@ void gltfItem_Node_KHR_lights_punctual::parse( idToken& token )
 	gltfItemArray xlight;
 	GLTFARRAYITEM( xlight, light, gltfItem_integer );
 	item->KHR_lights_punctual = new gltfNode_KHR_lights_punctual();
-	light->Set( &item->KHR_lights_punctual->light );
+	light.Set( &item->KHR_lights_punctual->light );
 	xlight.Parse( parser );
 
 	if( gltf_parseVerbose.GetBool() )
@@ -1069,14 +1118,14 @@ void gltfItem_KHR_lights_punctual::parse( idToken& token )
 		gltfExt_KHR_lights_punctual* gltfLight =
 			item->KHR_lights_punctual[item->KHR_lights_punctual.Num() - 1];
 
-		color->Set( &gltfLight->color, &lexer	);
+		color.Set( &gltfLight->color, &lexer	);
 		GLTFARRAYITEMREF( gltfLight, intensity	);
 		//GLTFARRAYITEMREF	(gltfLight, spot			);
-		GLTFARRAYITEMREF( gltfLight, type	);
+		GLTFARRAYITEMREF( gltfLight, type );
 		GLTFARRAYITEMREF( gltfLight, range	);
 		GLTFARRAYITEMREF( gltfLight, name	);
 		GLTFARRAYITEMREF( gltfLight, extensions	);
-		extras->Set( &gltfLight->extras, &lexer	);
+		extras.Set( &gltfLight->extras, &lexer	);
 
 		light.Parse( &lexer );
 
@@ -1098,7 +1147,7 @@ void gltfItem_node_extensions::parse( idToken& token )
 	gltfItemArray extensions;
 	GLTFARRAYITEM( extensions, KHR_lights_punctual, gltfItem_Node_KHR_lights_punctual );
 
-	KHR_lights_punctual->Set( item, parser );
+	KHR_lights_punctual.Set( item, parser );
 	extensions.Parse( parser );
 
 	if( gltf_parseVerbose.GetBool() )
@@ -1115,7 +1164,7 @@ void gltfItem_material_extensions::parse( idToken& token )
 	gltfItemArray extensions;
 	GLTFARRAYITEM( extensions, KHR_materials_pbrSpecularGlossiness, gltfItem_Material_KHR_materials_pbrSpecularGlossiness );
 
-	KHR_materials_pbrSpecularGlossiness->Set( item, parser );
+	KHR_materials_pbrSpecularGlossiness.Set( item, parser );
 	extensions.Parse( parser );
 
 	if( gltf_parseVerbose.GetBool() )
@@ -1131,7 +1180,7 @@ void gltfItem_texture_info_extensions::parse( idToken& token )
 	gltfItemArray extensions;
 	GLTFARRAYITEM( extensions, KHR_texture_transform, gltfItem_TextureInfo_KHR_texture_transform );
 
-	KHR_texture_transform->Set( item, parser );
+	KHR_texture_transform.Set( item, parser );
 	extensions.Parse( parser );
 
 	if( gltf_parseVerbose.GetBool() )
@@ -1164,7 +1213,7 @@ void GLTF_Parser::Parse_ASSET( idToken& token )
 
 void GLTF_Parser::Parse_SCENE( idToken& token )
 {
-	currentAsset->DefaultScene() = parser.ParseInt();
+	currentAsset->SetDefaultScene(parser.ParseInt());
 
 	if( gltf_parseVerbose.GetBool() )
 	{
@@ -1187,10 +1236,10 @@ void GLTF_Parser::Parse_SCENES( idToken& token )
 		lexer.LoadMemory( prop.item.c_str(), prop.item.Size(), "gltfScene", 0 );
 
 		gltfScene* gltfscene = currentAsset->Scene();
-		nodes->Set( &gltfscene->nodes, &lexer );
+		nodes.Set( &gltfscene->nodes, &lexer );
 		GLTFARRAYITEMREF( gltfscene, name );
 		GLTFARRAYITEMREF( gltfscene, extensions );
-		extras->Set( &gltfscene->extras, &lexer );
+		extras.Set( &gltfscene->extras, &lexer );
 		scene.Parse( &lexer );
 
 		if( gltf_parseVerbose.GetBool() )
@@ -1218,13 +1267,13 @@ void GLTF_Parser::Parse_CAMERAS( idToken& token )
 		lexer.LoadMemory( prop.item.c_str(), prop.item.Size(), "gltfCamera", 0 );
 
 		gltfCamera* item = currentAsset->Camera();
-		orthographic->Set( &item->orthographic, &lexer );
-		perspective->Set( &item->perspective, &lexer );
+		orthographic.Set( &item->orthographic, &lexer );
+		perspective.Set( &item->perspective, &lexer );
 
 		GLTFARRAYITEMREF( item, type );
 		GLTFARRAYITEMREF( item, name );
 		GLTFARRAYITEMREF( item, extensions );
-		extras->Set( &item->extras, &lexer );
+		extras.Set( &item->extras, &lexer );
 
 		camera.Parse( &lexer );
 
@@ -1262,18 +1311,18 @@ void GLTF_Parser::Parse_NODES( idToken& token )
 		gltfNode* gltfnode = currentAsset->Node();
 
 		GLTFARRAYITEMREF( gltfnode, camera );
-		matrix->Set( &gltfnode->matrix, &lexer );
-		children->Set( &gltfnode->children, &lexer );
+		matrix.Set( &gltfnode->matrix, &lexer );
+		children.Set( &gltfnode->children, &lexer );
 		GLTFARRAYITEMREF( gltfnode, skin );
-		matrix->Set( &gltfnode->matrix, &lexer );
+		matrix.Set( &gltfnode->matrix, &lexer );
 		GLTFARRAYITEMREF( gltfnode, mesh );
-		rotation->Set( &gltfnode->rotation, &lexer );
-		scale->Set( &gltfnode->scale, &lexer );
-		translation->Set( &gltfnode->translation, &lexer );
-		weights->Set( &gltfnode->weights, &lexer );
+		rotation.Set( &gltfnode->rotation, &lexer );
+		scale.Set( &gltfnode->scale, &lexer );
+		translation.Set( &gltfnode->translation, &lexer );
+		weights.Set( &gltfnode->weights, &lexer );
 		GLTFARRAYITEMREF( gltfnode, name );
-		extensions->Set( &gltfnode->extensions, &lexer );
-		extras->Set( &gltfnode->extras, &lexer );
+		extensions.Set( &gltfnode->extensions, &lexer );
+		extras.Set( &gltfnode->extras, &lexer );
 		node.Parse( &lexer );
 
 		if( gltf_parseVerbose.GetBool() )
@@ -1307,17 +1356,17 @@ void GLTF_Parser::Parse_MATERIALS( idToken& token )
 
 		gltfMaterial* gltfmaterial = currentAsset->Material();
 
-		pbrMetallicRoughness->Set( &gltfmaterial->pbrMetallicRoughness,	&lexer	);
-		normalTexture->Set( &gltfmaterial->normalTexture,			&lexer	);
-		occlusionTexture->Set( &gltfmaterial->occlusionTexture,		&lexer	);
-		emissiveTexture->Set( &gltfmaterial->emissiveTexture,		&lexer	);
-		emissiveFactor->Set( &gltfmaterial->emissiveFactor,		&lexer	);
+		pbrMetallicRoughness.Set( &gltfmaterial->pbrMetallicRoughness,	&lexer	);
+		normalTexture.Set( &gltfmaterial->normalTexture,			&lexer	);
+		occlusionTexture.Set( &gltfmaterial->occlusionTexture,		&lexer	);
+		emissiveTexture.Set( &gltfmaterial->emissiveTexture,		&lexer	);
+		emissiveFactor.Set( &gltfmaterial->emissiveFactor,		&lexer	);
 		GLTFARRAYITEMREF( gltfmaterial, alphaMode	);
 		GLTFARRAYITEMREF( gltfmaterial, alphaCutoff	);
 		GLTFARRAYITEMREF( gltfmaterial, doubleSided	);
 		GLTFARRAYITEMREF( gltfmaterial, name	);
-		extensions->Set( &gltfmaterial->extensions,			&lexer	);
-		extras->Set( &gltfmaterial->extras,				&lexer	);
+		extensions.Set( &gltfmaterial->extensions,			&lexer	);
+		extras.Set( &gltfmaterial->extras,				&lexer	);
 		material.Parse( &lexer );
 
 		gltfmaterial->intType = gltfMaterial::resolveAlphaMode( gltfmaterial->alphaMode );
@@ -1347,11 +1396,11 @@ void GLTF_Parser::Parse_MESHES( idToken& token )
 
 		gltfMesh* gltfmesh = currentAsset->Mesh();
 
-		primitives->Set( &gltfmesh->primitives, &lexer );
-		weights->Set( &gltfmesh->weights, &lexer );
+		primitives.Set( &gltfmesh->primitives, &lexer );
+		weights.Set( &gltfmesh->weights, &lexer );
 		GLTFARRAYITEMREF( gltfmesh,  name );
 		GLTFARRAYITEMREF( gltfmesh,  extensions );
-		extras->Set( &gltfmesh->extras, &lexer );
+		extras.Set( &gltfmesh->extras, &lexer );
 		mesh.Parse( &lexer );
 		if( gltf_parseVerbose.GetBool() )
 		{
@@ -1381,8 +1430,8 @@ void GLTF_Parser::Parse_TEXTURES( idToken& token )
 		GLTFARRAYITEMREF( gltftexture,				sampler );
 		GLTFARRAYITEMREF( gltftexture,				source );
 		GLTFARRAYITEMREF( gltftexture,				name );
-		extensions->Set( &gltftexture->extensions,	&lexer	);
-		extras->Set( &gltftexture->extras,		&lexer );
+		extensions.Set( &gltftexture->extensions,	&lexer	);
+		extras.Set( &gltftexture->extras,		&lexer );
 		texture.Parse( &lexer );
 
 		if( gltf_parseVerbose.GetBool() )
@@ -1399,8 +1448,8 @@ void GLTF_Parser::Parse_IMAGES( idToken& token )
 	gltfPropertyArray array = gltfPropertyArray( &parser );
 
 	gltfItemArray propItems;
-	auto uri		= new gltfItem_uri( "uri" );
-	propItems.AddItemDef( ( parsable* )uri );
+	gltfItem_uri uri = gltfItem_uri( "uri" );
+	propItems.AddItemDef( ( parsable* )&uri );
 	auto mimeType	= new gltfItem( "mimeType" );
 	propItems.AddItemDef( ( parsable* )mimeType );
 	auto bufferView = new gltfItem_integer( "bufferView" );
@@ -1418,7 +1467,7 @@ void GLTF_Parser::Parse_IMAGES( idToken& token )
 		lexer.LoadMemory( prop.item.c_str(), prop.item.Size(), "gltfImage", 0 );
 
 		gltfImage* image = currentAsset->Image();
-		uri->Set( &image->uri, &image->bufferView, currentAsset );
+		uri.Set( &image->uri, &image->bufferView, currentAsset );
 		mimeType->Set( &image->mimeType );
 		bufferView->Set( &image->bufferView );
 		name->Set( &image->name );
@@ -1466,12 +1515,12 @@ void GLTF_Parser::Parse_ACCESSORS( idToken& token )
 		GLTFARRAYITEMREF( item, normalized );
 		GLTFARRAYITEMREF( item, count );
 		GLTFARRAYITEMREF( item, type );
-		max->Set( &item->max, &lexer );
-		min->Set( &item->min, &lexer );
-		sparse->Set( &item->sparse, &lexer );
+		max.Set( &item->max, &lexer );
+		min.Set( &item->min, &lexer );
+		sparse.Set( &item->sparse, &lexer );
 		GLTFARRAYITEMREF( item, name );
 		GLTFARRAYITEMREF( item, extensions );
-		extras->Set( &item->extras, &lexer );
+		extras.Set( &item->extras, &lexer );
 		accessor.Parse( &lexer );
 
 		GetComponentTypeEnum( item->componentType, &item->typeSize );
@@ -1510,7 +1559,7 @@ void GLTF_Parser::Parse_BUFFERVIEWS( idToken& token )
 		GLTFARRAYITEMREF( gltfBV, target	);
 		GLTFARRAYITEMREF( gltfBV, name	);
 		GLTFARRAYITEMREF( gltfBV, extensions );
-		extras->Set( &gltfBV->extras, &lexer );
+		extras.Set( &gltfBV->extras, &lexer );
 		bv.Parse( &lexer );
 		gltfBV->parent = currentAsset;
 
@@ -1546,7 +1595,7 @@ void GLTF_Parser::Parse_SAMPLERS( idToken& token )
 		GLTFARRAYITEMREF( gltfSampl, wrapT );
 		GLTFARRAYITEMREF( gltfSampl, name	);
 		GLTFARRAYITEMREF( gltfSampl, extensions );
-		extras->Set( &gltfSampl->extras, &lexer );
+		extras.Set( &gltfSampl->extras, &lexer );
 		sampl.Parse( &lexer );
 
 		if( gltf_parseVerbose.GetBool() )
@@ -1575,11 +1624,11 @@ void GLTF_Parser::Parse_BUFFERS( idToken& token )
 		gltfBuffer* gltfBuf = currentAsset->Buffer();
 		gltfBuf->parent = currentAsset;
 
-		uri->Set( &gltfBuf->uri, nullptr , currentAsset );
+		uri.Set( &gltfBuf->uri, nullptr , currentAsset );
 		GLTFARRAYITEMREF( gltfBuf, byteLength );
 		GLTFARRAYITEMREF( gltfBuf, name );
 		GLTFARRAYITEMREF( gltfBuf, extensions );
-		extras->Set( &gltfBuf->extras, &lexer );
+		extras.Set( &gltfBuf->extras, &lexer );
 		buf.Parse( &lexer );
 		if( gltf_parseVerbose.GetBool() )
 		{
@@ -1606,11 +1655,11 @@ void GLTF_Parser::Parse_ANIMATIONS( idToken& token )
 
 		gltfAnimation* gltfanim = currentAsset->Animation();
 
-		channels->Set( &gltfanim->channels, &lexer );
-		samplers->Set( &gltfanim->samplers, &lexer );
+		channels.Set( &gltfanim->channels, &lexer );
+		samplers.Set( &gltfanim->samplers, &lexer );
 		GLTFARRAYITEMREF( gltfanim,  name );
 		GLTFARRAYITEMREF( gltfanim,  extensions );
-		extras->Set( &gltfanim->extras, &lexer );
+		extras.Set( &gltfanim->extras, &lexer );
 		anim.Parse( &lexer );
 
 		if( gltf_parseVerbose.GetBool() )
@@ -1641,10 +1690,10 @@ void GLTF_Parser::Parse_SKINS( idToken& token )
 
 		GLTFARRAYITEMREF( gltfSkin, inverseBindMatrices );
 		GLTFARRAYITEMREF( gltfSkin, skeleton );
-		joints->Set( &gltfSkin->joints, &lexer	);
+		joints.Set( &gltfSkin->joints, &lexer	);
 		GLTFARRAYITEMREF( gltfSkin, name );
 		GLTFARRAYITEMREF( gltfSkin, extensions );
-		extras->Set( &gltfSkin->extras, &lexer );
+		extras.Set( &gltfSkin->extras, &lexer );
 		skin.Parse( &lexer );
 
 		if( gltf_parseVerbose.GetBool() )
@@ -1667,8 +1716,8 @@ void GLTF_Parser::Parse_EXTENSIONS( idToken& token )
 	idLexer lexer( LEXFL_ALLOWPATHNAMES | LEXFL_ALLOWMULTICHARLITERALS | LEXFL_NOSTRINGESCAPECHARS );
 	lexer.LoadMemory( json.c_str(), json.Size(), "Extensions", 0 );
 	gltfExtensions* gltfextension = currentAsset->Extensions();
-	//KHR_materials_pbrSpecularGlossiness->Set( &gltfextensions, &lexer );
-	KHR_lights_punctual->Set( gltfextension, &lexer );
+	//KHR_materials_pbrSpecularGlossiness.Set( &gltfextensions, &lexer );
+	KHR_lights_punctual.Set( gltfextension, &lexer );
 	extensions.Parse( &lexer );
 
 	if( gltf_parseVerbose.GetBool() )
@@ -1989,6 +2038,13 @@ bool GLTF_Parser::loadGLB( idStr filename )
 		if( chunk_type == gltfChunk_Type_JSON )
 		{
 			currentFile = filename ;
+			if (gltf_SaveJson.GetBool())
+			{
+				idStrStatic< MAX_OSPATH > convertedFileName = filename;
+				convertedFileName.SetFileExtension( ".json" );
+				idFileLocal jsonFile( fileSystem->OpenFileWrite( filename+".json", "fs_basepath" ) );
+				jsonFile->Write(( const char* )data, chunk_length);
+			}
 			parser.LoadMemory( ( const char* )data, chunk_length, "gltfJson", 0 );
 		}
 		else if( !chunkCount )
@@ -2058,11 +2114,11 @@ bool GLTF_Parser::Parse()
 				if( !buffersDone )
 				{
 					buffersDone = true;
-					common->Printf( "no %s found", "buffers" );
+					common->Printf( "no buffers found");
 				}
 				if( !bufferViewsDone )
 				{
-					common->Printf( "no %s found", "bufferviews" );
+					common->Printf( "no bufferviews found" );
 					bufferViewsDone = true;
 				}
 				parser.Reset();

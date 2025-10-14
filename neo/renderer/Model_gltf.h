@@ -75,7 +75,7 @@ private:
 	bool fileExclusive;
 	bool hasAnimations;
 
-	float							maxJointVertDist;	// maximum distance a vertex is separated from a joint
+	float							maxJointVertDist = 10.0f;	// maximum distance a vertex is separated from a joint
 	idList<int, TAG_MODEL>			animIds;
 	idList<int, TAG_MODEL>			bones;
 	idList<int, TAG_MODEL>			MeshNodeIds;

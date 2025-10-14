@@ -26,10 +26,11 @@ If you have questions concerning this license or the applicable additional terms
 ===========================================================================
 */
 #include "precompiled.h"
+#include "SWF_Vector.h"
 #pragma hdrstop
 
 extern idCVar swf_debugShowAddress;
-
+extern idSWFScriptObject_VectorPrototype vectorScriptObjectPrototype;
 /*
 ========================
 idSWFScriptVar::idSWFScriptVar
@@ -53,30 +54,24 @@ idSWFScriptVar::idSWFScriptVar( const idSWFScriptVar& other )
 	}
 	traitsInfo = other.traitsInfo;
 }
-
+//https://ia600208.us.archive.org/8/items/ducktales-remastered-src/ducktales_r326558.7z
 /*
 ========================
 idSWFScriptVar::operator=
 ========================
 */
-idSWFScriptVar& idSWFScriptVar::operator=( const idSWFScriptVar& other )
-{
-	if( this != &other )
-	{
-		Free();
+idSWFScriptVar &idSWFScriptVar::operator=( const idSWFScriptVar &other ) {
+	if ( this != &other ) {
+		Free( );
 		type = other.type;
 		value = other.value;
-		if( other.type == SWF_VAR_STRING )
-		{
-			other.value.string->AddRef();
-		}
-		else if( other.type == SWF_VAR_OBJECT )
-		{
-			other.value.object->AddRef();
-		}
-		else if( other.type == SWF_VAR_FUNCTION )
-		{
-			other.value.function->AddRef();
+		traitsInfo = other.traitsInfo;
+		if ( other.type == SWF_VAR_STRING ) {
+			other.value.string->AddRef( );
+		} else if ( other.type == SWF_VAR_OBJECT ) {
+			other.value.object->AddRef( );
+		} else if ( other.type == SWF_VAR_FUNCTION ) {
+			other.value.function->AddRef( );
 		}
 	}
 	return *this;
@@ -310,7 +305,11 @@ idStr idSWFScriptVar::ToString() const
 		case SWF_VAR_UNDEF:
 			return "[undefined]";
 		case SWF_VAR_OBJECT:
+		{
+			if ( value.object && value.object->GetPrototype( ) == &vectorScriptObjectPrototype ) 
+				return static_cast< idSWFVectorBase* >( value.object )->ToString();
 			return value.object->DefaultValue( true ).ToString();
+		}
 		case SWF_VAR_FUNCTION:
 			if( swf_debugShowAddress.GetBool() )
 			{
@@ -589,4 +588,20 @@ void idSWFScriptVar::PrintToConsole() const
 	{
 		idLib::Printf( "unknown\n" );
 	}
+}
+bool idSWFScriptVar::CanBeCoercedTo( const idSWFScriptVar *type ) const {
+	if ( IsObject( ) && type->IsObject()) {
+		return GetObject( )->IsInstanceOf( type->GetObject() );
+	}
+
+	if ( type->IsString( ) && IsString( ) ) {
+		return true;
+	}
+
+	if ( ( type->IsNumeric( ) || type->IsBool() ) && ( IsNumeric( ) || type->IsBool()) ) {
+		return true;
+	}
+
+	idLib::Warning( "Could not coerce % into %\n",ToString(),type->ToString() );
+	return false;
 }

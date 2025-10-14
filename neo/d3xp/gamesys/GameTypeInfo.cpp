@@ -5567,6 +5567,9 @@ intptr_t idPlayer::Invoke(const char *functionName, void *param1) {
 	if(functionNameHash == 107329) { // Legs_Idle
 		return (intptr_t)Legs_Idle((stateParms_t *)param1);
 	};
+	if(functionNameHash == 122258) { // State_Idle
+		return (intptr_t)State_Idle((stateParms_t *)param1);
+	};
 	if(functionNameHash == 107471) { // Legs_Fall
 		return (intptr_t)Legs_Fall((stateParms_t *)param1);
 	};
@@ -6077,6 +6080,9 @@ bool idPlayer::HasNativeFunction(const char *functionName) {
 		return true;
 	};
 	if(functionNameHash == 107329) { // Legs_Idle
+		return true;
+	};
+	if(functionNameHash == 122258) { // State_Idle
 		return true;
 	};
 	if(functionNameHash == 107471) { // Legs_Fall
@@ -8294,8 +8300,16 @@ bool idBrittleFracture::HasNativeFunction(const char *functionName) {
 
 intptr_t idStateGraph::Invoke(const char *functionName, void *param1) {
 	int functionNameHash = idStr::Hash(functionName);
-	if(functionNameHash == 137647) { // SharedThink
-		SharedThink();
+	if(functionNameHash == 189718) { // Event_WaitFrame
+		Event_WaitFrame();
+		return 0;
+	};
+	if(functionNameHash == 61762) { // Think
+		Think();
+		return 0;
+	};
+	if(functionNameHash == 150760) { // GetVariables
+		GetVariables();
 		return 0;
 	};
 	if(functionNameHash == 151836) { // State_Update
@@ -8304,19 +8318,45 @@ intptr_t idStateGraph::Invoke(const char *functionName, void *param1) {
 	if(functionNameHash == 123133) { // State_Exec
 		return (intptr_t)State_Exec((stateParms_t *)param1);
 	};
+	if(functionNameHash == 187485) { // State_LocalExec
+		return (intptr_t)State_LocalExec((stateParms_t *)param1);
+	};
+	if(functionNameHash == 59010) { // Clear
+		Clear();
+		return 0;
+	};
+	if(functionNameHash == 216299) { // GetLocalVariables
+		GetLocalVariables();
+		return 0;
+	};
 	return __super::Invoke(functionName, param1);
 
 };
 
 bool idStateGraph::HasNativeFunction(const char *functionName) {
 	int functionNameHash = idStr::Hash(functionName);
-	if(functionNameHash == 137647) { // SharedThink
+	if(functionNameHash == 189718) { // Event_WaitFrame
+		return true;
+	};
+	if(functionNameHash == 61762) { // Think
+		return true;
+	};
+	if(functionNameHash == 150760) { // GetVariables
 		return true;
 	};
 	if(functionNameHash == 151836) { // State_Update
 		return true;
 	};
 	if(functionNameHash == 123133) { // State_Exec
+		return true;
+	};
+	if(functionNameHash == 187485) { // State_LocalExec
+		return true;
+	};
+	if(functionNameHash == 59010) { // Clear
+		return true;
+	};
+	if(functionNameHash == 216299) { // GetLocalVariables
 		return true;
 	};
 	return __super::HasNativeFunction(functionName);
@@ -8332,10 +8372,6 @@ intptr_t idGraphedEntity::Invoke(const char *functionName, void *param1) {
 	if(functionNameHash == 122258) { // State_Idle
 		return (intptr_t)State_Idle((stateParms_t *)param1);
 	};
-	if(functionNameHash == 137647) { // SharedThink
-		SharedThink();
-		return 0;
-	};
 	if(functionNameHash == 61762) { // Think
 		Think();
 		return 0;
@@ -8350,9 +8386,6 @@ bool idGraphedEntity::HasNativeFunction(const char *functionName) {
 		return true;
 	};
 	if(functionNameHash == 122258) { // State_Idle
-		return true;
-	};
-	if(functionNameHash == 137647) { // SharedThink
 		return true;
 	};
 	if(functionNameHash == 61762) { // Think
@@ -8386,7 +8419,7 @@ bool idStateNode::HasNativeFunction(const char *functionName) {
 
 };
 
-intptr_t idGraphOnInitNode::Invoke(const char *functionName, void *param1) {
+intptr_t idClassNode::Invoke(const char *functionName, void *param1) {
 	int functionNameHash = idStr::Hash(functionName);
 	if(functionNameHash == 46910) { // Exec
 		return (intptr_t)Exec((stateParms_t *)param1);
@@ -8398,12 +8431,105 @@ intptr_t idGraphOnInitNode::Invoke(const char *functionName, void *param1) {
 
 };
 
+bool idClassNode::HasNativeFunction(const char *functionName) {
+	int functionNameHash = idStr::Hash(functionName);
+	if(functionNameHash == 46910) { // Exec
+		return true;
+	};
+	if(functionNameHash == 82193) { // GetName
+		return true;
+	};
+	return __super::HasNativeFunction(functionName);
+
+};
+
+intptr_t idGraphOnInitNode::Invoke(const char *functionName, void *param1) {
+	int functionNameHash = idStr::Hash(functionName);
+	if(functionNameHash == 46910) { // Exec
+		return (intptr_t)Exec((stateParms_t *)param1);
+	};
+	if(functionNameHash == 82193) { // GetName
+		return (intptr_t)GetName();
+	};
+	if(functionNameHash == 215149) { // NodeTitleBarColor
+		NodeTitleBarColor();
+		return 0;
+	};
+	return __super::Invoke(functionName, param1);
+
+};
+
 bool idGraphOnInitNode::HasNativeFunction(const char *functionName) {
 	int functionNameHash = idStr::Hash(functionName);
 	if(functionNameHash == 46910) { // Exec
 		return true;
 	};
 	if(functionNameHash == 82193) { // GetName
+		return true;
+	};
+	if(functionNameHash == 215149) { // NodeTitleBarColor
+		return true;
+	};
+	return __super::HasNativeFunction(functionName);
+
+};
+
+intptr_t idGraphInputOutputNode::Invoke(const char *functionName, void *param1) {
+	int functionNameHash = idStr::Hash(functionName);
+	if(functionNameHash == 46910) { // Exec
+		return (intptr_t)Exec((stateParms_t *)param1);
+	};
+	if(functionNameHash == 82193) { // GetName
+		return (intptr_t)GetName();
+	};
+	if(functionNameHash == 215149) { // NodeTitleBarColor
+		NodeTitleBarColor();
+		return 0;
+	};
+	return __super::Invoke(functionName, param1);
+
+};
+
+bool idGraphInputOutputNode::HasNativeFunction(const char *functionName) {
+	int functionNameHash = idStr::Hash(functionName);
+	if(functionNameHash == 46910) { // Exec
+		return true;
+	};
+	if(functionNameHash == 82193) { // GetName
+		return true;
+	};
+	if(functionNameHash == 215149) { // NodeTitleBarColor
+		return true;
+	};
+	return __super::HasNativeFunction(functionName);
+
+};
+
+intptr_t idGraphLogicNode::Invoke(const char *functionName, void *param1) {
+	int functionNameHash = idStr::Hash(functionName);
+	if(functionNameHash == 46910) { // Exec
+		return (intptr_t)Exec((stateParms_t *)param1);
+	};
+	if(functionNameHash == 82193) { // GetName
+		return (intptr_t)GetName();
+	};
+	if(functionNameHash == 215149) { // NodeTitleBarColor
+		NodeTitleBarColor();
+		return 0;
+	};
+	return __super::Invoke(functionName, param1);
+
+};
+
+bool idGraphLogicNode::HasNativeFunction(const char *functionName) {
+	int functionNameHash = idStr::Hash(functionName);
+	if(functionNameHash == 46910) { // Exec
+		return true;
+	};
+	if(functionNameHash == 82193) { // GetName
+		return true;
+	};
+	if(functionNameHash == 215149) { // NodeTitleBarColor
 		return true;
 	};
 	return __super::HasNativeFunction(functionName);

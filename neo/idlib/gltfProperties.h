@@ -765,7 +765,7 @@ public:
 class gltfData
 {
 public:
-	gltfData() : fileName( "" ), fileNameHash( 0 ), json( nullptr ), data( nullptr ), totalChunks( -1 ) { };
+	gltfData() : fileName( "" ), fileNameHash( 0 ), json( nullptr ), data( nullptr ), totalChunks( -1 ), scene( -1 ) { };
 	~gltfData();
 	byte* AddData( int size, int* bufferID = nullptr );
 	byte* GetJsonData( int& size )
@@ -1350,7 +1350,10 @@ public:
 	idList<float>& GetAccessorView( gltfAccessor* accessor );
 	idList<idMat4>& GetAccessorViewMat( gltfAccessor* accessor );
 
-	int& DefaultScene()
+	void SetDefaultScene( int SceneId )  {
+		scene = SceneId;
+	}
+	const int& DefaultScene() const
 	{
 		return scene;
 	}

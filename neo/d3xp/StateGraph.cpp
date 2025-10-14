@@ -116,26 +116,31 @@ void idStateGraph::Clear()
 
 int idStateGraph::CreateSubState( const char* name, idList<idScriptVariableInstance_t> inputs, idList< idScriptVariableInstance_t> ouputs )
 {
-	int stateIndex = GetLocalStateIndex( name );
-	auto* graphInputs = CreateStateNode( stateIndex, new idGraphInputOutputNode() );
-	graphInputs->nodeType = idGraphInputOutputNode::NodeType::Input;
+	auto &mainState = localGraphState[GetLocalStateIndex( MAIN )];
+	int newStateIndex = GetLocalStateIndex( name );
+	auto &newState = localGraphState[newStateIndex];
+	newState.stateThread = mainState.stateThread;
+	localStates.AddUnique(name);
 
-	for( auto& input : inputs )
-	{
-		auto& newInput = graphInputs->CreateOutputSocket();
-		newInput.name = input.varName;
-		newInput.var = input.scriptVariable;
-	}
+	//auto* graphInputs = CreateStateNode( stateIndex, new idGraphInputOutputNode() );
+	//graphInputs->nodeType = idGraphInputOutputNode::NodeType::Input;
 
-	auto* graphOutputs = CreateNode<idGraphInputOutputNode>( stateIndex );
-	graphOutputs->nodeType = idGraphInputOutputNode::NodeType::Output;
-	for( auto& input : inputs )
-	{
-		auto& newInput = graphOutputs->CreateInputSocket();
-		newInput.name = input.varName;
-		newInput.var = input.scriptVariable;
-	}
-	return stateIndex;
+	//for( auto& input : inputs )
+	//{
+	//	auto& newInput = graphInputs->CreateOutputSocket();
+	//	newInput.name = input.varName;
+	//	newInput.var = input.scriptVariable;
+	//}
+
+	//auto* graphOutputs = CreateNode<idGraphInputOutputNode>( stateIndex );
+	//graphOutputs->nodeType = idGraphInputOutputNode::NodeType::Output;
+	//for( auto& input : inputs )
+	//{
+	//	auto& newInput = graphOutputs->CreateInputSocket();
+	//	newInput.name = input.varName;
+	//	newInput.var = input.scriptVariable;
+	//}
+	return newStateIndex;
 }
 
 void idStateGraph::Think()
@@ -157,42 +162,55 @@ void idStateGraph::Think()
 
 void idStateGraph::WriteBinary( idFile* file, ID_TIME_T* _timeStamp /*= NULL*/ )
 {
-	auto& currentGraphState = *GetLocalState( MAIN );
-	auto& nodes = currentGraphState.nodes;
-	auto& links = currentGraphState.links;
-
 	//First write all local variables
 	//then all nodes and sockets.
 	//as last all socket connections;
 	if( file != nullptr )
 	{
-		file->WriteBig( currentGraphState.localVariables.Num( ) );
-		for( idScriptVariableInstance_t& var : currentGraphState.localVariables )
+		file->WriteBig(localStates.Num());
+		for (int i = 1; i < localStates.Num(); i++)
 		{
-			file->WriteBig( var.scriptVariable->GetType( ) );
-			WriteVar( var.scriptVariable, file, _timeStamp );
+			idStr& stateName = localStates[i];
+			file->WriteString(stateName);
+		}
+		
+		int stateIndex = 0;
+		for (auto &localStateIt : localStates)
+		{
+			auto &currentGraphState = localGraphState[stateIndex++];// *GetLocalState( MAIN );
+			auto &nodes = currentGraphState.nodes;
+			auto &links = currentGraphState.links;
+
+			file->WriteBig( currentGraphState.localVariables.Num( ) );
+			for( idScriptVariableInstance_t& var : currentGraphState.localVariables )
+			{
+				file->WriteBig( var.scriptVariable->GetType( ) );
+				WriteVar( var.scriptVariable, file, _timeStamp );
+			}
+
+			file->WriteBig( nodes.Num() );
+			for( idGraphNode* node : nodes )
+			{
+				idTypeInfo* c = node->GetType();
+				file->WriteString( c->classname );
+			}
+
+			for( idGraphNode* node : nodes )
+			{
+				node->WriteBinary( file, _timeStamp );
+			}
+
+			file->WriteBig( links.Num() );
+			for( idGraphNodeSocket::Link_t& link : links )
+			{
+				file->WriteBig( link.start->nodeIndex );
+				file->WriteBig( link.start->socketIndex );
+				file->WriteBig( link.end->nodeIndex );
+				file->WriteBig( link.end->socketIndex );
+			}
 		}
 
-		file->WriteBig( nodes.Num() );
-		for( idGraphNode* node : nodes )
-		{
-			idTypeInfo* c = node->GetType();
-			file->WriteString( c->classname );
-		}
-
-		for( idGraphNode* node : nodes )
-		{
-			node->WriteBinary( file, _timeStamp );
-		}
-
-		file->WriteBig( links.Num() );
-		for( idGraphNodeSocket::Link_t& link : links )
-		{
-			file->WriteBig( link.start->nodeIndex );
-			file->WriteBig( link.start->socketIndex );
-			file->WriteBig( link.end->nodeIndex );
-			file->WriteBig( link.end->socketIndex );
-		}
+		//file->WriteBig( currentGraphState )
 	}
 }
 
@@ -201,53 +219,60 @@ bool idStateGraph::LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass
 	Clear();
 	if( file != nullptr )
 	{
-		auto& currentGraphState = localGraphState[0];
-		auto& nodes = currentGraphState.nodes;
-		auto& links = currentGraphState.links;
-
-		int totalLocalVars;
-		file->ReadBig( totalLocalVars );
-		idStr tmpName;
-		idEntity* entPtr = owner->Cast<idEntity>( );
-		assert( entPtr );
-		for( int i = 0; i < totalLocalVars; i++ )
+		int totalStates = 0;
+		file->ReadBig(totalStates);
+		for (int i=1; i<totalStates; i++)
 		{
-			int type;
-			file->ReadBig( type );
-			auto& newInstance = currentGraphState.graph->CreateVariable( nullptr, ( etype_t ) type );
-			ReadVar( newInstance.scriptVariable, file, _timeStamp );
+			idStr newStateName;
+			file->ReadString(newStateName);
+			CreateSubState(newStateName,{},{} );
 		}
 
-		int totalNodes;
-		file->ReadBig( totalNodes );
-		//create nodes
-		for( int i = 0; i < totalNodes; i++ )
+		for (int i = 0; i<totalStates; i++)
 		{
-			idStr className;
-			file->ReadString( className );
-			auto* typeInfo = idClass::GetClass( className );
-			auto* newNode = CreateNode( static_cast<idGraphNode*>( typeInfo->CreateInstance() ) );
-		}
-		//load data
-		for( auto* node : nodes )
-		{
-			if( !node->LoadBinary( file, _timeStamp, owner ) )
-			{
-				return false;
+			auto &currentGraphState = localGraphState[i];
+			auto &nodes = currentGraphState.nodes;
+			auto &links = currentGraphState.links;
+
+			int totalLocalVars;
+			file->ReadBig( totalLocalVars );
+			idStr tmpName;
+			idEntity *entPtr = owner->Cast<idEntity>( );
+			assert( entPtr );
+			for ( int i = 0; i < totalLocalVars; i++ ) {
+				int type;
+				file->ReadBig( type );
+				auto &newInstance = currentGraphState.graph->CreateVariable( nullptr, ( etype_t ) type );
+				ReadVar( newInstance.scriptVariable, file, _timeStamp );
 			}
-		}
 
-		int totalLinks;
-		file->ReadBig( totalLinks );
-		for( int i = 0; i < totalLinks; i++ )
-		{
-			int startIdx, endIdx;
-			int startSocketIdx, endSocketIdx;
-			file->ReadBig( startIdx );
-			file->ReadBig( startSocketIdx );
-			file->ReadBig( endIdx );
-			file->ReadBig( endSocketIdx );
-			AddLink( nodes[startIdx]->outputSockets[startSocketIdx], nodes[endIdx]->inputSockets[endSocketIdx] );
+			int totalNodes;
+			file->ReadBig( totalNodes );
+			//create nodes
+			for ( int i = 0; i < totalNodes; i++ ) {
+				idStr className;
+				file->ReadString( className );
+				auto *typeInfo = idClass::GetClass( className );
+				auto *newNode = CreateNode( static_cast< idGraphNode * >( typeInfo->CreateInstance( ) ) );
+			}
+			//load data
+			for ( auto *node : nodes ) {
+				if ( !node->LoadBinary( file, _timeStamp, owner ) ) {
+					return false;
+				}
+			}
+
+			int totalLinks;
+			file->ReadBig( totalLinks );
+			for ( int i = 0; i < totalLinks; i++ ) {
+				int startIdx, endIdx;
+				int startSocketIdx, endSocketIdx;
+				file->ReadBig( startIdx );
+				file->ReadBig( startSocketIdx );
+				file->ReadBig( endIdx );
+				file->ReadBig( endSocketIdx );
+				AddLink( nodes[startIdx]->outputSockets[startSocketIdx], nodes[endIdx]->inputSockets[endSocketIdx] );
+			}
 		}
 		return true;
 	}
@@ -514,18 +539,6 @@ idList<idScriptVariableInstance_t>& idStateGraph::GetLocalVariables()
 	return localGraphState[stateIndex].localVariables;
 }
 
-template<class T>
-T* idStateGraph::CreateStateNode( int stateIndex, T* node )
-{
-	return static_cast<T*>( CreateLocalStateNode( stateIndex, node ) );
-}
-
-template<class T>
-T* idStateGraph::CreateNode( int stateIndex )
-{
-	return static_cast<T*>( CreateLocalStateNode( stateIndex, new T() ) );
-}
-
 void WriteVar( idScriptVariableBase* var, idFile* file, ID_TIME_T* _timeStamp /*= NULL */ )
 {
 	switch( var->GetType() )
@@ -734,7 +747,7 @@ void idGraphNode::Draw( ImGuiTools::GraphNode* nodePtr )
 							icon.filled = ownerSocket.connections.Num() > 0;
 						}
 						else
-						{
+						{ 
 							if( i > 0 || !DrawFlowInputLabel( nodePtr, popup ) )
 							{
 								ImGui::GetWindowDrawList( )->AddText( ImGui::GetCursorScreenPos( ) + ImVec2( 0, ImGui::GetStyle( ).ItemInnerSpacing.y ),

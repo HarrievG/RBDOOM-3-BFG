@@ -317,7 +317,7 @@ static gltfNode* FindModelRoot( gltfData* data, const idImportOptions* options, 
 
 	// So the expectations in common .glb files is that the first scene node in the hierarchy is the Armature
 	// and skinned meshes are supposed to be children of the Rig.
-
+	// 
 	// 1. If there was an explicit name given in the identifer try it
 	gltfNode* root = nullptr;
 	auto nodes = data->NodeList();
@@ -403,36 +403,47 @@ static gltfNode* FindModelRoot( gltfData* data, const idImportOptions* options, 
 		data->GetAllSkinnedMeshes( meshNodeIDs );
 
 		int skinID = -1;
+		int skinnedMeshId = -1;
 		for( int meshID : meshNodeIDs )
 		{
 			gltfNode* meshNode = nodes[meshID];
 			if( meshNode->skin >= 0 )
 			{
 				skinID = meshNode->skin;
+				skinnedMeshId = meshID;
 				break;
 			}
 		}
 
+		int & rootNodeID = *rootID;
 		if( skinID != -1 )
 		{
-			auto skin = data->SkinList()[skinID];
-			*rootID = skin->skeleton;
-			root = nodes[skin->skeleton];
-			rootName = nodes[skin->skeleton]->name;
+			gltfSkin * skin = data->SkinList()[skinID];
+			if (skin->skeleton < 0 && data->SkinList().Num() == 1)
+			{
+				rootNodeID = 0;
+			}
+			else
+				rootNodeID = skin->skeleton;
+			
+			assert( rootNodeID >= 0 );
+
+			root = nodes[rootNodeID];
+			rootName = root->name;
 
 			if( rootSkin )
 			{
 				*rootSkin = skin;
 			}
 
-			idLib::Printf( "Found glTF2 Rig: name = '%s' ID=%i\n", rootName.c_str(), *rootID );
+			idLib::Printf( "Found glTF2 Rig: name = '%s' ID=%i\n", rootName.c_str(), rootNodeID );
 
 			return root;
 		}
 	}
 
 	// 4. There was no Armature so far so just try to use the first Mesh from the default scene
-	/*
+	// If this is the case, fileExclusive is expected to be true
 	if( root == nullptr )
 	{
 		// try the first mesh from the default scene
@@ -446,7 +457,6 @@ static gltfNode* FindModelRoot( gltfData* data, const idImportOptions* options, 
 
 			gltfMesh* firstMesh = data->MeshList()[0];
 
-			//fileExclusive = true;
 			root = data->GetNode( scene, firstMesh, rootID );
 			if( rootID != nullptr )
 			{
@@ -454,7 +464,6 @@ static gltfNode* FindModelRoot( gltfData* data, const idImportOptions* options, 
 			}
 		}
 	}
-	*/
 
 	return root;
 }
@@ -515,9 +524,12 @@ void idRenderModelGLTF::InitFromFile( const char* fileName, const idImportOption
 	bounds.Clear();
 
 	int sceneId = data->DefaultScene();
-	assert( sceneId >= 0 );
 
-	auto scene = data->SceneList()[sceneId];
+	if (sceneId < 0 && data->SceneList().Num() == 1)
+		sceneId = 0;
+
+	assert( sceneId >= 0 );
+	gltfScene * scene = data->SceneList()[sceneId];
 	assert( scene );
 
 	auto nodes = data->NodeList();
@@ -534,7 +546,7 @@ void idRenderModelGLTF::InitFromFile( const char* fileName, const idImportOption
 	MeshNodeIds.Clear();
 	bones.Clear();
 
-	if( rootID != -1 )
+	if( rootID != -1 && !fileExclusive )
 	{
 		// get all meshes in hierachy, starting at root
 		data->GetAllMeshes( root, MeshNodeIds );
@@ -579,6 +591,9 @@ void idRenderModelGLTF::InitFromFile( const char* fileName, const idImportOption
 
 				if( currentSkin->joints.Num() )
 				{
+					if ( currentSkin->skeleton < 0 && data->SkinList( ).Num( ) == 1 ) 
+						rootID = currentSkin->skeleton;
+
 					assert( currentSkin->skeleton == rootID );
 
 					// armature node is origin bone
@@ -827,9 +842,7 @@ const idMD5Joint* idRenderModelGLTF::FindMD5Joint( const idStr& name ) const
 			return &joint;
 		}
 	}
-	assert( 0 );
-	static idMD5Joint staticJoint;
-	return &staticJoint;
+	nullptr;
 }
 
 // unused
@@ -1680,6 +1693,9 @@ void idRenderModelGLTF::LoadModel()
 	if( !fileExclusive )
 	{
 		modelRoot = root = FindModelRoot( data, nullptr, rootName, &rootID, nullptr );
+	}else
+	{
+		rootID = 0;
 	}
 
 	num = bones.Num();
@@ -1822,6 +1838,8 @@ void idRenderModelGLTF::UpdateSurface( const struct renderEntity_s* ent, const i
 	static const __m128 vector_float_negInfinity = { -idMath::INFINITUM, -idMath::INFINITUM, -idMath::INFINITUM, -idMath::INFINITUM };
 #endif
 
+	//tr.pc.c_deformedSurfaces++;
+
 	// add skinning
 	if( surf->geometry != NULL )
 	{
@@ -1829,6 +1847,7 @@ void idRenderModelGLTF::UpdateSurface( const struct renderEntity_s* ent, const i
 	}
 	else
 	{
+	//	R_FreeStaticTriSurf( surf->geometry );
 		surf->geometry = R_AllocStaticTriSurf();
 	}
 
@@ -1844,6 +1863,8 @@ void idRenderModelGLTF::UpdateSurface( const struct renderEntity_s* ent, const i
 	tri->mirroredVerts = sourceSurf.geometry->mirroredVerts;
 	tri->numDupVerts = sourceSurf.geometry->numDupVerts;
 	tri->dupVerts = sourceSurf.geometry->dupVerts;
+	tri->numSilEdges = sourceSurf.geometry->numSilEdges;
+	tri->silEdges = sourceSurf.geometry->silEdges;
 
 	tri->indexCache = sourceSurf.geometry->indexCache;
 
@@ -2185,13 +2206,16 @@ int idRenderModelGLTF::NearestJoint( int surfaceNum, int a, int b, int c ) const
 {
 	for( const modelSurface_t& surf : surfaces )
 	{
+		if ( surf.id != surfaceNum )
+			continue;
+
 		idDrawVert* verts = surf.geometry->verts;
 		int numVerts = surf.geometry->numVerts;
 
 		for( int v = 0; v < numVerts; v++ )
 		{
 			// duplicated vertices might not have weights
-			int vertNum;
+			int vertNum = 0;
 			if( a >= 0 && a < numVerts )
 			{
 				vertNum = a;

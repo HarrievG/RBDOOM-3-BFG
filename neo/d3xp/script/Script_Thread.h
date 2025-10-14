@@ -236,7 +236,7 @@ public:
 	void						CallFunction( idEntity* obj, const function_t* func, bool clearStack );
 
 	void						DisplayInfo();
-	static idThread*				GetThread( int num );
+	static idThread*			GetThread( int num );
 	static void					ListThreads_f( const idCmdArgs& args );
 	static void					Restart();
 	static void					ObjectMoveDone( int threadnum, idEntity* obj );

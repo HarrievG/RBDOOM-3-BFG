@@ -320,10 +320,11 @@ sample the data for non-dynamic values.
 typedef idScriptVariable<int		, ev_boolean,	int>			idScriptBool;
 typedef idScriptVariable<float		, ev_float,		float>			idScriptFloat;
 typedef idScriptVariable<float		, ev_float,		int>			idScriptInt;
-typedef idScriptVariable<idVec3		, ev_vector,		idVec3>			idScriptVector;
-typedef idScriptVariable<idStr		, ev_string,		const char*>	idScriptString;
-typedef idScriptVariable < idStr		, ev_string,		idStr&& >		idScriptStr;
-typedef idScriptVariable < idEntity*, ev_entity,		idEntity&& >		idScriptEntity;
+typedef idScriptVariable<idVec3		, ev_vector,	idVec3>			idScriptVector;
+typedef idScriptVariable<idStr		, ev_string,	const char*>	idScriptString;
+//true idStr
+typedef idScriptVariable < idStr	, ev_string,	idStr&& >		idScriptStr;
+typedef idScriptVariable < idEntity*, ev_entity,	idEntity&& >	idScriptEntity;
 typedef idScriptVariable < idClass*, ev_object,		idClass&& >		idScriptClass;
 typedef idScriptVariable<int		, ev_int,		int>			idScriptInteger;
 

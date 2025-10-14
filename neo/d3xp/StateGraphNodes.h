@@ -53,7 +53,7 @@ class idStateNode : public idGraphNode
 	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL ) override;
 	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass* owner = nullptr ) override;
 	void Setup( idClass* graphOwner );
-	idGraphNode* QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner );
+	idGraphNode* QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner,idStr contextName );
 
 	idStr			input_State;
 	NodeType		type;
@@ -82,7 +82,7 @@ public:
 	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL ) override;
 	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass* owner = nullptr ) override;
 	void Setup( idClass* graphOwner );
-	idGraphNode* QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner );
+	idGraphNode* QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner,idStr contextName );
 
 	idEntityPtr<idEntity> ownerEntityPtr;
 
@@ -120,7 +120,7 @@ public:
 	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL ) override;
 	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass* owner = nullptr ) override;
 	void Setup( idClass* graphOwner );
-	idGraphNode* QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner );
+	idGraphNode* QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner , idStr contextName);
 
 	idVec4 NodeTitleBarColor() override;
 	void OnActivate( idEntity* activator );
@@ -150,7 +150,7 @@ public:
 	void WriteBinary( idFile* file, ID_TIME_T* _timeStamp = NULL ) override;
 	bool LoadBinary( idFile* file, const ID_TIME_T _timeStamp, idClass* owner = nullptr ) override;
 	void Setup( idClass* graphOwner );
-	idGraphNode* QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner )
+	idGraphNode* QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner,idStr contextName )
 	{
 		return nullptr;
 	}
@@ -189,7 +189,7 @@ public:
 	virtual bool DrawFlowInputLabel( ImGuiTools::GraphNode* nodePtr, idStr& popup ) override;
 
 	void Setup( idClass* graphOwner );
-	idGraphNode* QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner );
+	idGraphNode* QueryNodeConstruction( idStateGraph* targetGraph, idClass* graphOwner,idStr contextName );
 	idVec4 NodeTitleBarColor() override;
 
 	idScriptBool* boolOutput;

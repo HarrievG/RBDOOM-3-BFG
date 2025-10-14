@@ -28,6 +28,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "precompiled.h"
 #pragma hdrstop
 #include "float.h"
+#include "SWF_Graphics.h"
 
 #pragma warning( disable: 4189 ) // local variable is initialized but not referenced
 
@@ -112,6 +113,7 @@ idSWFShapeParser::ParseShape
 */
 void idSWFShapeParser::Parse( idSWFBitStream& bitstream, idSWFShape& shape, int recordType )
 {
+	currentShape = &shape;
 	extendedCount = ( recordType > 1 );
 	lineStyle2 = ( recordType == 4 );
 	rgba = ( recordType >= 3 );
@@ -314,6 +316,7 @@ idSWFShapeParser::ParseMorph
 */
 void idSWFShapeParser::ParseMorph( idSWFBitStream& bitstream, idSWFShape& shape )
 {
+	currentShape = &shape;
 	extendedCount = true;
 	lineStyle2 = false;
 	rgba = true;
@@ -342,7 +345,8 @@ idSWFShapeParser::ParseFont
 ========================
 */
 void idSWFShapeParser::ParseFont( idSWFBitStream& bitstream, idSWFFontGlyph& shape )
-{
+{	
+	currentShape = nullptr;
 	extendedCount = false;
 	lineStyle2 = false;
 	rgba = false;
@@ -415,6 +419,11 @@ void idSWFShapeParser::ParseShapes( idSWFBitStream& bitstream1, idSWFBitStream* 
 				uint8 moveBits = bitstream1.ReadU( 5 );
 				pen1X = bitstream1.ReadS( moveBits );
 				pen1Y = bitstream1.ReadS( moveBits );
+				if (currentShape)
+				{
+					currentShape->GraphicsCommands.Append( static_cast< int >( swfGraphics_Path_Command_t::MOVE_TO ) );
+					currentShape->GraphicsData.Append( { SWFTWIP( pen1X ), SWFTWIP( pen1Y ) } );
+				}
 			}
 			if( stateFillStyle0 )
 			{
@@ -532,6 +541,11 @@ void idSWFShapeParser::ParseShapes( idSWFBitStream& bitstream1, idSWFBitStream* 
 			if( lineStyle != 0 )
 			{
 				lineDraws[ baseLineStyle + lineStyle - 1 ].edges.Append( morphEdge );
+				if (currentShape)
+				{
+					currentShape->GraphicsCommands.Append( static_cast< int >( swfGraphics_Path_Command_t::LINE_TO ) );
+					currentShape->GraphicsData.Append( { verts[morphEdge.start.v1].x,verts[morphEdge.start.v1].y } );
+				}
 			}
 			if( swap )
 			{

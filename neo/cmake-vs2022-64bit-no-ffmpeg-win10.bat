@@ -10,4 +10,3 @@ cmake -G "Visual Studio 17" -A x64 ^
 -DDBG_CMD_Debug:PATH="debugCmds.txt" ^
 -DDBG_CMD_Release:PATH="releaseCmds.txt" ^
 ../neo 
-

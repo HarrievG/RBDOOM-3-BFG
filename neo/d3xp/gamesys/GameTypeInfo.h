@@ -7,9 +7,9 @@
 
 	This file has been generated with the Type Info Generator v1.1 (c) 2004 id Software
 
-	971 constants
-	95 enums
-	495 classes/structs/unions
+	985 constants
+	98 enums
+	498 classes/structs/unions
 	3 templates
 	9 max inheritance level for 'iceMonsterZombieSawyer'
 
@@ -83,6 +83,7 @@ static constantInfo_t constantInfo[] = {
 	{ "int", "ev_jumpoffset", "12" },
 	{ "int", "ev_argsize", "13" },
 	{ "int", "ev_boolean", "14" },
+	{ "int", "ev_int", "15" },
 	{ "int", "idVarDef::uninitialized", "0" },
 	{ "int", "idVarDef::initializedVariable", "1" },
 	{ "int", "idVarDef::initializedConstant", "2" },
@@ -567,13 +568,26 @@ static constantInfo_t constantInfo[] = {
 	{ "int", "idBrittleFracture::EVENT_PROJECT_DECAL", "2" },
 	{ "int", "idBrittleFracture::EVENT_SHATTER", "3" },
 	{ "int", "idBrittleFracture::EVENT_MAXEVENTS", "4" },
+	{ "static constexpr const char *", "idStateGraph::MAIN", "GRAPH_MAIN" },
 	{ "int", "idStateNode::Set", "0" },
 	{ "int", "idStateNode::Post", "1" },
 	{ "int", "idStateNode::Interrupt", "2" },
 	{ "int", "idClassNode::Call", "0" },
 	{ "int", "idClassNode::Set", "1" },
 	{ "int", "idClassNode::Get", "2" },
-	{ "const float", "SQUARE_ROOT_OF_2", "1.414213562" },
+	{ "int", "idGraphOnInitNode::Construct", "0" },
+	{ "int", "idGraphOnInitNode::Activate", "1" },
+	{ "int", "idGraphInputOutputNode::Input", "0" },
+	{ "int", "idGraphInputOutputNode::Output", "1" },
+	{ "int", "idGraphLogicNode::IF_EQU", "0" },
+	{ "int", "idGraphLogicNode::IF_NOTEQ", "1" },
+	{ "int", "idGraphLogicNode::IF_GT", "2" },
+	{ "int", "idGraphLogicNode::IF_LT", "3" },
+	{ "int", "idGraphLogicNode::IF_GTE", "4" },
+	{ "int", "idGraphLogicNode::IF_LTE", "5" },
+	{ "int", "idGraphLogicNode::IF_MAX", "6" },
+	{ "int", "idGraphLogicNode::MAX_TYPES", "7" },
+	{ "__SYS_STATE_GRAPH_H__ const float", "SQUARE_ROOT_OF_2", "1.414213562" },
 	{ "const float", "AI_TURN_PREDICTION", "0.2" },
 	{ "const float", "AI_TURN_SCALE", "60.0" },
 	{ "const float", "AI_SEEK_PREDICTION", "0.3" },
@@ -1051,6 +1065,7 @@ static enumValueInfo_t etype_t_typeInfo[] = {
 	{ "ev_jumpoffset", 12 },
 	{ "ev_argsize", 13 },
 	{ "ev_boolean", 14 },
+	{ "ev_int", 15 },
 	{ NULL, 0 }
 };
 
@@ -1707,6 +1722,30 @@ static enumValueInfo_t idClassNode_NodeType_typeInfo[] = {
 	{ NULL, 0 }
 };
 
+static enumValueInfo_t idGraphOnInitNode_NodeType_typeInfo[] = {
+	{ "Construct", 0 },
+	{ "Activate", 1 },
+	{ NULL, 0 }
+};
+
+static enumValueInfo_t idGraphInputOutputNode_NodeType_typeInfo[] = {
+	{ "Input", 0 },
+	{ "Output", 1 },
+	{ NULL, 0 }
+};
+
+static enumValueInfo_t idGraphLogicNode_NodeType_typeInfo[] = {
+	{ "IF_EQU", 0 },
+	{ "IF_NOTEQ", 1 },
+	{ "IF_GT", 2 },
+	{ "IF_LT", 3 },
+	{ "IF_GTE", 4 },
+	{ "IF_LTE", 5 },
+	{ "IF_MAX", 6 },
+	{ "MAX_TYPES", 7 },
+	{ NULL, 0 }
+};
+
 static enumValueInfo_t moveType_t_typeInfo[] = {
 	{ "MOVETYPE_DEAD", 0 },
 	{ "MOVETYPE_ANIM", 1 },
@@ -2157,7 +2196,7 @@ static enumValueInfo_t menuSounds_t_typeInfo[] = {
 	{ NULL, 0 }
 };
 
-static enumValueInfo_t enum_94_typeInfo[] = {
+static enumValueInfo_t enum_97_typeInfo[] = {
 	{ "OP_RETURN", 0 },
 	{ "OP_UINC_F", 1 },
 	{ "OP_UINCP_F", 2 },
@@ -2344,6 +2383,9 @@ static enumTypeInfo_t enumTypeInfo[] = {
 	{ "idBrittleFracture::enum_55", idBrittleFracture_enum_55_typeInfo },
 	{ "idStateNode::NodeType", idStateNode_NodeType_typeInfo },
 	{ "idClassNode::NodeType", idClassNode_NodeType_typeInfo },
+	{ "idGraphOnInitNode::NodeType", idGraphOnInitNode_NodeType_typeInfo },
+	{ "idGraphInputOutputNode::NodeType", idGraphInputOutputNode_NodeType_typeInfo },
+	{ "idGraphLogicNode::NodeType", idGraphLogicNode_NodeType_typeInfo },
 	{ "moveType_t", moveType_t_typeInfo },
 	{ "moveCommand_t", moveCommand_t_typeInfo },
 	{ "talkState_t", talkState_t_typeInfo },
@@ -2380,7 +2422,7 @@ static enumTypeInfo_t enumTypeInfo[] = {
 	{ "pdaHandlerWidgets_t", pdaHandlerWidgets_t_typeInfo },
 	{ "scoreboardHandlerWidgets_t", scoreboardHandlerWidgets_t_typeInfo },
 	{ "menuSounds_t", menuSounds_t_typeInfo },
-	{ "enum_94", enum_94_typeInfo },
+	{ "enum_97", enum_97_typeInfo },
 	{ NULL, NULL }
 };
 
@@ -2494,7 +2536,6 @@ static classVariableInfo_t idScriptVariableBase_typeInfo[] = {
 
 static classVariableInfo_t idScriptVariableInstance_t_typeInfo[] = {
 	{ "const char *", "varName", (intptr_t)(&((idScriptVariableInstance_t *)0)->varName), sizeof( ((idScriptVariableInstance_t *)0)->varName ) },
-	{ "const char *", "typeName", (intptr_t)(&((idScriptVariableInstance_t *)0)->typeName), sizeof( ((idScriptVariableInstance_t *)0)->typeName ) },
 	{ "idScriptVariableBase *", "scriptVariable", (intptr_t)(&((idScriptVariableInstance_t *)0)->scriptVariable), sizeof( ((idScriptVariableInstance_t *)0)->scriptVariable ) },
 	{ NULL, 0 }
 };
@@ -3792,6 +3833,8 @@ static classVariableInfo_t idEntity_typeInfo[] = {
 	{ "idStr", "name", (intptr_t)(&((idEntity *)0)->name), sizeof( ((idEntity *)0)->name ) },
 	{ "idDict", "spawnArgs", (intptr_t)(&((idEntity *)0)->spawnArgs), sizeof( ((idEntity *)0)->spawnArgs ) },
 	{ "idScriptObject", "scriptObject", (intptr_t)(&((idEntity *)0)->scriptObject), sizeof( ((idEntity *)0)->scriptObject ) },
+	{ "bool", "supportsNative", (intptr_t)(&((idEntity *)0)->supportsNative), sizeof( ((idEntity *)0)->supportsNative ) },
+	{ "idStateGraph *", "graphObject", (intptr_t)(&((idEntity *)0)->graphObject), sizeof( ((idEntity *)0)->graphObject ) },
 	{ "int", "thinkFlags", (intptr_t)(&((idEntity *)0)->thinkFlags), sizeof( ((idEntity *)0)->thinkFlags ) },
 	{ "int", "dormantStart", (intptr_t)(&((idEntity *)0)->dormantStart), sizeof( ((idEntity *)0)->dormantStart ) },
 	{ "bool", "cinematic", (intptr_t)(&((idEntity *)0)->cinematic), sizeof( ((idEntity *)0)->cinematic ) },
@@ -5823,8 +5866,8 @@ static classVariableInfo_t idBrittleFracture_typeInfo[] = {
 };
 
 static classVariableInfo_t idBlackBoard_typeInfo[] = {
-	{ "idBlockAlloc < byte , 4 , TAG_BLACKBOARD >", "data", (intptr_t)(&((idBlackBoard *)0)->data), sizeof( ((idBlackBoard *)0)->data ) },
-	{ "idStrPool", "strPool", (intptr_t)(&((idBlackBoard *)0)->strPool), sizeof( ((idBlackBoard *)0)->strPool ) },
+	{ "idDynamicBlockAlloc < byte , 16 * 1024 , 256 , TAG_BLACKBOARD >", "data", (intptr_t)(&((idBlackBoard *)0)->data), sizeof( ((idBlackBoard *)0)->data ) },
+	{ "idStrPtrList", "strList", (intptr_t)(&((idBlackBoard *)0)->strList), sizeof( ((idBlackBoard *)0)->strList ) },
 	{ NULL, 0 }
 };
 
@@ -5839,48 +5882,97 @@ static classVariableInfo_t idGraphNodeSocket_typeInfo[] = {
 	{ "idGraphNode *", "owner", (intptr_t)(&((idGraphNodeSocket *)0)->owner), sizeof( ((idGraphNodeSocket *)0)->owner ) },
 	{ "idScriptVariableBase *", "var", (intptr_t)(&((idGraphNodeSocket *)0)->var), sizeof( ((idGraphNodeSocket *)0)->var ) },
 	{ "bool", "active", (intptr_t)(&((idGraphNodeSocket *)0)->active), sizeof( ((idGraphNodeSocket *)0)->active ) },
+	{ "int", "lastActivated", (intptr_t)(&((idGraphNodeSocket *)0)->lastActivated), sizeof( ((idGraphNodeSocket *)0)->lastActivated ) },
 	{ "idStr", "name", (intptr_t)(&((idGraphNodeSocket *)0)->name), sizeof( ((idGraphNodeSocket *)0)->name ) },
+	{ "int", "socketIndex", (intptr_t)(&((idGraphNodeSocket *)0)->socketIndex), sizeof( ((idGraphNodeSocket *)0)->socketIndex ) },
+	{ "int", "nodeIndex", (intptr_t)(&((idGraphNodeSocket *)0)->nodeIndex), sizeof( ((idGraphNodeSocket *)0)->nodeIndex ) },
+	{ "bool", "freeData", (intptr_t)(&((idGraphNodeSocket *)0)->freeData), sizeof( ((idGraphNodeSocket *)0)->freeData ) },
+	{ "bool", "isOutput", (intptr_t)(&((idGraphNodeSocket *)0)->isOutput), sizeof( ((idGraphNodeSocket *)0)->isOutput ) },
+	{ NULL, 0 }
+};
+
+static classVariableInfo_t GraphState_typeInfo[] = {
+	{ "idList < idGraphNode * >", "nodes", (intptr_t)(&((GraphState *)0)->nodes), sizeof( ((GraphState *)0)->nodes ) },
+	{ "idList < idGraphNode * >", "activeNodes", (intptr_t)(&((GraphState *)0)->activeNodes), sizeof( ((GraphState *)0)->activeNodes ) },
+	{ "idList < idGraphNodeSocket :: Link_t >", "links", (intptr_t)(&((GraphState *)0)->links), sizeof( ((GraphState *)0)->links ) },
+	{ "idBlackBoard", "blackBoard", (intptr_t)(&((GraphState *)0)->blackBoard), sizeof( ((GraphState *)0)->blackBoard ) },
+	{ "rvStateThread *", "stateThread", (intptr_t)(&((GraphState *)0)->stateThread), sizeof( ((GraphState *)0)->stateThread ) },
+	{ "idStateGraph *", "graph", (intptr_t)(&((GraphState *)0)->graph), sizeof( ((GraphState *)0)->graph ) },
+	{ "int", "waitMS", (intptr_t)(&((GraphState *)0)->waitMS), sizeof( ((GraphState *)0)->waitMS ) },
+	{ "idList < idScriptVariableInstance_t >", "localVariables", (intptr_t)(&((GraphState *)0)->localVariables), sizeof( ((GraphState *)0)->localVariables ) },
+	{ "idStr", "name", (intptr_t)(&((GraphState *)0)->name), sizeof( ((GraphState *)0)->name ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idGraphNode_typeInfo[] = {
 	{ "idList < idGraphNodeSocket >", "inputSockets", (intptr_t)(&((idGraphNode *)0)->inputSockets), sizeof( ((idGraphNode *)0)->inputSockets ) },
 	{ "idList < idGraphNodeSocket >", "outputSockets", (intptr_t)(&((idGraphNode *)0)->outputSockets), sizeof( ((idGraphNode *)0)->outputSockets ) },
-	{ "idStateGraph *", "graph", (intptr_t)(&((idGraphNode *)0)->graph), sizeof( ((idGraphNode *)0)->graph ) },
+	{ "GraphState *", "graphState", (intptr_t)(&((idGraphNode *)0)->graphState), sizeof( ((idGraphNode *)0)->graphState ) },
+	{ "int", "nodeIndex", (intptr_t)(&((idGraphNode *)0)->nodeIndex), sizeof( ((idGraphNode *)0)->nodeIndex ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idStateGraph_typeInfo[] = {
-	{ "idClass *", "owner", (intptr_t)(&((idStateGraph *)0)->owner), sizeof( ((idStateGraph *)0)->owner ) },
-	{ "rvStateThread *", "stateThread", (intptr_t)(&((idStateGraph *)0)->stateThread), sizeof( ((idStateGraph *)0)->stateThread ) },
-	{ "idBlackBoard", "blackBoard", (intptr_t)(&((idStateGraph *)0)->blackBoard), sizeof( ((idStateGraph *)0)->blackBoard ) },
-	{ "idList < idGraphNode * >", "nodes", (intptr_t)(&((idStateGraph *)0)->nodes), sizeof( ((idStateGraph *)0)->nodes ) },
-	{ "idList < idGraphNode * >", "activeNodes", (intptr_t)(&((idStateGraph *)0)->activeNodes), sizeof( ((idStateGraph *)0)->activeNodes ) },
-	{ "idList < idGraphNodeSocket :: Link_t >", "links", (intptr_t)(&((idStateGraph *)0)->links), sizeof( ((idStateGraph *)0)->links ) },
+	{ "idStrList", "localStates", (intptr_t)(&((idStateGraph *)0)->localStates), sizeof( ((idStateGraph *)0)->localStates ) },
+	{ "idHashIndex", "localStateHash", (intptr_t)(&((idStateGraph *)0)->localStateHash), sizeof( ((idStateGraph *)0)->localStateHash ) },
+	{ "idList < GraphState >", "localGraphState", (intptr_t)(&((idStateGraph *)0)->localGraphState), sizeof( ((idStateGraph *)0)->localGraphState ) },
+	{ "idClass *", "ownerClass", (intptr_t)(&((idStateGraph *)0)->ownerClass), sizeof( ((idStateGraph *)0)->ownerClass ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idGraphedEntity_typeInfo[] = {
-	{ "idStateGraph", "graph", (intptr_t)(&((idGraphedEntity *)0)->graph), sizeof( ((idGraphedEntity *)0)->graph ) },
-	{ "rvStateThread", "stateThread", (intptr_t)(&((idGraphedEntity *)0)->stateThread), sizeof( ((idGraphedEntity *)0)->stateThread ) },
+	{ "idScriptBool", "varBoolTest", (intptr_t)(&((idGraphedEntity *)0)->varBoolTest), sizeof( ((idGraphedEntity *)0)->varBoolTest ) },
+	{ "idScriptInteger", "varIntTest", (intptr_t)(&((idGraphedEntity *)0)->varIntTest), sizeof( ((idGraphedEntity *)0)->varIntTest ) },
+	{ "idScriptFloat", "varFloatTest", (intptr_t)(&((idGraphedEntity *)0)->varFloatTest), sizeof( ((idGraphedEntity *)0)->varFloatTest ) },
+	{ "idScriptStr", "varStringTest", (intptr_t)(&((idGraphedEntity *)0)->varStringTest), sizeof( ((idGraphedEntity *)0)->varStringTest ) },
+	{ "idScriptVector", "varVectorTest", (intptr_t)(&((idGraphedEntity *)0)->varVectorTest), sizeof( ((idGraphedEntity *)0)->varVectorTest ) },
+	{ "idScriptBool", "varBoolTestX", (intptr_t)(&((idGraphedEntity *)0)->varBoolTestX), sizeof( ((idGraphedEntity *)0)->varBoolTestX ) },
+	{ "idScriptInteger", "varIntTestX", (intptr_t)(&((idGraphedEntity *)0)->varIntTestX), sizeof( ((idGraphedEntity *)0)->varIntTestX ) },
+	{ "idScriptFloat", "varFloatTestX", (intptr_t)(&((idGraphedEntity *)0)->varFloatTestX), sizeof( ((idGraphedEntity *)0)->varFloatTestX ) },
+	{ "idScriptStr", "varStringTestX", (intptr_t)(&((idGraphedEntity *)0)->varStringTestX), sizeof( ((idGraphedEntity *)0)->varStringTestX ) },
+	{ "idScriptVector", "varVectorTestX", (intptr_t)(&((idGraphedEntity *)0)->varVectorTestX), sizeof( ((idGraphedEntity *)0)->varVectorTestX ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idStateNode_typeInfo[] = {
-	{ "rvStateThread *", "stateThread", (intptr_t)(&((idStateNode *)0)->stateThread), sizeof( ((idStateNode *)0)->stateThread ) },
 	{ "idStr", "input_State", (intptr_t)(&((idStateNode *)0)->input_State), sizeof( ((idStateNode *)0)->input_State ) },
-	{ "stateResult_t", "output_Result", (intptr_t)(&((idStateNode *)0)->output_Result), sizeof( ((idStateNode *)0)->output_Result ) },
 	{ "NodeType", "type", (intptr_t)(&((idStateNode *)0)->type), sizeof( ((idStateNode *)0)->type ) },
+	{ "rvStateThread * *", "stateThread", (intptr_t)(&((idStateNode *)0)->stateThread), sizeof( ((idStateNode *)0)->stateThread ) },
+	{ "stateResult_t", "output_Result", (intptr_t)(&((idStateNode *)0)->output_Result), sizeof( ((idStateNode *)0)->output_Result ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idClassNode_typeInfo[] = {
-	{ "idBlackBoard", "blackBoard", (intptr_t)(&((idClassNode *)0)->blackBoard), sizeof( ((idClassNode *)0)->blackBoard ) },
+	{ "idEntityPtr < idEntity >", "ownerEntityPtr", (intptr_t)(&((idClassNode *)0)->ownerEntityPtr), sizeof( ((idClassNode *)0)->ownerEntityPtr ) },
+	{ "NodeType", "type", (intptr_t)(&((idClassNode *)0)->type), sizeof( ((idClassNode *)0)->type ) },
+	{ "const idEventDef *", "targetEvent", (intptr_t)(&((idClassNode *)0)->targetEvent), sizeof( ((idClassNode *)0)->targetEvent ) },
+	{ "idStr", "targetEventName", (intptr_t)(&((idClassNode *)0)->targetEventName), sizeof( ((idClassNode *)0)->targetEventName ) },
+	{ "idScriptVariableBase *", "targetVariable", (intptr_t)(&((idClassNode *)0)->targetVariable), sizeof( ((idClassNode *)0)->targetVariable ) },
+	{ "idStr", "targetVariableName", (intptr_t)(&((idClassNode *)0)->targetVariableName), sizeof( ((idClassNode *)0)->targetVariableName ) },
+	{ "bool", "isLocalvar", (intptr_t)(&((idClassNode *)0)->isLocalvar), sizeof( ((idClassNode *)0)->isLocalvar ) },
+	{ "bool", "isStaticVar", (intptr_t)(&((idClassNode *)0)->isStaticVar), sizeof( ((idClassNode *)0)->isStaticVar ) },
+	{ "idThread *", "scriptThread", (intptr_t)(&((idClassNode *)0)->scriptThread), sizeof( ((idClassNode *)0)->scriptThread ) },
+	{ "idStr", "currentTitle", (intptr_t)(&((idClassNode *)0)->currentTitle), sizeof( ((idClassNode *)0)->currentTitle ) },
+	{ "idClass *", "ownerClass", (intptr_t)(&((idClassNode *)0)->ownerClass), sizeof( ((idClassNode *)0)->ownerClass ) },
+	{ "idClass * *", "nodeOwnerClass", (intptr_t)(&((idClassNode *)0)->nodeOwnerClass), sizeof( ((idClassNode *)0)->nodeOwnerClass ) },
 	{ NULL, 0 }
 };
 
 static classVariableInfo_t idGraphOnInitNode_typeInfo[] = {
+	{ "NodeType", "type", (intptr_t)(&((idGraphOnInitNode *)0)->type), sizeof( ((idGraphOnInitNode *)0)->type ) },
 	{ "bool", "done", (intptr_t)(&((idGraphOnInitNode *)0)->done), sizeof( ((idGraphOnInitNode *)0)->done ) },
+	{ NULL, 0 }
+};
+
+static classVariableInfo_t idGraphInputOutputNode_typeInfo[] = {
+	{ "NodeType", "nodeType", (intptr_t)(&((idGraphInputOutputNode *)0)->nodeType), sizeof( ((idGraphInputOutputNode *)0)->nodeType ) },
+	{ NULL, 0 }
+};
+
+static classVariableInfo_t idGraphLogicNode_typeInfo[] = {
+	{ "idScriptBool *", "boolOutput", (intptr_t)(&((idGraphLogicNode *)0)->boolOutput), sizeof( ((idGraphLogicNode *)0)->boolOutput ) },
+	{ "NodeType", "nodeType", (intptr_t)(&((idGraphLogicNode *)0)->nodeType), sizeof( ((idGraphLogicNode *)0)->nodeType ) },
+	{ "int", "numInputs", (intptr_t)(&((idGraphLogicNode *)0)->numInputs), sizeof( ((idGraphLogicNode *)0)->numInputs ) },
 	{ NULL, 0 }
 };
 
@@ -6084,7 +6176,6 @@ static classVariableInfo_t idAI_typeInfo[] = {
 	{ "float", "lost_time", (intptr_t)(&((idAI *)0)->lost_time), sizeof( ((idAI *)0)->lost_time ) },
 	{ "idEntity *", "lost_combat_node", (intptr_t)(&((idAI *)0)->lost_combat_node), sizeof( ((idAI *)0)->lost_combat_node ) },
 	{ "float", "attack_flags", (intptr_t)(&((idAI *)0)->attack_flags), sizeof( ((idAI *)0)->attack_flags ) },
-	{ "bool", "supportsNative", (intptr_t)(&((idAI *)0)->supportsNative), sizeof( ((idAI *)0)->supportsNative ) },
 	{ "idStr", "lastStateName", (intptr_t)(&((idAI *)0)->lastStateName), sizeof( ((idAI *)0)->lastStateName ) },
 	{ "stateParms_t", "storedState", (intptr_t)(&((idAI *)0)->storedState), sizeof( ((idAI *)0)->storedState ) },
 	{ NULL, 0 }
@@ -7917,12 +8008,15 @@ static classTypeInfo_t classTypeInfo[] = {
 	{ "idBlackBoard", "", sizeof(idBlackBoard), idBlackBoard_typeInfo },
 	{ "idGraphNodeSocket::Link_t", "", sizeof(idGraphNodeSocket::Link_t), idGraphNodeSocket_Link_t_typeInfo },
 	{ "idGraphNodeSocket", "", sizeof(idGraphNodeSocket), idGraphNodeSocket_typeInfo },
+	{ "GraphState", "", sizeof(GraphState), GraphState_typeInfo },
 	{ "idGraphNode", "idClass", sizeof(idGraphNode), idGraphNode_typeInfo },
 	{ "idStateGraph", "idClass", sizeof(idStateGraph), idStateGraph_typeInfo },
 	{ "idGraphedEntity", "idEntity", sizeof(idGraphedEntity), idGraphedEntity_typeInfo },
 	{ "idStateNode", "idGraphNode", sizeof(idStateNode), idStateNode_typeInfo },
-	{ "idClassNode", "idStateNode", sizeof(idClassNode), idClassNode_typeInfo },
+	{ "idClassNode", "idGraphNode", sizeof(idClassNode), idClassNode_typeInfo },
 	{ "idGraphOnInitNode", "idGraphNode", sizeof(idGraphOnInitNode), idGraphOnInitNode_typeInfo },
+	{ "idGraphInputOutputNode", "idGraphNode", sizeof(idGraphInputOutputNode), idGraphInputOutputNode_typeInfo },
+	{ "idGraphLogicNode", "idGraphNode", sizeof(idGraphLogicNode), idGraphLogicNode_typeInfo },
 	{ "ballistics_t", "", sizeof(ballistics_t), ballistics_t_typeInfo },
 	{ "obstaclePath_t", "", sizeof(obstaclePath_t), obstaclePath_t_typeInfo },
 	{ "predictedPath_t", "", sizeof(predictedPath_t), predictedPath_t_typeInfo },

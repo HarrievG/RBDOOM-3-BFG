@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SWF_Enums.h"
+#include "SWF_Multiname.h"
 
 struct swfMultiname
 {
@@ -21,6 +22,7 @@ struct swfConstant_pool_info
 	idStrPtrList				namespaceNames; //u30 namespace_count	namespace_info namespace[namespace_count] (namespaceinfo_t.name)
 	idList<idStrPtrList>		namespaceSets;	//u30 ns_set_count		ns_set_info ns_set[ns_set_count]
 	idList<swfMultiname>		multinameInfos;	//u30 multiname_count	multiname_info multiname[multiname_count]
+	idList<SWF_Multiname>		extMultinameInfos; // precomputed multinames.
 };
 
 struct swfMetadata_info
@@ -54,9 +56,9 @@ struct swfMethod_info
 		NEED_ARGUMENTS	= 0x01, // Suggests to the run - time that an “arguments” object( as specified by the ActionScript 3.0 Language Reference ) be created.Must not be used together with NEED_REST.See Chapter 3.
 		NEED_ACTIVATION = 0x02, // Must be set if this method uses the newactivation opcode.
 		NEED_REST		= 0x04, // This flag creates an ActionScript 3.0 rest arguments array.Must not be used with NEED_ARGUMENTS.See Chapter 3.
-		HAS_OPTIONAL	= 0x08, // Must be set if this method has optional parameters andthe options field is present in this method_info structure.
-		IGNORE_REST		= 0x10,
-		NATIVE			= 0x20,
+		HAS_OPTIONAL	= 0x08, // Must be set if this method has optional parameters and the options field is present in this method_info structure.
+		IGNORE_REST		= 0x10, // Allow extra args, but dont capture them.
+		NATIVE			= 0x20, 
 		SET_DXNS		= 0x40, // Must be set if this method uses the dxns or dxnslate opcodes.
 		HAS_PARAM_NAMES	= 0x80, // Must be set when the param_names field is present in this method_info structure.
 	};
@@ -172,6 +174,7 @@ struct swfMethod_body_info
 class idSWFScriptObject;
 struct SWF_AbcFile
 {
+	//remove template, this is bs.
 	template<class T>
 	T* GetTrait( const swfTraits_info& trait, idSWFScriptObject* globals = nullptr );
 
@@ -190,6 +193,17 @@ struct SWF_AbcFile
 	static idStr asString( swfMultiname* mn, swfConstant_pool_info& constant_pool, bool prefix = true );
 	static void traceMN( const char* name, swfMultiname* mn, swfConstant_pool_info& constant_pool );
 	static void traceConstantPool( swfConstant_pool_info& constant_pool );
+	
+	static bool IsRTname( swfMultiname& mn )	{ return ( mn.type == swfConstantKind_t::MultinameL
+														|| mn.type == swfConstantKind_t::RTQnameL
+														|| mn.type == swfConstantKind_t::RTQnameLA); }
+	static bool IsRTns( swfMultiname& mn )		{ return ( mn.type == swfConstantKind_t::RTQname
+														|| mn.type == swfConstantKind_t::RTQnameA
+														|| mn.type == swfConstantKind_t::RTQnameL
+														|| mn.type == swfConstantKind_t::RTQnameLA); }
+	static bool IsRuntime( swfMultiname& mn )	{ return IsRTname(mn) || IsRTns(mn);}
+	static bool IsPublicNs ( swfMultiname& mn)  { return mn.type == swfConstantKind_t::Namespace; }
+	static bool IsBinding ( swfMultiname& mn )	{ return !( mn.type == Utf8 || IsRTns(mn)) && mn.index > 0 && mn.indexT > 0; }
 
 	uint16						minor_version;
 	uint16						major_version;
@@ -201,7 +215,7 @@ struct SWF_AbcFile
 	idList<swfClass_info>		classes;		//class_info class[class_count]
 	idList<swfScript_info>		scripts;		//u30 script_count script_info script[script_count]
 	idList<swfMethod_body_info>	method_bodies;	//u30 method_body_count method_body_info method_body[method_body_count]
-
+	
 	//Writing the whole bytestream as whole for now, but :
 	//	debug info plus unused tags and bytecode should be removed, constant pools need to stay the same
 	//	accessibility can also be removed.

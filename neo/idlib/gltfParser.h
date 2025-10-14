@@ -225,8 +225,6 @@ gltfItemClass( boolean, bool, if( token.Icmp( "true" ) == 0 ) *item = true; else
 class gltfItemArray
 {
 public:
-	~gltfItemArray();
-	gltfItemArray() { };
 	int Num()
 	{
 		return items.Num();
@@ -237,15 +235,6 @@ public:
 	}
 	int Fill( idLexer* lexer , idDict* strPairs );
 	int Parse( idLexer* lexer , bool forwardLexer = false );
-	template<class T>
-	T* Get( idStr name )
-	{
-		for( auto* item : items ) if( item->Name() == name )
-			{
-				return static_cast<T*>( item );
-			}
-		return nullptr;
-	}
 private:
 	idList<parsable*> items;
 };

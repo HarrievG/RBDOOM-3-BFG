@@ -71,7 +71,7 @@ they can contain raw data (int, float), strings, functions, or objects
 struct swfTraits_info;
 class idSWFScriptVar
 {
-public:
+public: 
 	idSWFScriptVar() : traitsInfo( NULL ), type( SWF_VAR_UNDEF ) { }
 	idSWFScriptVar( const idSWFScriptVar& other );
 	idSWFScriptVar( idSWFScriptObject* o ) :  traitsInfo( NULL ), type( SWF_VAR_UNDEF )
@@ -113,6 +113,8 @@ public:
 	// implements ECMA 262 11.9.3
 	bool AbstractEquals( const idSWFScriptVar& other );
 	bool StrictEquals( const idSWFScriptVar& other );
+
+	bool CanBeCoercedTo( const idSWFScriptVar *type ) const;
 
 	void SetString( idStrId s )
 	{
@@ -248,10 +250,17 @@ public:
 	{
 		return ( type == SWF_VAR_FLOAT ) || ( type == SWF_VAR_INTEGER ) || ( type == SWF_VAR_BOOL );
 	}
+	bool IsBool( )	const {
+		return ( type == SWF_VAR_BOOL ) ;
+	}
 
 	bool IsResult()		const
 	{
 		return ( type == SWF_VAR_RESULT );
+	}
+
+	bool IsInt( )		const {
+		return ( type == SWF_VAR_INTEGER );
 	}
 
 	enum swfScriptVarType
@@ -271,6 +280,13 @@ public:
 	swfScriptVarType	GetType() const
 	{
 		return type;
+	}
+
+	idSWFScriptVar( idSWFScriptVar &&other ) noexcept
+		: traitsInfo( other.traitsInfo ), type( other.type ), value( other.value ) {
+		other.traitsInfo = nullptr;
+		other.type = SWF_VAR_UNDEF;
+		other.value.object = nullptr;
 	}
 
 	const swfTraits_info* traitsInfo;

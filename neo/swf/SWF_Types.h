@@ -221,7 +221,11 @@ public:
 	swfRect_t endBounds;
 	idList< idSWFShapeDrawFill, TAG_SWF > fillDraws;
 	idList< idSWFShapeDrawLine, TAG_SWF > lineDraws;
+
+	idList<int, TAG_SWF> GraphicsCommands;
+	idList<float, TAG_SWF> GraphicsData;
 };
+
 class idSWFFontGlyph
 {
 public:

@@ -44,7 +44,7 @@ void gltfExtra_Scatter::parse( idToken& token, idLexer* parser )
 void gltfExtra_CameraLensFrames::parse( idToken& token, idLexer* parser )
 {
 	item = new idList<double>();
-	auto* numbers = new gltfItem_number_array( "" );
-	numbers->Set( item, parser );
-	numbers->parse( token );
+	auto numbers = gltfItem_number_array( "" );
+	numbers.Set( item, parser );
+	numbers.parse( token );
 }

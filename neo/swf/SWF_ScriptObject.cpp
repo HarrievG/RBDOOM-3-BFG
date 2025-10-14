@@ -28,7 +28,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "precompiled.h"
 #pragma hdrstop
 
-idCVar swf_debugShowAddress( "swf_debugShowAddress", "0", CVAR_BOOL, "shows addresses along with object types when they are serialized" );
+idCVar swf_debugShowAddress( "swf_debugShowAddress", "1", CVAR_BOOL, "shows addresses along with object types when they are serialized" );
 
 
 /*
@@ -65,7 +65,8 @@ void idSWFScriptObject::DeepCopy( idSWFScriptObject* _object )
 	{
 		for( int i = 0; i < _object->NumVariables( ); i++ )
 		{
-			Set( _object->EnumVariable( i ), _object->Get( _object->EnumVariable( i ) ) );
+			if((_object->EnumVariableFlags(i) & idSWFScriptObject::SWF_VAR_FLAG_DONTENUM ) == 0)
+				Set( _object->EnumVariable( i ), _object->Get( _object->EnumVariable( i ) ) );
 		}
 	}
 }

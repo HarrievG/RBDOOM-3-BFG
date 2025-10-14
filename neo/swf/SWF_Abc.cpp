@@ -24,7 +24,10 @@ Copyright (C) 2022 HvanGinneken
 
 #include "SWF_Abc.h"
 
-idCVar swf_abc_verbose( "swf_abc_verbose", "0", CVAR_INTEGER, "1 : writes out all abc data read \n 2 : print bytecode " );
+idCVar swf_abc_verbose( "swf_abc_verbose", "1", CVAR_INTEGER, "1 : writes out all abc data read \n 2 : print bytecode " );
+
+idCVar swf_abc_nodebug( "swf_abc_nodebug", 0, CVAR_BOOL, "Removes all debug opcodes and arg from method bodies during initial swf load." );
+
 
 #pragma warning( disable: 4189 ) // local variable is initialized but not referenced
 
@@ -206,42 +209,81 @@ void SWF_AbcFile::traceConstantPool( swfConstant_pool_info& constant_pool )
 }
 
 
-void ReadMultiName( idSWFBitStream& bitstream , swfMultiname& target )
+void ReadMultiName( idSWFBitStream& bitstream , swfMultiname& target, SWF_Multiname & extTarget ,swfConstant_pool_info& constant_pool )
 {
 	target.type = ( swfConstantKind_t )bitstream.ReadU8();
 	target.index = 0;
 	target.nameIndex = 0;
 	switch( target.type )
 	{
+
 		case RTQnameL:
 		case RTQnameLA:
 			//0,0
+			extTarget.setQName( );
+			extTarget.setRtns( );
+			extTarget.setRtname( );
+			extTarget.setAttr( target.type == RTQnameLA );
 			break;
+
 		case Qname:
 		case QnameA:
 			target.index = bitstream.ReadEncodedU32();
+			if (!target.index)
+				extTarget.setAnyNamespace();
+			else
+				extTarget.setNamespace( constant_pool.namespaceNames[target.index] );
+
 			target.nameIndex = bitstream.ReadEncodedU32();
+			if ( !target.nameIndex )
+				extTarget.setAnyName( );
+			else
+				extTarget.setName( constant_pool.utf8Strings[target.nameIndex] );
+
+			extTarget.setQName();
+			extTarget.setAttr(target.type == QnameA);
 			break;
 
 		case RTQname:
 		case RTQnameA:
 			target.nameIndex = bitstream.ReadEncodedU32();
+
+			if ( !target.nameIndex )
+				extTarget.setAnyName( );
+			else
+				extTarget.setName( constant_pool.utf8Strings[target.nameIndex] );
+
+			extTarget.setQName();
+			extTarget.setRtname();
+			extTarget.setAttr(target.type == RTQnameA);
 			break;
 
 		case TypeName:
 			target.nameIndex = bitstream.ReadEncodedU32( );
 			target.nameIndexT = bitstream.ReadEncodedU32( );
 			target.indexT = bitstream.ReadEncoded<uint8>( );
+			extTarget.setName( constant_pool.extMultinameInfos[target.nameIndex].getName() + "<" + constant_pool.utf8Strings[target.indexT] +">" );
+			extTarget.setTypeParameter(target.indexT);
 			break;
 		case Multiname:
 		case MultinameA:
 			target.nameIndex = bitstream.ReadEncodedU32( );
+			if ( !target.nameIndex )
+				extTarget.setAnyName( );
+			else
+				extTarget.setName( constant_pool.utf8Strings[target.nameIndex] );
+
 			target.index = bitstream.ReadEncodedU32( );
+			extTarget.setNsset( constant_pool.namespaceSets[ target.index ] );
+			extTarget.setAttr( target.type == MultinameA );
 			break;
 
 		case MultinameL:
 		case MultinameLA:
+			extTarget.setRtname();
 			target.index = bitstream.ReadEncodedU32( );
+			extTarget.setNsset( constant_pool.namespaceSets[ target.index ] );
+			extTarget.setAttr(target.type == MultinameLA );
 			break;
 		default:
 			common->FatalError( "Invalid Multiname type" );
@@ -305,14 +347,19 @@ void ReadConstantPoolInfo( idSWFBitStream& bitstream ,  swfConstant_pool_info& t
 	}
 
 	uint32 multiname_count = bitstream.ReadEncodedU32( );
-	auto& empty = target.multinameInfos.Alloc( );
-	empty.index = 0;
-	empty.nameIndex = 0;
-	empty.type = unused_0x00;
+	for ( uint i = 0; i <= multiname_count; i++ )
+	{
+		auto &emptyExt= target.extMultinameInfos.Alloc( );
+		auto &empty = target.multinameInfos.Alloc( );
+		empty.index = 0;
+		empty.nameIndex = 0;
+		empty.type = unused_0x00;
+	}
 	for( uint i = 1; i < multiname_count; i++ )
 	{
-		auto& newMn = target.multinameInfos.Alloc( );
-		ReadMultiName( bitstream, newMn );
+		auto& newMn = target.multinameInfos[i];
+		auto& newMnExt = target.extMultinameInfos[i];
+		ReadMultiName( bitstream, newMn,newMnExt,target );
 	}
 }
 
@@ -340,8 +387,8 @@ void SWF_AbcFile::ReadMetaDataInfo( idSWFBitStream& bitstream , swfMetadata_info
 }
 
 void SWF_AbcFile::ReadTraitData( idSWFBitStream& bitstream, swfTraits_info& newTraitsData )
-{
-	swfTraits_info::Type kind = ( swfTraits_info::Type )( ( newTraitsData.kind << 4 ) >> 4 ); // snip upper half, lower 4 bits should remain.
+{	
+	swfTraits_info::Type kind = ( swfTraits_info::Type )( newTraitsData.kind & 0x0F ); // snip upper half, lower 4 bits should remain.
 	uint8 attrib = ( newTraitsData.kind >> 4 ); // snip lower half, upper 4 bits should remain.
 
 	switch( kind )
@@ -398,16 +445,24 @@ struct idSWFScriptObject::swfNamedVar_t ;
 template<>
 idSWFScriptObject::swfNamedVar_t* SWF_AbcFile::GetTrait( const swfTraits_info& trait, idSWFScriptObject* globals )
 {
-	swfTraits_info::Type kind = ( swfTraits_info::Type )( ( trait.kind << 4 ) >> 4 );  // snip upper half, lower 4 bits should remain.
+	swfTraits_info::Type kind = ( swfTraits_info::Type )( trait.kind & 0x0F ); // snip upper half, lower 4 bits should remain.
 	uint8 attrib = ( trait.kind >> 4 ); // snip lower half, upper 4 bits should remain.
 
-	//idSWFScriptObject* newObj = new idSWFScriptObject();
 	idSWFScriptObject::swfNamedVar_t* newVar = new idSWFScriptObject::swfNamedVar_t();
 	newVar->value.traitsInfo = &trait;
+	if( ( attrib & swfTraits_info::Attrib::Final ) != 0 )
+	{
+		newVar->flags &= idSWFScriptObject::SWF_VAR_FLAG_DONTENUM;
+	}
 	switch( kind )
 	{
-		case swfTraits_info::Trait_Slot:
+		
 		case swfTraits_info::Trait_Const:
+		{
+			newVar->flags &= idSWFScriptObject::SWF_VAR_FLAG_DONTENUM;
+			[[fallthrough]];
+		}
+		case swfTraits_info::Trait_Slot:
 		{
 			//member variable.
 			swfTrait_slot& slot = *( ( swfTrait_slot* )( trait.data ) );
@@ -499,11 +554,16 @@ idSWFScriptObject::swfNamedVar_t* SWF_AbcFile::GetTrait( const swfTraits_info& t
 				}
 			else
 			{
-				idStr& typeName = constant_pool.utf8Strings[slot.type_name->nameIndex];
-				if( globals->HasProperty( typeName.c_str( ) ) )
+				idStr &typeName = constant_pool.utf8Strings[slot.type_name->nameIndex];
+				idStr fullClassName = *constant_pool.namespaceNames[slot.type_name->index];
+				if ( !fullClassName.IsEmpty( ) ) {
+					fullClassName += ".";
+				}
+				fullClassName += typeName;
+				if( globals->HasProperty( fullClassName.c_str( ) ) )
 				{
 					auto* newobj = idSWFScriptObject::Alloc();
-					newobj->SetPrototype( globals->GetObject( typeName.c_str() ) );
+					newobj->SetPrototype( globals->GetObject( fullClassName.c_str() ) );
 					newVar->value.SetObject( newobj );
 				}
 				else
@@ -522,37 +582,14 @@ idSWFScriptObject::swfNamedVar_t* SWF_AbcFile::GetTrait( const swfTraits_info& t
 		{
 			newVar->name = constant_pool.utf8Strings[trait.name->nameIndex];
 			swfTrait_method& method = *( ( swfTrait_method* )( trait.data ) );
+			idSWFScriptFunction_Script* func = idSWFScriptFunction_Script::Alloc( );
+			func->SetAbcFile( this );
+			func->SetData( method.method );
+			auto * scope = func->GetScope();
+			scope->Alloc() = globals;
 
-			idStrPtr name = method.method->name;
-			idStr owner;
-			//string method owner
-			//common->FatalError("This is wrong. now dont keep using the debug info but start resolving it properly!!!!");
-			//check frame scripts!
-			int slashPos = name->Find( "/" );
-			if( slashPos != -1 )
-			{
-				owner = idStr( name->c_str(), 0, slashPos );
-			}
-
-			slashPos = owner.Find( ":" );
-			if( slashPos != -1 )
-			{
-				owner = idStr( owner.c_str( ), slashPos + 1, owner.Length() );
-			}
-
-			if( globals->HasProperty( owner.c_str() ) )
-			{
-				idSWFScriptFunction_Script* func = idSWFScriptFunction_Script::Alloc( );
-				func->SetAbcFile( this );
-				func->SetData( method.method );
-				newVar->value = idSWFScriptVar( func ) ;
-			}
-			else
-			{
-				newVar->value.SetUndefined( );
-			}
+			newVar->value = idSWFScriptVar( func ) ;
 			break;
-
 		}
 		break;
 		case swfTraits_info::Trait_Class:
@@ -641,7 +678,7 @@ void SWF_AbcFile::ReadMethodBodyInfo( idSWFBitStream& bitstream, swfMethod_body_
 	newMethodBody.initScopeDepth = bitstream.ReadEncodedU32();
 	newMethodBody.maxScopeDepth = bitstream.ReadEncodedU32();
 	newMethodBody.codeLength = bitstream.ReadEncodedU32();
-	newMethodBody.code.Load( bitstream.ReadData( newMethodBody.codeLength ), newMethodBody.codeLength, true ); // ( byte * ) Mem_ClearedAlloc( sizeof( byte ) * newMethodBody.codeLength );
+	newMethodBody.code.Load( bitstream.ReadData( newMethodBody.codeLength ), newMethodBody.codeLength, true );
 	extern void swf_PrintStream( SWF_AbcFile * file , idSWFBitStream & bitstream );
 	if( swf_abc_verbose.GetInteger( ) == 2 )
 	{
@@ -649,6 +686,10 @@ void SWF_AbcFile::ReadMethodBodyInfo( idSWFBitStream& bitstream, swfMethod_body_
 		common->Printf( "Method %s 's bytecode \n", newMethodBody.method->name->c_str() );
 		common->Printf( "============================\n" );
 		swf_PrintStream( this, newMethodBody.code );
+	}
+	if (swf_abc_nodebug.GetBool())
+	{
+		//strip debug opcodes and data.
 	}
 	//memcpy(newMethodBody.code,bitstream.ReadData(newMethodBody.codeLength),newMethodBody.codeLength);
 	uint32 exception_count = bitstream.ReadEncodedU32( );
@@ -694,7 +735,8 @@ void SWF_AbcFile::ReadInstanceInfo( idSWFBitStream& bitstream, swfInstance_info&
 
 	for( uint i = 0; i < interface_count; i++ )
 	{
-		newInstancedata.interfaces.Alloc() = &constant_pool.multinameInfos[bitstream.ReadEncodedU32()];
+		uint32 index = bitstream.ReadEncodedU32();
+		newInstancedata.interfaces.Alloc() = &constant_pool.multinameInfos[index? index-1 : index];
 	}
 
 	newInstancedata.iinit = &methods[bitstream.ReadEncodedU32()];
@@ -856,5 +898,3 @@ void idSWF::SymbolClass( idSWFBitStream& bitstream )
 		trace( "SymbolClass ^5%i ^7tag ^5%i  ^2%s \n", i, newSymbol.tag, newSymbol.name.c_str() );
 	}
 }
-
-

@@ -69,7 +69,7 @@ public:
 		return NULL;
 	}
 	virtual void			SetPrototype( idSWFScriptObject* _object ) { }
-
+	virtual bool			HasAbcMethod() { return false; }
 
 };
 
@@ -297,6 +297,7 @@ private:
 	//////////////////////////////////////////////////////////////////////////
 	//////////////////////ABC Wordcode Interpretation/////////////////////////
 	//////////////////////////////////////////////////////////////////////////
+	idStr ResolveMultiname( SWF_AbcFile *file, idSWFStack& stack, idSWFBitStream& bitstream,swfMultiname & ResolvedMultiName, swfMultiname & ResolvedTypeName );
 	void findproperty( SWF_AbcFile* file, idSWFStack& stack, idSWFBitStream& bitstream );
 	void findpropstrict( SWF_AbcFile* file, idSWFStack& stack, idSWFBitStream& bitstream );
 	void getlex( SWF_AbcFile* file, idSWFStack& stack, idSWFBitStream& bitstream );
